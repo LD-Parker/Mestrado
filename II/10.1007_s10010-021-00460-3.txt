@@ -1,0 +1,694 @@
+ORIGINALARBEITEN/ORIGINALShttps://doi.org/10.1007/s10010-021-00460-3Forsch Ingenieurwes (2021) 85:241–250
+Development of a wind turbine gearbox virtual load sensor using
+multibody simulation and artiﬁcial neural networks
+Baher Azzam1· Ralf Schelenz1·B j ö r nR o s c h e r1· Abdul Baseer1·G e o r gJ a c o b s1
+Received: 30 November 2020 / Accepted: 4 March 2021 / Published online: 29 March 2021
+© The Author(s) 2021
+Abstract
+A current development trend in wind energy is characterized by the installation of wind turbines (WT) with increasing
+rated power output. Higher towers and larger rotor diameters increase rated power leading to a n intensiﬁcation of the load
+situation on the drive train and the main gearbox. Howeve r, current main gearbox condition monitoring systems (CMS)
+do not record the 6-degree of freedom (6-DOF) input loads to the transmission as it is too expensive. Therefore, this
+investigation aims to present an approach to develop and validate a low-cost virtual sensor for measuring the input loads ofa WT main gearbox. A prototype of the virtual sensor system was developed in a virtual environment using a multi-body
+simulation (MBS) model of a WT drivetrain and artiﬁcial neural network (ANN) models. Simulated wind ﬁelds according
+to IEC 61400-1 covering a variety of wind speeds were generated and applied to a MBS model of a Vestas V52 wind
+turbine. The turbine contains a high-speed drivetrain with 4-points bearing suspension, a common drivetrain conﬁguration.The simulation was used to generate time-series data of the t arget and input parameters for the virtual sensor algorithm,
+an ANN model. After the ANN was trained using the time-series data collected from the MBS, the developed virtualsensor algorithm was tested by comparing the estimated 6-DOF transmission input loads from the ANN to the simulated
+6-DOF transmission input loads from the MBS. The results show high potential for virtual sensing 6-DOF wind turbine
+transmission input loads using the presented method.
+Entwicklung eines virtuellen Lastsensors für Windturbinengetriebe mittels Mehrkörpersimulation
+und künstlicher neuronaler Netze
+Zusammenfassung
+Steigende Nennleistungen sind ein aktueller Entwicklungstrend in der Windenergieanlagentechnologie. In Kombination
+mit größeren Rotordurchmessern führt dies zu einer veränderten Belastungssituation des Antriebsstrangs und insbeson-
+dere des Hauptgetriebes von Windenergieanlagen. Aufg rund von hohen Kosten messen aktuell am Markt verfügbare
+Hauptgetriebe-Zustandsüberwachungssysteme diese veränderte B elastungssituation der Getriebeeingangslasten in 6 Frei-
+heitsgrade (6-DOF) bisher nicht. Ziel dieser Untersuchung ist es daher, einen Ansatz zur Entwicklung und Validierung eines
+kostengünstigen virtuellen Sensors zur Messung der Eingangsla sten eines WEA-Hauptgetriebes vorzustellen. Ein Proto-
+typ des virtuellen Sensorsystems wurde in einer Modellumgebung unter Verwendung eines Mehrkörpersimulationsmodells(MKS) eines WEA-Antriebsstrangs und künstlicher neuronaler N etze (KNN) entwickelt. Simulierte Windfelder gemäß IEC
+61400-1, die eine Vielzahl möglicher Windbedingungen abdecken, wurden generiert und auf ein MKS-Modell einer VestasV52 Windenergieanlage angewendet. Di e V52 Windenergieanlage hat ein am Markt häuﬁg aufﬁndbares schnelllaufendes
+Antriebsstrangkonzept mit Vierpunktlagerung. Die MKS-Windf eld-Simulationen wurden verwendet, um Zeitreihendaten
+für das Training des virtuellen Sensor-Algorithmus (das KNN-Modell) zu generieren. Im Anschluss an das Training erfolgteder Test des entwickelten virtuellen Sensor-Algorithmus indem die vom KNN geschätzten 6-DOF-Getriebeeingangslastenmit den simulierten 6-DOF-Getriebeeingangslasten des MKS verglichen wurden. Die Ergebnisse zeigen ein hohes Potenzial
+für die hier vorgestellte Methode zur Messung von 6-DOF-Get riebeeingangslasten mithilfe eines virtuellen Sensors.
+/envelopebackBaher Azzam
+baher.azzam@cwd.rwth-aachen.de1Center for Wind Power Drives, RWTH Aachen University,Campus-Boulevard 61, 52074 Aachen, Germany
+K
+------------------------------End of the page -----------------------------------
+242 Forsch Ingenieurwes (2021) 85:241–250
+1I n t r o d u c t i o n
+The development in the ﬁeld of wind energy has been char-
+acterized by the installation of new wind turbines with in-creasing rated power and the r epowering of old turbines
+and wind farms [ 1–3]. As a result, the load situation in the
+drivetrain components in a wind turbine (WT) is intensi-fying [ 3]. Higher towers and larger rotor diameters result
+in higher power as well as higher torsional loads on the
+WT drivetrain. The torsional load is superimposed by the
+aerodynamic turbulence, which is characterized by both thetower height and location dependencies [ 4,5]. Thus, the
+load situation within the drivetrain has a time-variant andunpredictable dynamic, which has a strong inﬂuence on the
+utilization of individual components. This results in devi-
+ations between the design loa d spectra and the actual load
+spectra occurring in operation [ 5,6]. Such deviations could
+cause faster damage accumulations in drivetrain compo-
+nents, resulting in unexpected maintenance and increased
+downtime [ 5].
+Additionally, the limited availability of space for wind
+farms due to logistical problems or social restrictions gaverise to a trend to increase the number of WTs per wind
+farm [ 5]. As a result, investigations showed that the operat-
+ing conditions of WTs within a wind farm can be stronglylocation dependent [ 5,7]. For example, WTs of the same
+type within a wind farm can have uneven overall utilization
+and component utilization [ 5]. Therefore, with the develop-
+ment of larger WTs and more densely packed wind farms,the need for monitoring the load situation within the WTdrivetrain rises in order to gain a more accurate impres-sion on component utilization and reduce the likelihood of
+unplanned downtime.
+One of the drivetrain components that lead to the longest
+downtimes and most costly repairs is the gearbox [ 8,9].
+Condition Monitoring Systems (CMS) are used to detect
+potential faults or initialized damages of gearbox compo-
+nents. These systems collect gearbox condition data andoperating data, which are then evaluated and assessed. Al-though current CMSs are able to provide evaluation vari-ables for the condition of the transmission and to detect
+possible damage at an early st age, currently deployed sys-
+tems are not capable of measuring the input transmissionmechanical loads [ 10]. For example, several investigations
+aimed to develop wind turbine CMS based on measure-
+ments of the low-speed shaft torque (hereinafter referred
+to as “shaft torque”) [ 11–13]. However, developed systems
+for measuring shaft torque are yet to be deployed in newturbines [ 10]. This is mainly due to the high cost and low
+practicality of the measurement equipment needed for direct
+load measurements on the low-speed shaft [ 10]. However,
+the high potential of continuously monitoring transmissioninput loads such as shaft torque maintain the need for anaffordable measurement syste m for measuring such loads.
+Therefore, this investigation aims to develop a prototype ofa low-cost virtual sensor system for measuring transmissioninput loads in all 6 degrees of freedom (6-DOF).
+The problem of measuring par ameters of interest that are
+too costly or unpractical to directly sense requires novel
+sensor solutions to cost-effectively infer such parametersfrom alternative sources of information. With the recentdevelopments in the machine learning ﬁeld, virtual sens-
+ing has demonstrated high potential to bring down the cost
+and enhance the practicality of measurement systems ina variety of applications [ 14–18]. A virtual sensor allows
+a measurement system to indir ectly measure a parameter of
+interest using a set of sensor values. The motivation is typ-
+ically the signiﬁcant difference in the cost of implementing
+the virtual sensor in comparison to directly measuring theparameter(s) of interest. With the help of machine learning(ML) techniques, virtual sensor algorithms can be trained
+using time-series data when both the parameter of interest
+(target variables) and the sensor values from a set of af-fordable sensors (predictor v ariables) were recorded. Thus,
+measurements of the parameter of interest, which is costly
+to directly measure, are still required to develop the vir-
+tual sensor algorithm. Further, it is also beneﬁcial to it-
+eratively experiment with diff erent sensor setups (e.g. dif-
+ferent measured parameters, different sensor locations) toidentify the optimal set of affordable sensors to feed the
+virtual sensor algorithm. In this investigation for example,
+collecting the needed data to tr ain a 6-DOF virtual sensor of
+transmission input loads would entail a resource-intensivemeasurement campaign of an operational WT drivetrain.In addition, equipping such a turbine with the necessary
+measuring equipment would be a difﬁcult task to repeat
+when a different sensor conﬁguration is to be experimentedwith during the prototyping phase of the envisaged virtualsensor. Therefore, reducing the resources required to pro-
+totype the envisaged virtual sensor system during the early
+development phase is necessary.
+Time-series computer simulations, speciﬁcally MBS, of-
+fer a ﬂexible platform capable of supplying the neededdata to develop an ML-based virtual sensor. This paper
+will demonstrate a process for prototyping a virtual sensor
+for estimating 6-DOF WT transmission input loads usingdata obtained from a WT MBS model experiencing simu-lated wind ﬁelds. Simulated wind ﬁelds according to IEC
+61400-1 [ 4] covering a variety of nominal wind speeds and
+load scenarios were generat e da n da p p l i e dt oa nM B Sm o d e l
+of a Vestas V52 wind turbine following a procedure out-lined in Sect. 2.1. The turbine contains a high-speed driv-etrain with 4-points main bearing arrangement, a common
+drivetrain conﬁguration in the ﬁeld. Foreseen in the project
+for comparison reasons is the design and test of a newlybuilt three point main bearing arrangement for the V52.
+K
+------------------------------End of the page -----------------------------------
+Forsch Ingenieurwes (2021) 85:241–250 243
+Fig. 1 Flow Chart of Virtual
+Sensor Development using MBS
+and ANN models
+The simulation was used to generate time-series data of the
+target (output) and predictor (input) parameters for the de-
+velopment of the virtual sensor algorithm, in this case an
+ANN model. After the ANN was trained using the time-
+series data collected from the MBS, the developed proto-
+type of the virtual sensor algorithm was tested by compar-
+ing the estimated 6-DOF transmission input loads from the
+ANN to the simulated 6-DOF transmission input loads from
+the MBS. Fig. 1provides an overview of the prototyping
+process leading to a trained and tested ANN-based virtual
+sensor algorithm.
+To summarize, several investigations aimed to develop
+algorithms for directly or indirectly measuring WT trans-
+mission input loads [ 10–13,19]. On the one hand, the main
+obstacles for direct measurem ent solutions have been the
+low practicality and high costs of the needed sensor equip-
+ment [ 10]. On the other hand, virtual systems targeting the
+indirect measurement path have been hindered by the crit-
+ical need for WT data in the form of measurements col-
+lected over different operating conditions in order to design
+and calibrate the e nvisaged systems [ 10]. This investigation
+addresses these needs by not only developing algorithms
+to perform virtual sensing of transmission input loads us-
+ing practical measurement equi pment, but also presenting
+a process to collect the needed data without performing an
+extensive measurement campaign, typically required to col-
+lect such data [ 10]. Therefore, this paper presents a holistic
+approach to the prototyping and development of a sensor
+system for WT transmission input load estimation which
+mitigates the main obstacles faced by previous investiga-
+tions in this domain and brings this technology closer to
+ﬁeld deployment.
+This paper is organised as follows. Chap. 1 discusses the
+methods used in this investigation. Sect. 2.1 outlines the
+modelling and simulation approach, and the resulting datais described in Sect. 2.2 followed by an explanation of the
+data pre-processing steps i n Sect. 2.3. Sect. 2.4 presents
+the data analysis performed , and Sect. 2.5 elaborates on
+considerations and challenges in practical implementation
+of the proposed method. Chap. 3 presents the results of
+the investigation followed by a discussion of the results in
+Chap. 4. The conclusions are outlined in Chap. 5.
+2 Methods
+2.1 Modelling and simulation approach
+In order to generate time-series simulated data for train-
+ing the envisaged virtual sensor algorithm, a model of the
+Vestas V52 turbine was constructed in a virtual MBS en-
+vironment and subjected to simulated wind ﬁelds in ac-
+cordance with the IEC 61400-1 standard [ 20]. Fig. 2out-
+lines the approach followed to perform the simulation and
+collect the simulated data. The main purpose of the simu-
+lation was to generate time-series simulated data covering
+the predictor and target paramet ers for the envisaged virtual
+sensor algorithm. Therefore, the level of detail in the simu-
+lation was tuned to ensure those parameters are accurately
+captured and to limit the error in the resulting data, e.g.
+force and torque estimations. Since the 6-DOF transmis-
+sion input loads represent the target parameters, the rotor
+blades were ﬁrst modelled in ﬁ nite elements (FE) and then
+modally decomposed to the MBS environment [ 21]. Sim-
+ilarly, the tower was modally decomposed via the Craig-
+Bampton method and implemented in the MBS [ 22]. As
+the deﬂections and misalignments of the torque arms in all
+6-DOF were also of interest as pr edictor parameters for the
+virtual sensor algorithm, the main shaft as well as the main
+frame and all pins within the gearbox and the planet car-
+K
+------------------------------End of the page -----------------------------------
+244 Forsch Ingenieurwes (2021) 85:241–250
+Fig. 2 Modelling and Simulation Approach
+rier were modelled as ﬂexible bodies in the MBS. In order
+to maintain the speed of the time-series simulation while
+covering the main deformation behavior of the ﬂexible el-
+ements, the following procedure was applied. First, CAD
+model of elements (e.g. planet carrier) were simpliﬁed and
+transferred to FE environment. After that, the simpliﬁed
+CAD models were meshed using the FE method. The FE
+models were then modally decomposed to the MBS envi-
+ronment with the goal of covering the main eigenfrequen-
+cies and deformation behavior. The torque arms were sim-
+pliﬁed with a spring-damper force element. Similarly, the
+generator was connected to the main frame using spring-
+damper force elements. The stiffnesses of the main bearing
+were calculated using the BearinX ®software and imple-
+mented as one dimensional char acteristic curves for radial
+and axial directions using force elements. Additionally, mi-
+cro-level ﬂaws, e.g. material and tolerance imperfections, in
+WT components were not incorporated in the simulations.
+The wind ﬁelds were simulated using Turbsim [ 23]
+and design load case calcula tions were performed via co-
+simulation with MATLAB. For those calculations, the
+AERODYN force element and a SIMULINK PI controller
+was used [ 24]. In order to demonstrate a proof of concept
+of the proposed method, three nominal wind speeds cover-
+ing the cut-in, rated, and cu t-out wind speeds of the Vestas
+V52 turbine were chosen for the wind ﬁeld simulations in
+this investigation. Design load cases 1.1 and 1.2 were used
+to simulate six wind ﬁelds with a normal turbulence model
+and power production as the design condition. The wind
+ﬁelds covered two random seeds for each of the following
+nominal wind speeds: 3, 12, and 25 m/s. Each ﬁeld was
+simulated for 600 s.Table 1 Predictor Parameters Collected from MBS Wind Turbine
+Model
+Predictor Parameters
+Left & right torque arm displacements (x, y, z)
+Left & right torque arm angular misalignments ( α,β,γ)
+Four generator mount displacements (z)
+Wind direction and speed
+Three blade pitch angles
+Generator speed
+2.2 Data description
+The predictor and target parameters were collected from the
+simulations for use as input and output variables, respec-
+tively, for the ANN-based virtual sensor algorithm. The
+collected target variables are the 6-DOF transmission input
+loads, and the predictor par ameters are listed in Table 1.
+The orientations of the x, y, and z axes with respect to the
+WT drivetrain are as illustrated in Fig. 1.I nT a b l e 1,w i n d
+speed refers to the average wind speed at hub height for
+each time step during the simulations. The hub height was
+chosen for the reason that wi nd speed measurement during
+operation is typically performed at nacelle height. In this
+investigation, the three blade pitch angles were identical.
+However, the decision to include three input blade pitch
+angles for the virtual sensor algorithm was made to enable
+training the algorithm on scen arios where offsets between
+pitch angles may be present. The sampling frequency of
+the parameters was 200 Hz. Therefore, for each wind ﬁeld,
+the MBS simulation generated a dataset containing 120,000
+data points for 28 variables.
+The data pre-processing steps implemented before train-
+ing the ANN-based virtual sensor algorithm will be detailed
+in Sect. 2.3.
+2.3 Data pre-processing
+Before the collected data could be used to train and test the
+envisaged ANN model, certain preprocessing steps are nec-
+essary. Firstly, the data needed to be normalized to improve
+the speed of convergence when training the ANN [ 25]. This
+was performed on the data belonging to each variable in the
+datasets using the following formula:
+Z=X .i /−u
+/ESC(1)
+Where X, u, and σrepresent the sample, mean of sample,
+and standard deviation of sample, respectively. The avail-
+able data was then distributed among 3 datasets: training,
+validation, and testing dataset s. The training set contained
+45% of the data, while the validation and testing sets con-
+tained 5 and 50%, respectively.
+K
+------------------------------End of the page -----------------------------------
+Forsch Ingenieurwes (2021) 85:241–250 245
+2.4 Data analysis
+After the data was preprocessed and split into the three
+datasets to be used for training, validating, and testing the
+ANN-based virtual sensor, th e data analysis could be per-
+formed to reach the objective of this investigation. The
+Python programming language was used to perform the
+data analysis in this paper [ 26].
+Feed-forward ANN models were trained to estimate the
+6-DOF transmission input loads collected during the time-
+series simulations, taking the predictor param eters, speci-
+ﬁed in Table 1, as input. The pre-processed data consists
+of 720,000 data points from six wind ﬁeld simulations. Six
+ANNs were developed estimating one of the 6-DOF trans-
+mission input loads. As shown in Fig. 3, the process used to
+develop the ANN models started with an initial construction
+or architecture of the neural network which was iteratively
+improved through the process of hyperparameter tuning.
+The goal of hyperparameter tuning is to iteratively improve
+the accuracy of the trained m odel, when validated against
+the validation dataset, by altering the model’s architecture.
+Some of the most inﬂuential hyperparameters on feed-for-
+ward ANN performance are the number of hidden layers,
+the number of nodes per layer, the types of activation func-
+tions, the type and parameters of regularization, the type of
+loss function, and the parameters of the optimizer function.
+For the training phase, the investigator must also decide
+parameters such as batch size and number of epochs of
+training which also highly inﬂuence the performance of the
+resulting ANN model. The hyperparameters were individ-
+ually tuned for the six ANN models developed during this
+investigation until accu racy ceased to improve.
+Table 2lists some of the hyperparameters used in this
+investigation for training the top performing ANN models.
+The rectiﬁed linear unit (ReLu) [ 27] activation function was
+used after each hidden layer in all models due to its superior
+performance compared to activ ation functions such as the
+Sigmoid or the hyperbolic tangent (Tanh) activation func-
+tions [ 28,29]. In addition, dropout layers were used during
+training as a countermeasur e against overﬁtting. Dropout
+layers randomly switch off neurons, or nodes, at each up-
+date during training by setting the output value of the af-
+Fig. 3 Process Diagram for ANN Model DevelopmentTable 2 Hyperparameters of Developed ANN Models for 6-DOF Load
+Estimation
+Model target parame-
+terNumber of
+hidden layersNodes
+per layerNumber
+of epochs
+Transmission input
+force (x-axis)8 1000 2
+Transmission input
+force (y-axis)8 1000 30
+Transmission input
+force (z-axis)5 400 30
+Transmission input
+moment (about x-axis)2 130 15
+Transmission input
+moment (about y-axis)5 400 30
+Transmission input
+moment (about z-axis)7 700 17
+fected nodes to zero [ 30]. The adaptive moment estimation
+(Adam) [ 31] was the optimization algorithm used to update
+the weights of the models during training to improve model
+accuracy, and the learning rate used for training the models
+was 0.001.
+During the testing phase, the developed models were
+tested on the previously unseen data from the test dataset.
+The resulting model estimations were evaluated using sev-
+eral metrics in order to thoroughly assess the errors of their
+estimations with respect to each of the 6-DOF transmission
+input loads. To give an impression of the absolute error in
+the respective load units, Eq. 2[32] was used to calculate
+the mean absolute error (MAE) for each input load.
+MAE =Pn
+i=1jyi−byij
+n(2)
+Where yi,byi,a n d nrepresent the ith expected value,
+the ith estimated value, and the number of values in the
+dataset containing the targe t parameter, respectively.
+In order to put the error into context, it is necessary to
+compare the deviations betw een estimations and expected
+values to the typical behaviours, or in this case, loading
+scenarios present in the available data. Due to the impor-
+tance of this step in interpreting the resulting model errors,
+a twofold approach was implemented to investigate the rel-
+ative errors of the model estimations. Firstly, the coefﬁcient
+of determination, R2, was calculated for each of the 6-DOF
+loads by applying Eq. 3to the target values from the test
+dataset and model estimations [ 33].
+R2.y;by/=1−Pn
+i=1.y i−byi/2
+Pn
+i=1.y i−y/2(3)
+Where yis the mean of the expected values of the target
+parameter, i.e. y=1
+nPn
+i=1yi.
+As can be read in Eq. 3, the error is calculated in relation
+to the term in the denominator which includes the expected
+K
+------------------------------End of the page -----------------------------------
+246 Forsch Ingenieurwes (2021) 85:241–250
+value as well as the mean of the expected values of the
+target parameter from the test dataset.
+A second approach to relative error was developed and
+implemented in order to provide more transparency and fur-ther evaluate the performance of the models. The approach
+begins with an extraction of relevant load statistics from the
+simulated loads at rated wind speed. The extracted statisticsare minimum, maximum, and average values of the respec-tive loads for each of the 6-DOF transmission input loads.
+Due to the nature of wind turbine input loads, a nuanced
+approach was needed in order to select the relative statisticfor calculating relative error. For example, forces along they axis (Fy) typically ﬂuctuate around an average value closeto zero. Thus, comparing the calculated MAE to the average
+value of Fy would result in an inﬂated error ﬁgure. Simi-
+larly, always selecting the maximum values of the 6-DOFloads to compare to the absolute error of the estimated loadswould arguably result in an exaggerated impression of the
+skill of the models since it would result in relatively low
+errors. In addition, scaling the absolute error against theexpected value for each data point as shown in Eq. 4[34,
+35] would result in extremely high error values when the
+expected value is zero.
+RMSRE =s
+1
+n/SOHX n
+i=1/DC2byi−yi
+yi/DC32
+(4)
+Therefore, a dedicated approach was developed to tackle
+these issues and calculate relative error using Eq. 5:
+Load-Relative Error .LRE/
+=Pn
+i=1jyi−byij
+n/SOHmedian .jymaxj;jyminj;jyj/(5)
+Where ymaxandyminare the maximum and minimum
+values of the target parameter, respectively.
+By scaling the MAE against the median of the three
+statistics (minimum, maximum, average), an error can becalculated relative to a simple statistic representing theloads at rated wind speed while addressing the aforemen-
+tioned issues with comparing error to only one statistic. As
+far as we know, this method of calculating relative error was
+developed during this investigation, inspired by the natureof the 6-DOF transmission input loads and the challengestherein. By using Eq. 6, a load-relative score (LRS) can be
+calculated comparable to the R
+2score:
+Load-Relative Score .LRS/=1−L R E ( 6 )2.5 Considerations and challenges in practical
+implementation
+In this investigation, simulation data is used to train ANN-
+based virtual sensor algorith ms; therefore, the accuracy of
+the developed virtual sensor is a function of the validity of
+the simulation model and its resulting data. Since absolutevalidity of a simulation model is refuted by most experts[36–39], the validity of a simulation model is only deﬁned
+within the limits of the project and its intended applica-
+tion [ 40]. In other words, validation of a simulation model
+attempts to answer the following question: Is the model suf-ﬁciently accurate for its inte nded application? Indeed, the
+sufﬁciency of model accuracy from the perspective of its
+intended application is often used to deﬁne model validity
+[37,41–43]. Different approaches to analyse the validity
+of simulation models have been proposed in literature withvarying levels of comprehensi veness and associated costs
+[40]. The following are some examples:
+/CIRCLEMicro-level examination and veriﬁcation by system de-
+signers [ 41].
+/CIRCLEComparisons to real-world performance of the modelled
+system [ 41].
+/CIRCLEA ﬂow analysis of conserved quantities, such as heat and
+kinetic energy, through the model [ 44].
+/CIRCLESubjective assessment by the model development team
+on whether a model is valid based on results obtained
+during model development process [ 36].
+When implementing the methodology proposed in this
+paper, investigators must gain a clear understanding of whatis considered sufﬁcient mode l accuracy with respect to the
+intended application of their envisaged virtual sensor. The
+degree of detail of the simulation model and the compre-hensiveness of the validation analyses must ﬁt the demandsof the application. Therefore, the necessary quality of the
+MBS model for implementing the proposed method de-
+pends heavily on the intended application. Resource limita-tions must also be considered and an assessment needs to be
+made on whether the proposed method is a viable optionfor the intended application given the available resources
+for developing and validating the simulation models. It may
+be more affordable to develop the envisaged virtual sensorusing data from real world experiments on the actual sys-tem as opposed to developing simulation models to provide
+sufﬁciently accurate data. However, this approach may be-
+come prohibitively costly if it would be a goal to investigatedifferent potential sensor setups (e.g. different locations ortypes of sensors). This is due to the high cost of instrument-ing a WT with all candidate sensor setups and performing
+sufﬁcient experimentation with each setup. The proposed
+method would be beneﬁcial in investigations which rely onreal world measurement data to train the ﬁnal virtual sen-
+K
+------------------------------End of the page -----------------------------------
+Forsch Ingenieurwes (2021) 85:241–250 247
+sor algorithms by allowing for more affordable screening
+of potential sensor setups prior to costly real world experi-mentation.
+Taking this project as an example, it is planned in the fu-
+ture to instrument and test two drivetrain conﬁgurations of
+the Vestas V52 as part of a measurement campaign aimed
+at further developing the envisaged 6-DOF transmission in-put loads virtual sensor. This presents a valuable opportu-nity to design and test a pred eﬁned sensor setup on actual
+systems. However, it also presents a challenge to ﬁnd the
+optimal sensor setup prior to the test since it would not bepossible to modify the sensor setup during the test; the driv-etrain would be less accessibl e and pausing testing would
+cost valuable testing time. Therefore, the ability to proto-
+type and screen different virtu al sensor systems, albeit with
+less accuracy as compared to r eal world testing, provides
+a valuable opportunity to identify suitable sensor types andlocations for the resource-intensive and less ﬂexible real
+world test.
+Lastly, the choice of the Vestas V52 for the ﬁrst appli-
+cation of the proposed method is linked to the availabilityof a Vestas V52 drivetrain for the planned testing. Dueto the age of the V52, design differences exist between
+its design and the design of more modern WTs e.g. more
+lightweight construction. The ANN-based virtual sensors inthe proposed method use deformations and misalignmentsas input to sense transmission input loads. Therefore, it is
+expected that the lightwei ght construction of more recent
+turbines would at least maintain and more likely enhancethe sensitivity of those par ameters to experienced loads.
+This also may necessitate the modelling of some compo-nents in higher detail to reﬂect the additional deformability
+of such components during operation. As mentioned ear-
+lier, an assessment of model validity during the model de-velopment phase is vital for a successful implementation ofthe proposed method. A screening of different sensor se-
+tups may also lead to improvements in the accuracy of the
+ANN-based virtual sensor algorithms.
+Table 3 Error Metrics of ANN Models Estimations & Simulated Loads Statistics at Rated Wind Speed
+Target parameter:
+transmission input loadMAE (units:
+N, Nm)R2LRS Simulated loads statistics at rated wind speed (units: N, Nm)
+Min. Max. Avg.
+Force (x-axis) 170.07 0.96 0.95 –7898 1050 –3222
+Force (y-axis) 852.29 0.93 0.94 –17,972 15,556 –81
+Force (z-axis) 792.25 0.96 0.98 –53,850 –26,380 –41,074
+Moment (about x-axis) 817.56 0.99 0.99 –380,056 –41,669 –257,847
+Moment (about y-axis) 548.87 0.95 0.98 22,881 32,429 27,368
+Moment (about z-axis) 700.61 0.99 0.97 4555 45,827 30,1243R e s u l t s
+As mentioned earlier, six feed-forward ANN models were
+trained to estimate each of the 6-DOF transmission inputloads using the predictor parameters, listed in Table 1,a s
+input. In addition to adjusting the number of nodes per
+layer, using the Rectiﬁed Li near Unit (ReLu) activation
+function and an Adaptive Moment Estimation (Adam) opti-mizer proved particularly usef ul in increasing model accu-
+racy as well as training speed. The use of dropout layers was
+an effective measure against overﬁtting. After testing thedeveloped models on the test dataset, the aforementionederror metrics were evaluated with respect to the model es-timations of the target parameters. The calculated errors as
+well as the corresponding simulated loads statistics at rated
+wind speed are listed in Table 3. The median value selected
+for the calculation of the LRS for each transmission inputload is in bold to facilitate interpretation. The Tensorﬂow
+framework was utilized to implement the ANN algorithms
+[45].
+The load relative error distributions of the estimated
+transmission input forces and moments are also plotted inFigs. 4and 5, respectively. The LRE of the ith estimated
+value for each target parameter was calculated using Eq. 7:
+LRE
+i=yi−byi
+median .jymaxj;jyminj;jyj/(7)
+4 Discussion
+The results demonstrate high potential of the presented
+method for prototyping virtual sensor algorithms and sensor
+setups for estimating 6-DOF wind turbine transmission in-
+put loads. The mean ab solute errors of the estimated forces
+and moments, listed in Table 3, are below the kN and kNm
+range, respectively, which corresponds to R2scores as well
+as load relative scores above 0.9. Moreover, the load rel-
+ative error distributions of the estimated loads shown inFigs. 4and 5demonstrate that the majority of estimations
+have an LRE close to zero. Ther efore, the results of the de-
+veloped virtual sensor prototype demonstrate the potential
+capability of feed-forward ANNs to estimate transmission
+K
+------------------------------End of the page -----------------------------------
+248 Forsch Ingenieurwes (2021) 85:241–250
+Fig. 4 Load Relative Error Distributions for Estimated Transmission
+Input Forces
+Fig. 5 Load Relative Error Distributions for Estimated Transmission
+Input Moments
+input loads in a WT application without relying on costly,
+rotating measuring equipment s uch as telemetry systems. In
+addition, the ﬂexibility offered by the MBS modelling en-
+vironment used in this investigation can potentially reduce
+the resources needed for prototyping a virtual sensor for
+similar applications. The achieved results motivate further
+applications of the methodology presented in this paper in
+order to evaluate its transferability to other WT drivetrains
+and other wind ﬁelds based on different design load cases
+and wind speeds.
+The predictor parameters, listed in Table 1, needed for
+the trained ANN models to estimate 6-DOF transmission
+input loads in a WT can be sensed using stationary sensors
+as well as sensors from the typical SCADA system in WTs.
+Displacement and angular misalignment parameters can be
+measured using stationary distance sensors mounted on the
+main frame or the gearbox housing. Despite the signiﬁcant
+potential of enabling WT CMS to use WT drivetrain input
+loads such as shaft torque, such systems are so far limited
+to research and development environments [ 10]. One of the
+main obstacles hindering the deployment of such systems
+is the high cost and impracticality of the required measure-
+ment equipment. Therefore, the developed models could
+reduce the cost and increase the practicality of shaft loadmeasurement, potentially enab ling ﬁeld-deployed CMS to
+use those measurements for fault identiﬁcation in the future
+[10].
+5C o n c l u s i o n
+In this investigation, ANN-based virtual sensor algorithms
+were trained using simulated data obtained from a model
+of the Vestas V52 WT subjected to simulated wind ﬁelds in
+an MBS environment. The main conclusions are as follow:
+1. The developed Feed-forward ANN models demonstrate
+promising potential for this technology in estimating
+6-DOF WT transmission input loads using indirect, sta-
+tionary measurement equipment as opposed to costly
+solutions, e.g. tel emetry systems.
+2. It is possible to collect the training data for developing an
+ANN-based virtual sensor for WT 6-DOF transmission
+input loads using the simula tion approach outlined in this
+paper.
+3. The ﬂexibility offered by the presented methodology for
+virtual sensor development has the potential of dramati-
+cally reducing the resources needed for prototyping and
+testing virtual sensor systems compared to physical test-
+ing.
+4. Due to the promising results achieved using the presented
+methodology, the authors aim to further test the method-
+ology with different boundary conditions, e.g. different
+WT drivetrain conﬁgurations and different design load
+cases.
+5. The load-relative score (LRS) was developed and applied
+during this investigation as a method of assessing the
+6-DOF virtual sensor models estimation capabilities us-
+ing selective scaling of a simple statistic representing the
+loads at rated wind speed.
+Funding Open Access funding enabled and organized by Projekt
+DEAL.
+Open Access This article is licensed under a Creative Commons At-
+tribution 4.0 International License, which permits use, sharing, adapta-
+tion, distribution and reproduction in any medium or format, as long as
+you give appropriate credit to the original author(s) and the source, pro-
+vide a link to the Creative Commons licence, and indicate if changes
+were made. The images or other third party material in this article are
+included in the article’s Creative Commons licence, unless indicated
+otherwise in a credit line to the material. If material is not included
+in the article’s Creative Commons licence and your intended use is not
+permitted by statutory regulation or ex ceeds the perm itted use, you will
+need to obtain permission directly from the copyright holder. To view
+a copy of this licence, visit http://creativecommons.org/licenses/by/4.
+0/.
+K
+------------------------------End of the page -----------------------------------
+Forsch Ingenieurwes (2021) 85:241–250 249
+References
+1. Fraunhofer IEE (2018) Windenergie Report Deutschland 2018.
+Fraunhofer Verlag,
+2. Wiser R, Millstein D, Bolinge r M, Jeong S, M ills A ( 2020) The
+hidden value of large-rotor, tall-tower wind turbines in the UnitedStates. Wind Eng. https://doi.org/10.1177/0309524X20933949
+3. McKennan R, Ostman v.d. Leye P, Fichtner W (2016) Key chal-
+lenges and prospects for large wind turbines. Renew Sust EnergRev. https://doi.org/10.1016/j.rser.2015.09.080
+4. Deutsches Ins titut für No rmung (2015) Windenergieanlagen – Teil
+1: Auslegungsanforderungen. Deutsche Norm. VDE Verlag, Berlin
+5. Roscher B, Werkmeister A, J acobs G, Schelenz R (2017) M odellin g
+of wind turbine loads nearby a wind farm. J Phys Conf Ser. https://
+doi.org/10.1088/1742-6596/854/1/012038
+6. Rommel D, Di Maio D, Tinga T (2020) Calculating wind tur-
+bine component loads for improved life prediction. Renew Energ.https://doi.org/10.1016/j.renene.2019.06.131
+7. Cardaun B, Roscher B, Schelenz R, Jacobs G (2019) Analysis of
+wind-turbine main bearing loads due to constant yaw misalign-ments over a 20 years Timespan. Energies. https://doi.org/10.3390/
+en12091768
+8. Kotzalas M, Doll G (2010) Tribological advancements for reliable
+wind turbine performance. Philos Trans Math Phys Eng Sci. https://
+doi.org/10.1098/rsta.2010.0194
+9. Kim K, Parthasarathy G, Uluyol O, Foslien W, Sheng S, Fleming P
+(2011) Use of SCADA data for failure detection in wind turbines.ASME 2011 5th internati onal conference on ener gy sustai nability,
+Washington, DC
+10. Perisic N, Kirkegaard P, Pedersen B (2015) Cost-effective shaft
+torque observer for condition monitoring of wind turbines. WindEnergy. https://doi.org/10.1002/we.1678
+11. Yang W, Tavner P, Crabtree C, Feng Y , Qiu Y (2012) Wind turbine
+condition monitoring: technical and commercial challenges. WindEnergy. https://doi.org/10.1002/we.1508
+12. Hameed Z, Hong Y , Cho Y , A hn S, Song C (2009) Conditio n mon-
+itoring and fault detection of wind turbines and related algorithms:a review. Renew Sust Energ Rev 13:1–39
+13. Lu B, Li Y , Wu X, Yang Z (2009) A review of recent advances in
+wind turbine cond ition monitoring and fault diagnosis. In: Power
+Electronics and Machines in Wind Applications Lincoln
+14. Bin Ilyas E, Fischer M, Iggena T, Tönjes R (2020) Virtual sensor
+creation to replace faulty sensors using automated machine learningtechniques. In: 2020 Global Internet of Things Summit (GIoTS)Dublin
+15. Matusowsky M, Ramotsoela D, Abu-Mahfouz A (2020) Data im-
+putation in wireless sensor networks using a machine learning-based virtual sensor. J Sens Actuator Netw. https://doi.org/10.3390/
+jsan9020025
+16. Zaidan MA et al (2020) Intelligent calibration and virtual sensing
+for integrated low-cost air quality sensors. IEEE Sens J. https://doi.
+org/10.1109/JSEN.2020.3010316
+17. Williams A, Himsc hoot A, Saaﬁr M, Ga tlin M, Pendleton D,
+Alvord D (2020) A machine learning approach for solid rocketmotor data analysis and virtual sensor development. In: AIAApropulsion and energy 2020 forum, virtual event
+18. Roveda L, Bussolan A, Braghin F, Piga D (2020) 6D virtual
+sensor for wrench estimation in robotized interaction tasks ex-
+ploiting extended Kalman ﬁlter. Machines. https://doi.org/10.3390/
+machines8040067
+19. Perisic N, Pedersen B, Kirkegaard P (2012) Gearbox fatigue
+load estimation for condition monitoring of wind turbines. In:ISMA2012 international conference on noise and vibration Leuven
+20. International Electrotechnical Commission (2019) IEC 61400-1.
+Wind turbines—part 1: design requirements21. Berroth J (2017) Einﬂuss der Stelldynamik der Rotorblätter auf die
+Lasten der Blattverstellsysteme von Windenergieanlagen. V erlags-gruppe Mainz, Aachen
+22. Craig R, Bampton M (1968) Coupling of substructures for dynamic
+analysis. AIAA J 6:1313–1319
+23. Jonkman B (2009) Turbsim user’s guide: Version 1.50. Technical
+Report No. NREL/EL-500-38230. National Renewable EnergyLaboratory, Colorado
+24. Bi L, Schelenz R, Jacobs G (2015) Dynamic simulation of full-scale
+nacelle test rig with focus on drivetrain response under emulatedloads. In: Conference for Wind Power Drives Aachen
+25. Sola J, Se villa J ( 1997) Importance of input da ta normalization for
+the application of neural networks to complex industrial problems.I E E ETN u c lS c i . https://doi.org/10.1109/23.589532
+26. van Rossum G (1995) Python tutorial. Technical Report CS-R9526.
+Centrum voor Wiskunde en Informatica (CWI)„ Amsterdam
+27. Hinton G, Nair V (2010) Rectiﬁed linear units improve restricted
+Boltzmann machines. In: Proceedings of the 27th InternationalConference on Machine Learning (ICML-10) Haifa
+28. Zeiler MD (2013) On rectiﬁed linear units for speech processing.
+In: Internationalconference on acoustics, speech and signal process-ing Vancouver
+29. Dahl G, Sainath T, Hinton G (2013) Improving deep neural net-
+works for LVCSR using rectiﬁed linear units and dropout. In: In-
+ternational conference on acoustics, speech and signal processingVancouver
+30. Srivastava N (2014) Dropout: a simple way to prevent neural net-
+works from Overﬁtting. JMLR 15:1929–1958
+31. Kingma D, Ba J (2015) Adam: a method for stochastic optimiza-
+tion. In: International Conference on Learning Representations(ICLR) San Diego
+32. Sammut C, Webb G (2010) Encyclopedia of machine learning.
+Springer, Boston
+33. Nagelkerke N (1991) A note on a ge neral deﬁnitio n of the coefﬁ-
+cient of determination. Biometrika. https://doi.org/10.1093/biomet/
+78.3.691
+34. Göçken M, Özçalıcı M, Boru A, Dosdo ˘gru A (2016) Integrating
+metaheuristics and Artiﬁcial Neural Networks for improved stockprice prediction. Expert Syst Appl. https://doi.org/10.1016/j.eswa.
+2015.09.029
+35. Webber H et al (2017) Canopy temperature for simulation of heat
+stress in irrigated wheat in a semi-arid environment: a multi-modelcomparison. Field Crop Res. https://doi.org/10.1016/j.fcr.2015.10.
+009
+36. Sargent R (2010) Veriﬁcation and validation of simulation models.
+In: Proceedings of the 2010 Winter Simulation Conference Ba lti-
+more
+37. Babuska I, Oden T (2004) Veriﬁcation and validation in computa-
+tional engineering and science: basic concepts. Comput MethodsAppl Mech Engrg. https://doi.org/10.1016/j.cma.2004.03.002
+38. Law A (2007) Simulation modeling a nd analysis. McGraw-Hill,
+New York
+39. Logan R, N itta C ( 2004) Veriﬁcation & validation: process and lev-
+els leading to qualitative or quantitative validation statements. SAETrans 113:804–816
+40. Kutluay K, Winner H (2014) Validation of vehicle dynamics simu-
+lation models—a review. V ehicle Syst Dyn. https://doi.org/10.1080/
+00423114.2013.868500
+41. Carson J (2002) Model veriﬁcation and validation. In: Proceedings
+of the Winter Simulation Conference San Diego
+42. Schlesinger S (1979) Terminology for model c redibility. SIMULA-
+TION. https://doi.org/10.1177/003754977903200304
+43. American Institute of Aeronautics and Astronautics (1998) Guide
+for the V eriﬁcation and V alidation of Computational Fluid Dynam-ics Simulations (AIAA G-077-1998(2002)). AIAA.
+K
+------------------------------End of the page -----------------------------------
+250 Forsch Ingenieurwes (2021) 85:241–250
+44. Tiller M ( 2009) Veriﬁcation and validation of physical plant mod-
+els. SAE International, Warrendale
+45. Abadi M et al (2016) TensorFlow : Large-Scale Machine Learning
+on Heterogeneous Distributed Systems
+K
+------------------------------End of the page -----------------------------------

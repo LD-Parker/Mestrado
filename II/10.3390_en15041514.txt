@@ -1,0 +1,816 @@
+/gid00030/gid00035/gid00032/gid00030/gid00038/gid00001/gid00033/gid00042/gid00045 /gid00001
+/gid00048/gid00043/gid00031/gid00028/gid00047/gid00032/gid00046Citation: Meyer, A. Vibration Fault
+Diagnosis in Wind Turbines Based on
+Automated Feature Learning.
+Energies 2022 ,15, 1514. https://
+doi.org/10.3390/en15041514
+Academic Editor: Mohamed
+Benbouzid
+Received: 24 December 2021
+Accepted: 16 February 2022
+Published: 18 February 2022
+Publisher’s Note: MDPI stays neutral
+with regard to jurisdictional claims in
+published maps and institutional afﬁl-
+iations.
+Copyright: © 2022 by the author.
+Licensee MDPI, Basel, Switzerland.
+This article is an open access article
+distributed under the terms and
+conditions of the Creative Commons
+Attribution (CC BY) license (https://
+creativecommons.org/licenses/by/
+4.0/).
+energies
+Article
+Vibration Fault Diagnosis in Wind T urbines Based on
+Automated Feature Learning
+Angela Meyer
+School of Engineering and Computer Science, Bern University of Applied Sciences, 2501 Biel, Switzerland;
+angela.meyer@bfh.ch
+Abstract: A growing number of wind turbines are equipped with vibration measurement systems
+to enable the close monitoring and early detection of developing fault conditions. The vibration
+measurements are analyzed to continuously assess the component health and prevent failures that
+can result in downtimes. This study focuses on gearbox monitoring but is also applicable to other
+subsystems. The current state-of-the-art gearbox fault diagnosis algorithms rely on statistical or
+machine learning methods based on fault signatures that have been deﬁned by human analysts. This
+has multiple disadvantages. Deﬁning the fault signatures by human analysts is a time-intensive
+process that requires highly detailed knowledge of gearbox composition. This effort needs to be
+repeated for every new turbine, so it does not scale well with the increasing number of monitored
+turbines, especially in fast-growing portfolios. Moreover, fault signatures deﬁned by human analysts
+can result in biased and imprecise decision boundaries that lead to imprecise and uncertain fault
+diagnosis decisions. We present a novel accurate fault diagnosis method for vibration-monitored
+wind turbine components that overcomes these disadvantages. Our approach combines autonomous
+data-driven learning of fault signatures and health state classiﬁcation based on convolutional neural
+networks and isolation forests. We demonstrate its performance with vibration measurements from
+two wind turbine gearboxes. Unlike the state-of-the-art methods, our approach does not require
+gearbox-type-speciﬁc diagnosis expertise and is not restricted to predeﬁned frequencies or spectral
+ranges but can monitor the full spectrum at once.
+Keywords: wind energy; fault detection and diagnosis; vibration-based condition monitoring; wind
+turbines; gearboxes; convolutional neural networks
+1. Introduction
+The capacity of globally installed wind power is constantly growing due to interna-
+tional efforts to limit the global mean temperature rise by replacing fossil fuels [ 1]. A major
+fraction of the levelized cost of wind energy consists of the operation and maintenance
+costs of wind farms [ 2]. The continuous health monitoring of wind turbine components
+forms an important part of the work of wind farm operators as it helps to limit the extent
+of unforeseen maintenance costs. To reduce the operation and maintenance costs of their
+wind farms, many operators and asset managers are applying remote condition monitoring
+techniques to detect incipient faults before they result in major damage.
+Gearboxes are among the most critical and costly components to replace in a wind
+turbine in terms of the equipment, replacement work and downtime costs per failure [ 3–6].
+Therefore, a growing number of wind turbine gearboxes is being equipped with vibration
+measurement systems to enable the close monitoring and early detection of developing
+fault conditions in the gearbox components [ 7–9]. The vibration-monitoring signals require
+analysis and interpretation to prevent failures. Numerous approaches have been proposed
+to assess the vibration signals from wind turbine gearboxes in the time and frequency
+domains. Examples include the time-domain monitoring of waveform features such as
+root mean square deviations, peak-to-peak amplitudes, and kurtosis. In the frequency
+Energies 2022 ,15, 1514. https://doi.org/10.3390/en15041514 https://www.mdpi.com/journal/energies
+------------------------------End of the page -----------------------------------
+Energies 2022 ,15, 1514 2 of 13
+domain, methods such as spectral line analysis, envelope and sideband analysis have
+been proposed [ 8–11]. Thus, the state-of-the-art vibration diagnostics methods applied for
+wind turbine (WT) gearboxes in practice rely on the extraction of hand-crafted features
+from the gearbox vibration signals. The features need to be deﬁned by a human analyst
+before they can be extracted. Only after they have been deﬁned and extracted from the
+vibration measurements can the features be used to infer information about potential faults
+in gearbox components based on statistical methods or machine learning models [ 12,13].
+Typical handcrafted features that are in use for WT gearbox fault diagnostics are the position
+and amplitude of spectral lines corresponding to characteristic frequencies of gearbox
+components, such as gear mesh frequencies, and other characteristic metrics such as the root
+mean square deviation and kurtosis of parts of the vibration time series [ 8–11]. However,
+these state-of-the-art vibration diagnostics methods have multiple disadvantages. First,
+they require a labor-intensive upfront conception and handcrafting of feature deﬁnitions,
+which constitutes a signiﬁcant time and workforce effort. Second, many state-of-the-art
+approaches and feature deﬁnitions require a highly detailed knowledge of the gearbox type,
+manufacturer, composition and dimensions, its bearing and gear types, gear teeth numbers,
+and so on. This information needs to be gathered for every single gearbox before the start
+of the monitoring. As a result, the state-of-the-art fault diagnostics and feature extraction
+approaches can generally not be transferred straightforwardly to new turbine types added
+to an operator’s wind power portfolio. For every new turbine entering the portfolio,
+detailed turbine composition information needs to be collected from the manufacturer
+and the vibration features need to be reviewed, adapted and extracted. This constitutes a
+large, resource-intensive initial effort that many wind farm operators and asset managers
+are hesitant to make. Third, after a feature deﬁnition and extraction method has been
+implemented, thousands of characteristic spectral values per turbine gearbox need to be
+stored and monitored, which requires costly storage resources and computing time in the
+remote monitoring centers of the turbine operators and asset managers. Fourth, the state-
+of-the-art approaches do not analyze the full vibration spectrum but focus on monitoring
+only isolated aspects thereof, such as a set of characteristic frequencies, or they focus on the
+global metrics of the vibration time series or spectrum. Unlike the proposed approach, they
+do not support the automated, simultaneous vibration monitoring of the full spectral range.
+Lastly, features deﬁned by human analysts can lead to imprecise decision boundaries and
+less accurate fault diagnostics predictions than features that have been learnt by machine
+learning algorithms themselves [ 14]. The state-of-the-art feature deﬁnition and extraction
+methods may result in lower diagnostics accuracy, more false alarms and false negatives,
+especially in ambiguous boundary cases that require additional inspection and decision
+making by remote monitoring staff, than fault diagnostics methods which learn and extract
+the optimal features themselves. A reliable feature deﬁnition and extraction is essential to
+the fault diagnostics process. For an illustrative example of how the chosen upfront feature
+deﬁnitions can affect fault detection quality, we refer to the study presented by [11].
+The research gap addressed by this study is the development of a fault diagnostics
+method for vibration-monitored wind turbine gearboxes that:
+(1) Learns and extracts an optimal set of discriminative features in an automated manner,
+not requiring any feature engineering;
+(2) Analyzes the full vibration spectrum, rather than focusing only on isolated predeﬁned
+aspects thereof;
+(3) This is even applicable if only a few fault observations are available.
+Consequently, the objective of this paper is to introduce and demonstrate a novel fault
+diagnostics approach for vibration-monitored wind turbine gearboxes that can overcome
+the discussed disadvantages of the state-of-the-art methods. In particular, the novel ap-
+proach is expected to learn optimal discriminative features in an automated manner and
+classify the gearboxes’ health conditions based on these features without requiring any
+human feature deﬁnition and extraction. It is also expected to analyze the full vibration
+------------------------------End of the page -----------------------------------
+Energies 2022 ,15, 1514 3 of 13
+spectrum and be applicable even in situations where sufﬁcient model training data for
+fault-type classiﬁcation are unavailable.
+This paper is organized as follows. Section 2 introduces the proposed fault diagnostics
+approach. Section 3 describes the method applied and data employed in a gearbox failure
+case study, whereas Section 4 discusses the analysis and results. Our conclusions are
+presented in Section 5.
+2. Fault Diagnosis Method
+The proposed fault diagnosis method comprises two stages. The ﬁrst stage performs
+an unsupervised anomaly detection on the features learnt and extracted from spectrograms
+of each monitored gearbox component (Figure 1). This stage one accounts for the fact that
+many WT operators have access to only a few or even no sensor measurements from actual
+gearbox fault incidents, as these are relatively rare events and can arise from a range of
+different causes. While methods that require labeled observations of gearbox faults (as in
+proposed stage two below) may be less beneﬁcial to such operators, anomaly detection
+methods based on measurements taken in the normal healthy operation state will still be
+available and highly useful to them, even in absence of labeled fault observations.
+Energies 2022 , 15, x FOR PEER REVIEW 4 of 13 
+ 
+ tasks based on the previously extracted feat ures. During model trai ning, the CNN weights 
+optimization algorithm effectuates automated fe ature learning and extraction to construct 
+a low dimensional representation of the input spectra, which is subsequently fed to the 
+anomaly detection model (stage one, Figure 1) or the fault type classification network 
+(stage two, Figure 2).  
+ 
+Figure 1. Stage one of the proposed method. Anomaly detection based on features extracted by 
+convolutional and pooling layers from spectrograms  of the monitored components in their healthy 
+state. An isolation forest model is trained on the extracted features. The trained model is subse-
+quently employed for detecting an omalous spectra, indicated as red nodes in the isolation trees 
+shown on the right-hand side of the chart.  
+In the first stage of the presented fault di agnostics approach, the feature extraction 
+part is succeeded by an isolation forest model  (Figure 1) for detecting anomalous spectro-
+grams in an automated manner. The extracted fe atures serve as input to the isolation for-
+est algorithm [17] that is adapted to distinguish anomalous from normal spectrograms 
+with regard to the component health state based on historical accelerometer measure-
+ments. The isolation forest algorithm identifies potential anomalies by how quickly the 
+input spectrograms can be isolated from the rest of the spectrograms using a decision-
+tree-based approach. A health-state classifier  is trained using examples from only one 
+class, namely observations from healthy gearbox components only. This is a highly rele-
+vant scenario in practice because fault obse rvations of WT gearbox components are often 
+lacking: Wind farm operators usually have a large amount of CMS sensor observations 
+from different parts of the drive train from multiple months or years of operation. Typi-
+cally, the vast majority of these measuremen ts from the CMS system are taken under nor-
+mal operating conditions from healthy components. Fault conditions and damages occur 
+relatively rarely in commercial turbines that are operated and maintained in accordance with the manufacturer’s recommendations. Therefor e, there is a relative lack of such fault 
+observations, which strongly restricts the training and application of machine learning 
+models for fault type classification because those models require a significant amount of training data. Therefore, machine learning models trained only on observations from 
+healthy gearbox components tend to be more widely applicable in practical applications 
+and are highly relevant when comprehe nsive fault observations are lacking.  
+To train the health-state classifier using on ly observations from healthy gearbox com-
+ponents, we compared two anomaly detection approaches: the isolation forest algorithm 
+introduced above and one-class support vector  machines [18]. The isolation forest ap-
+proach is known for its fast computational training time [17]. In the case study presented 
+below, it outperformed the one-class SVM by more than a factor of 30 in terms of required 
+training time but provided no advantages in terms of prediction performance. Therefore, 
+our discussion of the case study below focu ses on the developed isolation forest model 
+with its more attractive training times and accordingly larger practical relevance.  
+Figure 1. Stage one of the proposed method. Anomaly detection based on features extracted by
+convolutional and pooling layers from spectrograms of the monitored components in their healthy
+state. An isolation forest model is trained on the extracted features. The trained model is subsequently
+employed for detecting anomalous spectra, indicated as red nodes in the isolation trees shown on the
+right-hand side of the chart.
+The second stage of the presented approach employs a multi-label classiﬁcation
+method to diagnose speciﬁc gearbox fault types based on past fault observations ( Figure 2 ).
+This stage mainly beneﬁts operators who have access to measurements from observed gear-
+box faults that enable the training of a corresponding fault type classiﬁcation model. There-
+fore, the proposed stage two is performed only if sufﬁcient fault observations are available
+to the operator’s remote monitoring staff in charge of implementing the proposed approach.
+Fault diagnoses are made based on features extracted from vibration spectrograms. To
+this end, vibration measurements are taken continuously from numerous accelerometer-
+monitored gearbox components and are accessed through the turbine’s condition monitor-
+ing system (CMS). The accelerometer measurement time series are subjected to short-time
+Fourier transforms (STFT) to monitor the temporal evolution of the vibration spectra in
+the time-frequency domain. The resulting spectrograms from all accelerometer-monitored
+gearbox components serve as inputs to feature extraction neural networks composed of
+convolutional and pooling layers, as described below. Unlike the state-of-the-art fault
+diagnostics methods, the proposed approach does not require gearbox-type-speciﬁc infor-
+mation. Therefore, it can be introduced to even larger WT portfolios without the upfront
+efforts and investments required for existing methods.
+------------------------------End of the page -----------------------------------
+Energies 2022 ,15, 1514 4 of 13
+Energies 2022 , 15, x FOR PEER REVIEW 5 of 13 
+ 
+ In stage two of the proposed fault diagnostic s method, our goal is to train a health-
+state classifier to diagnose specific fault cond itions in gearbox components using both ac-
+celerometer measurements from both healthy and damaged components. The features ex-
+tracted by the convolutional and pooling layers serve as input to train multi-label fault type classifiers, as illustrated in Figure 2.  
+ 
+Figure 2. Stage two of the proposed appr oach. Again, the feature lear ning and extraction is per-
+formed autonomously by convolutional and poolin g layers. The proposed fault diagnostics model 
+for the health state classification in wind turbine gearboxes is a fully connected multi-label neural 
+network, as shown on the right-hand side of the chart.  
+Multi-label classification [19–22] is especially beneficial when accelerometer meas-
+urements taken during evolving and evolved past gearbox damage are available for the 
+gearbox types of interest. A multi-label classi fication model is estimated for monitoring 
+multiple gearbox components simultaneous ly based on high-frequency acceleration 
+measurements from accelerometers attached in close proximity to the monitored compo-
+nents. The multi-label classification enables a joint classification of multiple damage types, wherein each data instance is simultaneously assigned multiple labels. Each label indi-
+cates the membership status in one of multiple classes in a binary manner. More formally, 
+a multi-label classification algorithm estimates a map 𝑓: ℝ
+௞→ℝ௡ based on a training set 
+൛൫𝑥 ଵ,௜,...,𝑥 ௞,௜,𝑦ଵ,௜,...,𝑦 ௡,௜൯ ,𝑖 ൌ 1 ,...,𝑚 ൟ  of size 𝑚 wherein the coordinates of any 𝑦∈ℝ௡ 
+can take binary values only, 𝑦௝∈ሼ0,1ሽ ∀  𝑗 ൌ 1 ,...,𝑛 .  
+3. Case Study 
+The proposed fault diagnosis approach is  demonstrated and tested based on vibra-
+tion measurements from multiple gearbox components taken while the gearbox was op-
+erating on a test rig. The proposed approach  is demonstrated, and its performance is 
+tested using accelerometer measurements from  the gearboxes of two 750 kW wind tur-
+bines operated on a WT test rig at the Nati onal Renewable Energy Laboratory (NREL), 
+Golden, Colorado, USA. The data were collected by NREL for its Gearbox Condition Mon-
+itoring Round Robin study [23]. The accelero meter measurements were taken over a ten-
+minute period from two identical gearboxes of the 750 kW wind turbines with one of the 
+gearboxes in a healthy unimpaired state and the other gearbox suffering from multiple 
+damaged components after an oil loss even t which had caused moderate damage to the 
+gearbox gears and bearings. Each of the two gearboxes has a transmission ratio of 1:81.491 
+and comprises a low-speed planetary stage and tw o parallel stages. Figure 3 shows a sche-
+matic of the gearbox. We refer to [23,24] for a detailed description and visualization of the 
+test stand, gearbox, monitoring system and measurement setup.  
+To demonstrate the fault diagnostics appr oach and automated feature learning and 
+extraction, the following components were selected for this case study in an arbitrary 
+manner from the set of components monitor ed in the NREL study [23]: Accelerometer 1 
+was attached to the ring gear (component 1) at a bottom-facing location in both the healthy 
+Figure 2. Stage two of the proposed approach. Again, the feature learning and extraction is performed
+autonomously by convolutional and pooling layers. The proposed fault diagnostics model for the
+health state classiﬁcation in wind turbine gearboxes is a fully connected multi-label neural network,
+as shown on the right-hand side of the chart.
+The operators will be informed both in stages one and two in case a signiﬁcant
+deviation from healthy component spectrograms is diagnosed. Importantly, both stages of
+the proposed fault diagnostics approach rely on automated feature learning and extraction
+that is performed by an algorithm rather than a human analyst. This is achieved by the
+application of convolutional neural networks (CNNs) [ 14,15], as shown in Figures 1 and 2.
+We refer to [ 16] for a technical introduction to CNNs. CNNs were selected for the proposed
+health state classiﬁcation approach because, unlike other models, they are capable of
+learning and extracting features from image data without human assistance.
+CNNs are computational models that are capable of extracting the relevant features
+without any human assistance. They accomplish this by learning optimal convolutional
+ﬁlters based on historical training data, in this case vibration measurements and fault
+observations. Due to this property, CNNs have enabled major performance improvements
+in ﬁelds such as speech recognition and object detection in recent years [ 14,15]. CNNs
+are artiﬁcial neural networks that consist of convolutional and pooling layers trained to
+perform feature learning and extraction based on past observations. These layers are
+subsequently linked to fully connected layers to perform desired classiﬁcation or regression
+tasks based on the previously extracted features. During model training, the CNN weights
+optimization algorithm effectuates automated feature learning and extraction to construct
+a low dimensional representation of the input spectra, which is subsequently fed to the
+anomaly detection model (stage one, Figure 1) or the fault type classiﬁcation network (stage
+two, Figure 2).
+In the ﬁrst stage of the presented fault diagnostics approach, the feature extraction
+part is succeeded by an isolation forest model (Figure 1) for detecting anomalous spec-
+trograms in an automated manner. The extracted features serve as input to the isolation
+forest algorithm [ 17] that is adapted to distinguish anomalous from normal spectrograms
+with regard to the component health state based on historical accelerometer measurements.
+The isolation forest algorithm identiﬁes potential anomalies by how quickly the input
+spectrograms can be isolated from the rest of the spectrograms using a decision-tree-based
+approach. A health-state classiﬁer is trained using examples from only one class, namely
+observations from healthy gearbox components only. This is a highly relevant scenario in
+practice because fault observations of WT gearbox components are often lacking: Wind
+farm operators usually have a large amount of CMS sensor observations from different
+parts of the drive train from multiple months or years of operation. Typically, the vast
+majority of these measurements from the CMS system are taken under normal operating
+conditions from healthy components. Fault conditions and damages occur relatively rarely
+in commercial turbines that are operated and maintained in accordance with the manu-
+facturer’s recommendations. Therefore, there is a relative lack of such fault observations,
+which strongly restricts the training and application of machine learning models for fault
+------------------------------End of the page -----------------------------------
+Energies 2022 ,15, 1514 5 of 13
+type classiﬁcation because those models require a signiﬁcant amount of training data.
+Therefore, machine learning models trained only on observations from healthy gearbox
+components tend to be more widely applicable in practical applications and are highly
+relevant when comprehensive fault observations are lacking.
+To train the health-state classiﬁer using only observations from healthy gearbox com-
+ponents, we compared two anomaly detection approaches: the isolation forest algorithm
+introduced above and one-class support vector machines [ 18]. The isolation forest approach
+is known for its fast computational training time [ 17]. In the case study presented below, it
+outperformed the one-class SVM by more than a factor of 30 in terms of required training
+time but provided no advantages in terms of prediction performance. Therefore, our dis-
+cussion of the case study below focuses on the developed isolation forest model with its
+more attractive training times and accordingly larger practical relevance.
+In stage two of the proposed fault diagnostics method, our goal is to train a health-
+state classiﬁer to diagnose speciﬁc fault conditions in gearbox components using both
+accelerometer measurements from both healthy and damaged components. The features
+extracted by the convolutional and pooling layers serve as input to train multi-label fault
+type classiﬁers, as illustrated in Figure 2.
+Multi-label classiﬁcation [ 19–22] is especially beneﬁcial when accelerometer mea-
+surements taken during evolving and evolved past gearbox damage are available for the
+gearbox types of interest. A multi-label classiﬁcation model is estimated for monitor-
+ing multiple gearbox components simultaneously based on high-frequency acceleration
+measurements from accelerometers attached in close proximity to the monitored compo-
+nents. The multi-label classiﬁcation enables a joint classiﬁcation of multiple damage types,
+wherein each data instance is simultaneously assigned multiple labels. Each label indi-
+cates the membership status in one of multiple classes in a binary manner. More formally,
+a multi-label classiﬁcation algorithm estimates a map f:Rk!Rnbased on a training
+set(x1,i, . . . , xk,i,y1,i, . . . , yn,i),i=1, . . . , m	
+of size mwherein the coordinates of any
+y2Rncan take binary values only, yj2f0, 1g8j=1, . . . , n.
+3. Case Study
+The proposed fault diagnosis approach is demonstrated and tested based on vibration
+measurements from multiple gearbox components taken while the gearbox was operating
+on a test rig. The proposed approach is demonstrated, and its performance is tested using
+accelerometer measurements from the gearboxes of two 750 kW wind turbines operated on
+a WT test rig at the National Renewable Energy Laboratory (NREL), Golden, CO, USA. The
+data were collected by NREL for its Gearbox Condition Monitoring Round Robin study [ 23].
+The accelerometer measurements were taken over a ten-minute period from two identical
+gearboxes of the 750 kW wind turbines with one of the gearboxes in a healthy unimpaired
+state and the other gearbox suffering from multiple damaged components after an oil loss
+event which had caused moderate damage to the gearbox gears and bearings. Each of the
+two gearboxes has a transmission ratio of 1:81.491 and comprises a low-speed planetary
+stage and two parallel stages. Figure 3 shows a schematic of the gearbox. We refer to [ 23,24]
+for a detailed description and visualization of the test stand, gearbox, monitoring system
+and measurement setup.
+To demonstrate the fault diagnostics approach and automated feature learning and
+extraction, the following components were selected for this case study in an arbitrary
+manner from the set of components monitored in the NREL study [ 23]: Accelerometer 1
+was attached to the ring gear (component 1) at a bottom-facing location in both the healthy
+and damaged gearbox to measure radial accelerations. Accelerometer 2 was attached to
+the low-speed shaft bearing (component 2) to also measure radial accelerations, whereas
+accelerometer 3 monitored the radial accelerations of the high-speed shaft downwind
+bearing (component 3). All three components—the ring gear, low-speed shaft bearing and
+high-speed shaft bearing—exhibited different degrees of damage in the damaged gearbox
+such as scufﬁng. In total, readings from six sensors were considered. The accelerometer
+------------------------------End of the page -----------------------------------
+Energies 2022 ,15, 1514 6 of 13
+measurements at the undamaged gearbox and damaged gearbox were each taken at a
+40 kHz sampling frequency under a constant load, 22.09 rpm low-speed shaft and 1800 rpm
+high-speed shaft speed for a duration of 10 min.
+Energies 2022 , 15, x FOR PEER REVIEW 6 of 13 
+ 
+ and damaged gearbox to measure radial acce lerations. Accelerometer 2 was attached to 
+the low-speed shaft bearing (component 2) to also measure radial accelerations, whereas 
+accelerometer 3 monitored the radial accele rations of the high-speed shaft downwind 
+bearing (component 3). All three components—the ring gear, low-speed shaft bearing and high-speed shaft bearing—exhibited different degrees of damage in the damaged gearbox 
+such as scuffing. In total, readings from six sensors were considered. The accelerometer 
+measurements at the undamaged gearbox and damaged gearbox were each taken at a 40 
+kHz sampling frequency under a constant load, 22.09 rpm low-speed shaft and 1800 rpm 
+high-speed shaft speed for a duration of 10 min.  
+ 
+Figure 3. Schematic of the gearbox (based on [23]) . 
+4. Discussion 
+To create the spectrograms that will be input to the CNN for feature extraction, the 
+accelerometer measurements were split into four segments per second and a separate 
+short-time Fourier transform (STFT) was co mputed for each segment. A short-time Fou-
+rier transform enables the frequency analysis of a signal as it changes over time [25,26]. The length of four segments per second was selected by investigating the tradeoff between 
+time and frequency resolution so as to mainta in a high-frequency resolution and sufficient 
+temporal resolution, as shown in Figure 4. The frequency resolution should be sufficient 
+for resolving typical spectral differences ar ising between healthy and damaged states of 
+the monitored components. The STFTs were co mputed with an overlap of 0.2 s for adja-
+cent segments. However, the length of the overlap had no significant effect on the perfor-
+mance of the subsequent anomaly detection an d classification models. Given the 40 kHz 
+sampling rate, vibration frequencies up to the Nyquist frequency of 20 kHz can be re-
+solved. For the present fault diagnostics case study, we focused the analysis on vibration 
+frequencies up to 1 kHz.  
+Prior to the model training, we sampled segments from the resulting spectrograms 
+with replacement in order to augment the trai ning dataset. We sampled segments of one 
+second in length to ensure that short vibration measurement periods (of only one second) 
+were sufficient as input to the fault diagnostics model when it was used for inference in a 
+condition monitoring software or CMS system. One-second intervals were found to be sufficiently representative of this amplitude variability when examining the STFT ampli-
+tude variability over time for all frequencies up to 20 kHz, as shown in Figure 5. To test 
+the sensitivity of the presented fault diagnostics approach with regard to the temporal length of the sampled spectrogram segments, we performed our analysis for spectrograms 
+Figure 3. Schematic of the gearbox (based on [23]).
+4. Discussion
+To create the spectrograms that will be input to the CNN for feature extraction, the
+accelerometer measurements were split into four segments per second and a separate
+short-time Fourier transform (STFT) was computed for each segment. A short-time Fourier
+transform enables the frequency analysis of a signal as it changes over time [ 25,26]. The
+length of four segments per second was selected by investigating the tradeoff between
+time and frequency resolution so as to maintain a high-frequency resolution and sufﬁcient
+temporal resolution, as shown in Figure 4. The frequency resolution should be sufficient
+for resolving typical spectral differences arising between healthy and damaged states of the
+monitored components. The STFTs were computed with an overlap of 0.2 s for adjacent
+segments. However, the length of the overlap had no significant effect on the performance of
+the subsequent anomaly detection and classification models. Given the 40 kHz sampling rate,
+vibration frequencies up to the Nyquist frequency of 20 kHz can be resolved. For the present
+fault diagnostics case study , we focused the analysis on vibration frequencies up to 1 kHz.
+Prior to the model training, we sampled segments from the resulting spectrograms
+with replacement in order to augment the training dataset. We sampled segments of one
+second in length to ensure that short vibration measurement periods (of only one second)
+were sufﬁcient as input to the fault diagnostics model when it was used for inference
+in a condition monitoring software or CMS system. One-second intervals were found
+to be sufﬁciently representative of this amplitude variability when examining the STFT
+amplitude variability over time for all frequencies up to 20 kHz, as shown in Figure 5. To
+test the sensitivity of the presented fault diagnostics approach with regard to the temporal
+length of the sampled spectrogram segments, we performed our analysis for spectrograms
+with time lengths of up to 6 s, ﬁnding that this choice did not signiﬁcantly affect the results.
+After sampling the one-second segments from the vibration spectra of healthy and faulty
+components, the resulting dataset was randomly shufﬂed and partitioned into training,
+validation and test sets. The training set in this case study contained 80,000 instances. The
+classiﬁcation method was validated using a validation set of vibration measurements from
+healthy and damaged components based on 10,000 instances. The test set also contained
+10,000 instances.
+------------------------------End of the page -----------------------------------
+Energies 2022 ,15, 1514 7 of 13
+Energies 2022 , 15, x FOR PEER REVIEW 7 of 13 
+ 
+ with time lengths of up to 6 s, finding that this choice did not significantly affect the re-
+sults. After sampling the one-second segments from the vibration spectra of healthy and 
+faulty components, the resulting dataset was randomly shuffled and partitioned into 
+training, validation and test sets. The training set in this case study contained 80,000 in-
+stances. The classification method was validated using a validation set of vibration meas-
+urements from healthy and damaged components  based on 10,000 instances. The test set 
+also contained 10,000 instances.  
+ 
+Figure 4. Tradeoff between frequency and temporal reso lution depending on the number of short-
+time Fourier transforms performed per minute (# SFFT) for creating the spectrograms. The longer 
+the input time series to the Fourier transform,  the higher the frequency resolution achieved.  
+ 
+Figure 5. One-second intervals were found to be sufficiently representative of the STFT amplitude 
+variability when examining this vari ability over a range of intervals,  including 1, 5, 10 and 60 s, as 
+shown in the subpanels, for all frequencies up to  20 kHz. For illustration, the amplitude variability 
+is only shown for frequencies in the range of 100 to 200 Hz.  
+Figure 6 shows subsets of the spectrograms derived from the vibration measure-
+ments of the three accelerometers at the healthy and the damaged gearbox components. 
+Two healthy and two damaged instances are shown for each of the three components for 
+Figure 4. Tradeoff between frequency and temporal resolution depending on the number of short-
+time Fourier transforms performed per minute (#SFFT) for creating the spectrograms. The longer the
+input time series to the Fourier transform, the higher the frequency resolution achieved.
+Energies 2022 , 15, x FOR PEER REVIEW 7 of 13 
+ 
+ with time lengths of up to 6 s, finding that this choice did not significantly affect the re-
+sults. After sampling the one-second segments from the vibration spectra of healthy and 
+faulty components, the resulting dataset was randomly shuffled and partitioned into 
+training, validation and test sets. The training set in this case study contained 80,000 in-
+stances. The classification method was validated using a validation set of vibration meas-
+urements from healthy and damaged components  based on 10,000 instances. The test set 
+also contained 10,000 instances.  
+ 
+Figure 4. Tradeoff between frequency and temporal reso lution depending on the number of short-
+time Fourier transforms performed per minute (# SFFT) for creating the spectrograms. The longer 
+the input time series to the Fourier transform,  the higher the frequency resolution achieved.  
+ 
+Figure 5. One-second intervals were found to be sufficiently representative of the STFT amplitude 
+variability when examining this vari ability over a range of intervals,  including 1, 5, 10 and 60 s, as 
+shown in the subpanels, for all frequencies up to  20 kHz. For illustration, the amplitude variability 
+is only shown for frequencies in the range of 100 to 200 Hz.  
+Figure 6 shows subsets of the spectrograms derived from the vibration measure-
+ments of the three accelerometers at the healthy and the damaged gearbox components. 
+Two healthy and two damaged instances are shown for each of the three components for 
+Figure 5. One-second intervals were found to be sufﬁciently representative of the STFT amplitude
+variability when examining this variability over a range of intervals, including 1, 5, 10 and 60 s, as
+shown in the subpanels, for all frequencies up to 20 kHz. For illustration, the amplitude variability is
+only shown for frequencies in the range of 100 to 200 Hz.
+Figure 6 shows subsets of the spectrograms derived from the vibration measurements
+of the three accelerometers at the healthy and the damaged gearbox components. Two
+healthy and two damaged instances are shown for each of the three components for illustra-
+tion. As can be seen in the ﬁgure, the spectral differences between vibration measurements
+from the healthy and the damaged components were sufﬁciently resolved by Fourier
+transforms, enabling discriminative feature learning.
+------------------------------End of the page -----------------------------------
+Energies 2022 ,15, 1514 8 of 13
+Energies 2022 , 15, x FOR PEER REVIEW 8 of 13 
+ 
+ illustration. As can be seen in the figure, th e spectral differences between vibration meas-
+urements from the healthy and the damaged components were sufficiently resolved by 
+Fourier transforms, enabling discriminative feature learning. 
+ 
+Figure 6. Subsets of the spectrograms derived from th e vibration measurements of the three accel-
+erometers at the healthy and the damaged gear box components. Two healthy and two damaged 
+instances are shown for each of the three componen ts. For instance, “Healthy 1” labels two different 
+1 s spectrogram segments of component 1 in health y state. Each spectrogram segment runs over 1 s 
+and displays logarithmic STFT amplit udes for frequencies up to 400 Hz.  
+Stage 1: Isolation forests for detecting anomalous vibration spectra . The spectro-
+grams prepared as outlined above served as input to the convolutional and pooling layers 
+of a CNN that learned and extracted discrimina tive features in an automated manner. For 
+feature learning and extraction, we defined a network architecture consisting of one con-
+volutional layer with 16 convolutional filters of 3-by-3 pixels, followed by a max pooling 
+layer with a window size of 2-by-2 pixels and batch normalization [27]. This architecture is of low complexity and enabled a high classification accuracy in the multi-label classifi-
+cation of stage two of the presented fault diagnostics approach.  
+The extracted features were input to an isolation forest algorithm for one-class clas-
+sification [17], which identified spectral anomalies based on how hard it is to isolate a 
+particular spectrum from the rest of the spectra in the training set. A forest containing 100 isolation trees was trained on the extract ed features. The model parameters are summa-
+rized in Table 1. The training dataset contai ned features from the spectrograms of only 
+healthy components. We specified the fraction  of anomalous data instances estimated to 
+be present in the training data to less than one over the training set size. The anomaly 
+score computed by the model for each training, validation and test set instance corre-
+sponded to the number of splits averaged acro ss the isolation tree forest that were needed 
+to isolate a data point (Figure 1). Thus, the anomaly score is the average path length from 
+the root to leaf node in an isolation tree. As shown in Figure 7, the spectra from the healthy 
+and damaged components are clearly sepa rable using the computed anomaly scores; 
+therefore, the isolation forest model is well-suited for identifying components with anom-
+alous health states, even for high dimensional feature spaces, as in th e present case study.  
+The differentiation of health states is pe rformed in an unsupervised manner to make 
+it applicable to WT operators whose remote  condition monitoring team does not have 
+sufficient amounts of fault observations. Since we are actually in possession of such ob-
+servations in this case study, we employed a test dataset that had not been used in model 
+training (Figure 7) and estimated performance metrics based on the test dataset. We found 
+Figure 6. Subsets of the spectrograms derived from the vibration measurements of the three ac-
+celerometers at the healthy and the damaged gearbox components. Two healthy and two damaged
+instances are shown for each of the three components. For instance, “Healthy 1” labels two different
+1 s spectrogram segments of component 1 in healthy state. Each spectrogram segment runs over 1 s
+and displays logarithmic STFT amplitudes for frequencies up to 400 Hz.
+Stage 1: Isolation forests for detecting anomalous vibration spectra . The spectro-
+grams prepared as outlined above served as input to the convolutional and pooling layers
+of a CNN that learned and extracted discriminative features in an automated manner.
+For feature learning and extraction, we deﬁned a network architecture consisting of one
+convolutional layer with 16 convolutional ﬁlters of 3-by-3 pixels, followed by a max pooling
+layer with a window size of 2-by-2 pixels and batch normalization [ 27]. This architecture is
+of low complexity and enabled a high classiﬁcation accuracy in the multi-label classiﬁcation
+of stage two of the presented fault diagnostics approach.
+The extracted features were input to an isolation forest algorithm for one-class clas-
+siﬁcation [ 17], which identiﬁed spectral anomalies based on how hard it is to isolate a
+particular spectrum from the rest of the spectra in the training set. A forest containing
+100 isolation trees was trained on the extracted features. The model parameters are sum-
+marized in Table 1. The training dataset contained features from the spectrograms of only
+healthy components. We speciﬁed the fraction of anomalous data instances estimated to be
+present in the training data to less than one over the training set size. The anomaly score
+computed by the model for each training, validation and test set instance corresponded to
+the number of splits averaged across the isolation tree forest that were needed to isolate
+a data point (Figure 1). Thus, the anomaly score is the average path length from the root
+to leaf node in an isolation tree. As shown in Figure 7, the spectra from the healthy and
+damaged components are clearly separable using the computed anomaly scores; therefore,
+the isolation forest model is well-suited for identifying components with anomalous health
+states, even for high dimensional feature spaces, as in the present case study.
+Table 1. Parameters of the trained isolation forest model (stage one) and of the convolutional neural
+network (stage two).
+Model Model Parameter
+Isolation forest Number of isolation trees equals 100; Threshold for outliers fraction equals 0.0001
+Convolutional neural networkOne convolutional layer with four 3-by-3 ﬁlters followed by a 2-by-2 max pooling layer and
+batch normalization, and then a dense layer of four fully connected nodes and a 3-node
+output layer; 10% drop out rate.
+------------------------------End of the page -----------------------------------
+Energies 2022 ,15, 1514 9 of 13
+Energies 2022 , 15, x FOR PEER REVIEW 9 of 13 
+ 
+ both recall and precision to be 100% on the test dataset for the proposed isolation forest 
+approach and model architecture. Recall is a performance metric that designates the frac-
+tion of true positives over all actual positives, in this case the fraction of all correctly iden-
+tified instances of a given fault type over all actual occurrences of that fault type. Precision is an alternative performance metric that denot es the fraction of true positives over all 
+instances that were identified as positive. In other words, the precision states what frac-
+tion of the identified observations of a given fault type were correctly identified as obser-
+vations of that fault type.  
+Table 1. Parameters of the trained isolation forest mode l (stage one) and of the convolutional neural 
+network (stage two).  
+Model Model Parameter 
+Isolation forest Number of isolation trees equals 100; Threshold for outliers frac-
+tion equals 0.0001 
+Convolutional neural 
+network One convolutional layer with four 3-by-3 filters followed by a 2-
+by-2 max pooling layer and batch normalization, and then a 
+dense layer of four fully conne cted nodes and a 3-node output 
+layer; 10% dr op out rate. 
+We repeated the analysis with the same feature learning and extraction architecture 
+employed in stage two below, which naturally resulted in the same extracted feature set 
+as used in the multi-label classification step. Specifically, this architecture comprised one 
+convolutional layer with only four convolutional 3-by-3 filters, followed by a 2-by-2 max 
+pooling layer and batch normalization. As befo re, the extracted featur es were then input 
+into the isolation forest algorithm for detecting anomalous spectra. The change in feature 
+extraction architecture had no significant effe ct on the spectra’s anomaly scores (Figure 7) 
+and also resulted in 100% recall and precision.  
+In addition, one-class support vector machin es (SVMs) [18] were investigated as a 
+further approach for the vibration-based anom aly detection in this study. However, the 
+SVM algorithm required more than 30 times more model training time than the isolation 
+forest on the same training set and processor—an AMD EPYC 7B12 2.25 GHz processing 
+unit—though no improvement in det ection performance was observed.  
+ 
+Figure 7. Anomaly detection based on anomaly scores computed with the isolation forest algorithm. 
+The training set contains only spectra from heal thy component states, corresponding to the absence 
+of anomalies as indicated by a positive anomaly score ( left panel ). We tested the model using addi-
+tional spectra from healthy component states ( middle panel ) and from damaged component states 
+(right panel ). In the latter case, the anom aly scores were negative, indicating anomalies as expected. 
+Healthy and damaged components are clearly separable with this approach.  
+Stage 2: Multi-label classificati on for fault-type diagnostics . As in stage one, the 
+spectrograms were subjected to convolutional and pooling layers to enable feature learn-
+ing and extraction based on the training datase t. Subsequently, a fault-type classification 
+was performed with the extracted features using fully connected neural network layers. 
+Figure 7. Anomaly detection based on anomaly scores computed with the isolation forest algorithm.
+The training set contains only spectra from healthy component states, corresponding to the absence
+of anomalies as indicated by a positive anomaly score ( left panel ). We tested the model using
+additional spectra from healthy component states ( middle panel ) and from damaged component
+states ( right panel ). In the latter case, the anomaly scores were negative, indicating anomalies as
+expected. Healthy and damaged components are clearly separable with this approach.
+The differentiation of health states is performed in an unsupervised manner to make
+it applicable to WT operators whose remote condition monitoring team does not have
+sufﬁcient amounts of fault observations. Since we are actually in possession of such
+observations in this case study, we employed a test dataset that had not been used in
+model training (Figure 7) and estimated performance metrics based on the test dataset. We
+found both recall and precision to be 100% on the test dataset for the proposed isolation
+forest approach and model architecture. Recall is a performance metric that designates the
+fraction of true positives over all actual positives, in this case the fraction of all correctly
+identiﬁed instances of a given fault type over all actual occurrences of that fault type.
+Precision is an alternative performance metric that denotes the fraction of true positives
+over all instances that were identiﬁed as positive. In other words, the precision states what
+fraction of the identiﬁed observations of a given fault type were correctly identiﬁed as
+observations of that fault type.
+We repeated the analysis with the same feature learning and extraction architecture
+employed in stage two below, which naturally resulted in the same extracted feature set
+as used in the multi-label classiﬁcation step. Speciﬁcally, this architecture comprised one
+convolutional layer with only four convolutional 3-by-3 ﬁlters, followed by a 2-by-2 max
+pooling layer and batch normalization. As before, the extracted features were then input
+into the isolation forest algorithm for detecting anomalous spectra. The change in feature
+extraction architecture had no signiﬁcant effect on the spectra’s anomaly scores (Figure 7)
+and also resulted in 100% recall and precision.
+In addition, one-class support vector machines (SVMs) [ 18] were investigated as a
+further approach for the vibration-based anomaly detection in this study. However, the
+SVM algorithm required more than 30 times more model training time than the isolation
+forest on the same training set and processor—an AMD EPYC 7B12 2.25 GHz processing
+unit—though no improvement in detection performance was observed.
+Stage 2: Multi-label classiﬁcation for fault-type diagnostics . As in stage one, the
+spectrograms were subjected to convolutional and pooling layers to enable feature learning
+and extraction based on the training dataset. Subsequently, a fault-type classiﬁcation was
+performed with the extracted features using fully connected neural network layers. Jointly,
+the convolutional, pooling and fully connected layers established the convolutional neural
+network for the multi-label fault type classiﬁcation. Once trained, the CNN predicts the
+probabilities of all three fault types considered in this case study being diagnosed, based
+on a given spectrogram.
+To arrive at the ﬁnal CNN structure (Table 1), we started from a more complex CNN ar-
+chitecture and successively reduced the number of convolutional and pooling layers, ﬁlters
+and fully connected layers while maintaining maximal validation set accuracy. We selected
+------------------------------End of the page -----------------------------------
+Energies 2022 ,15, 1514 10 of 13
+the least complex CNN architecture that could achieve the highest possible classiﬁcation
+accuracy on the validation set. In this case study, the resulting CNN architecture comprises
+one convolutional layer with four 3-by-3 ﬁlters, followed by a 2-by-2 max pooling layer
+and batch normalization. This ﬁrst part ensures the learning and extraction of features,
+based on which the subsequent classiﬁcation can be performed. Two fully connected
+layers were added to the network and a 10% dropout rate applied to avoid overﬁtting the
+training data [ 28]. The ﬁrst fully connected layer comprised four nodes and the output
+layer consisted of three nodes with a sigmoid activation function for the output layer. The
+model predicts three binary labels, one of which is for each of the monitored gearbox
+components, and indicates whether or not a fault was detected in the respective component.
+The output layer with the three neurons and the sigmoid activation functions provides
+the probabilities for a given spectrum to belong to a particular fault-type class. The model
+parameters were determined iteratively with the Adaptive Moment Estimation (Adam)
+optimization algorithm [ 29] by optimizing a binary cross-entropy loss function. In doing so,
+multiple binary classiﬁcation decisions can be optimized at once. The model training was
+performed for 20 epochs with a batch size equal to 32. Different batch sizes did not affect
+the classiﬁcation accuracy. Logarithmic transformations of the input spectra also had no
+effect on the classiﬁcation accuracy. This architecture enabled a 100% classiﬁcation accuracy
+for all three component fault type classes on the validation and test sets. We arrived at
+this architecture through a grid search by starting from a more complex CNN with the
+number of nodes equal to powers of two, and then reducing the network complexity while
+maintaining a high accuracy of 100% on the validation set, as described above. The test
+set classiﬁcation accuracy of 100% was achieved both with and without the logarithmic
+transformation of the spectrogram segments inputs to the convolutional and pooling layers
+(Figure 6). The models trained as part of the hyperparameter optimization converged to a
+loss function minimum within 20 epochs without overﬁtting.
+With regard to the limitations and the future research needs arising from the present
+study, we point out that, ﬁrst, all acceleration measurements in the present study were taken
+under constant speed and load conditions on a test stand. The introduced fault detection
+approach should be ﬁeld tested under variable speed and load conditions in future work.
+In practice, the wind speed driving the turbine ﬂuctuates, which results in a variable
+load and shaft speed and may cause frequency smearing in the spectral representation [ 9].
+However, this condition can be overcome by synchronizing the measurements with the
+wind turbine’s rotational speed, for instance by sampling under identical wind and load
+conditions. Second, for applications in operating wind turbines, the performance of the
+fault type classiﬁcation model should also be investigated for a signiﬁcantly larger number
+of monitored components and fault types and for damage processes that are evolving over
+time. This investigation will require more comprehensive ﬁeld or laboratory measurement
+datasets. Third, attention also needs to be paid to the avoidance of possible data imbalance
+issues when training a fault diagnostics model. While this does not affect stage one
+of the proposed fault diagnosis approach, it may be relevant in the application of the
+methods introduced for stage two. Data imbalance refers to situations where there is a
+disproportionate number of observations in the output classes. For instance, there may
+be a large number of observations for one class, for instance fault type 1, but only few
+observations for another class. In the presented case study, all fault types were represented
+with similar numbers of observations. This may not always be the case in practice. Typically,
+more vibration measurements will be available from healthy components because fault
+situations are less common than WT gearboxes operating in normal health states. Vibration
+measurements from damaged components or components in which a damage starts to
+develop are typically in the underrepresented class. One method to address data imbalance
+is by over- or undersampling to arrive at an augmented and more balanced training
+dataset. This may be achieved, for example, by random resampling with replacement
+(statistical bootstrapping) from the available fault observations, so that all monitored WT
+components are equally represented, both in healthy and damage states, in the training,
+------------------------------End of the page -----------------------------------
+Energies 2022 ,15, 1514 11 of 13
+validation and test datasets. This approach relies on the assumption that the data used for
+the bootstrapping are sufﬁciently representative of the underlying data-generating process.
+A more comprehensive discussion of methods for addressing data imbalance is not in the
+scope of this work, and we refer to the work of other authors, e.g., [30].
+5. Conclusions
+An increasing number of wind turbines are equipped with vibration-measurement
+systems to enable a close monitoring and early detection of developing fault conditions in
+gearboxes. Gearboxes are among the most critical and costly components to replace in wind
+turbines. The current state-of-the-art gearbox fault diagnostics algorithms rely on upfront
+deﬁnitions of fault signatures by human analysts. The state-of-the-art diagnostics methods
+have in common that, for each of them, a human analyst has investigated and designed a
+particular feature (fault signature) to be extracted from the vibration measurements. Each
+feature has been deﬁned so as to capture a particular aspect that starts to build up in the
+time- or frequency-domain signals when an incipient fault starts to evolve and intensify
+in an originally healthy component. For instance, local surface damage on a gear tooth is
+typically diagnosed based on changes in the residual signal obtained after the gear mesh
+frequencies and harmonics have been removed. These feature-engineering approaches have
+multiple disadvantages, as discussed above. They require a time-intensive handcrafting of
+fault diagnostics features and detailed knowledge of the monitored component. Therefore,
+they lack scalability with the increasing number of monitored turbines, with different
+component types and conﬁgurations present, each of which has its own characteristic
+frequencies. Fault signatures deﬁned by human analysts can result in biased and imprecise
+decision boundaries in the fault diagnostics process.
+We presented a novel, accurate fault diagnostics framework for wind turbine gear-
+boxes that overcomes these disadvantages and can be easily incorporated into condition
+monitoring software or CMS systems for autonomous fault diagnostics decision support.
+This is based on high-frequency vibration measurements from multiple accelerometers and
+monitored components. The proposed two-stage framework combines the autonomous
+data-driven learning of fault signatures and health state classiﬁcation based on convo-
+lutional neural networks and isolation forests. In stage one of the presented approach,
+an isolation forest algorithm detects anomalous component health states based on the
+features that have been automatically learnt and extracted from the gearbox component
+spectrograms. This is particularly suitable for operators and monitoring centers that do
+not have access to sufﬁcient amounts of accelerometer measurements from gearbox fault
+events. On the other hand, the availability of such observations is required in stage two,
+which involves a multi-label classiﬁcation by fault types based on spectrogram features
+extracted from past fault observations.
+We have demonstrated and tested the proposed fault diagnostics framework by appli-
+cation to gearbox vibration measurements from two wind turbine drivetrains. The case
+study performed to this end used accelerometer measurements from a test rig measurement
+campaign for three different fault types and achieved high fault diagnostics accuracy.
+Unlike the state-of-the-art approaches [ 8–11], the presented method enables automated
+feature learning and extraction without a human analyst. As demonstrated, given suitable
+training data, accurate fault diagnosis is possible without any human feature engineering
+and without the need for storing thousands of spectral characteristics and threshold values
+to be predeﬁned by monitoring center staff for every turbine. Moreover, the presented fault
+diagnostics approach does not require detailed knowledge of the gearbox type, manufac-
+turer, composition, gear dimensions, teeth numbers, characteristic bearing frequencies, and
+so on. Therefore, it can be applied to arbitrary gearbox types, compositions and manu-
+facturers. In summary, the proposed framework is advantageous over the state-of-the-art
+approaches, such as the monitoring of spectral lines and other characteristic metrics, in that
+the fault diagnosis features are learnt by the algorithm, so that no gearbox-type-speciﬁc
+diagnostics expertise and no corresponding human-featured engineering are required.
+------------------------------End of the page -----------------------------------
+Energies 2022 ,15, 1514 12 of 13
+Moreover, it is not restricted to predeﬁned frequencies or spectral ranges but monitors the
+full vibration frequency spectrum of interest.
+Funding: The support of the present work through a grant from the Swiss innovation agency
+Innosuisse is gratefully acknowledged.
+Acknowledgments: The author thanks Shawn Sheng from the National Renewable Energy Labora-
+tory for sharing his gearbox accelerometer measurement data for this study. The author also thanks
+colleagues at WinJi AG for fruitful discussions.
+Conﬂicts of Interest: The author declares no conﬂict of interest. The funders had no role in the design
+of the study; in the collection, analyses, or interpretation of data; in the writing of the manuscript, or
+in the decision to publish the results.
+References
+1. International Energy Agency IEA, 2020, Renewables 2020: Analysis and Forecast to 2025. Available online: https://www.iea.org/
+reports/renewables-2020 (accessed on 10 December 2021).
+2. International Renewable Energy Agency (IRENA), 2020, Renewable Power Generation Costs in 2020. Available online: https:
+//www.irena.org/publications/2021/Jun/Renewable-Power-Costs-in-2020 (accessed on 6 December 2021).
+3. Carroll, J.; McDonald, A.; McMillan, D. Failure rate, repair time and unscheduled O&M cost analysis of offshore wind turbines.
+Wind Energy 2015 ,19, 1107–1119. [CrossRef]
+4. Ribrant, J.; Bertling, L. Survey of failures in wind power systems with focus on Swedish wind power plants during 1997–2005. In
+Proceedings of the 2007 IEEE Power Engineering Society General Meeting, Tampa, FL, USA, 24–28 June 2007. [CrossRef]
+5. Faulstich, S.; Hahn, B.; Tavner, P .J. Wind turbine downtime and its importance for offshore deployment. Wind Energy 2011 ,14,
+327–337. [CrossRef]
+6. Tavner, P .J.; Xiang, J.; Spinato, F. Reliability analysis for wind turbines. Wind Energy 2006 ,10, 1–18. [CrossRef]
+7. Crabtree, C.; Zappala, D.; Tavner, P . Survey of Commercially Available Condition Monitoring Systems for Wind Turbines; Technical
+Report, Durham University School of Engineering and Computing Sciences and the SUPERGEN Wind Energy Technologies
+Consortium: 2014. Available online: https://dro.dur.ac.uk/12497/ (accessed on 10 December 2021).
+8. Salameh, J.P .; Cauet, S.; Etien, E.; Sakout, A.; Rambault, L. Gearbox condition monitoring in wind turbines: A review. Mech. Syst.
+Signal Process. 2018 ,111, 251–264. [CrossRef]
+9. Barszcz, T. Vibration-Based Condition Monitoring of Wind Turbines , 1st ed.; Springer: Cham, Switzerland, 2019. [CrossRef]
+10. Randall, R.B. Vibration-based diagnostics of gearboxes under variable speed and load conditions. Meccanica 2016 ,51, 3227–3239.
+[CrossRef]
+11. Koukoura, S.; Carroll, J.; McDonald, A.; Weiss, S. Comparison of wind turbine gearbox vibration analysis algorithms based on
+feature extraction and classiﬁcation. IET Renew. Power Gener. 2019 ,13, 2549–2557. [CrossRef]
+12. Stetco, A.; Dinmohammadi, F.; Zhao, X.; Robu, V .; Flynn, D.; Barnes, M.; Keane, J.; Nenadic, G. Machine learning methods for
+wind turbine condition monitoring: A review. Renew. Energy 2018 ,133, 620–635. [CrossRef]
+13. Meyer, A. Early fault detection with multi-target neural networks. In Lecture Notes in Computer Science ; Gervasi, O., Murgante, B.,
+Misra, S., Garau, C., Blecic, I., Taniar, D., Apduhan, B., Rocha, A., Tarantino, E., Torre, C., Eds.; Springer: Cham, Switzerland, 2021;
+pp. 1–9. [CrossRef]
+14. LeCun, Y.; Bengio, Y.; Hinton, G. Deep learning. Nature 2015 ,521, 436–444. [CrossRef] [PubMed]
+15. LeCun, Y.; Bengio, Y. Convolutional Networks for Images, Speech, and Time-Series. In Handbook of Brain Theory and Neural
+Networks ; Arbib, M., Ed.; MIT Press: Cambridge, MA, USA, 1995.
+16. Goodfellow, I.; Bengio, Y.; Courville, A. Deep Learning ; MIT Press: Cambridge, MA, USA, 2016.
+17. Liu, F.T.; Ting, K.M.; Zhou, Z.-H. Isolation Forest. In Proceedings of the 2008 Eighth IEEE International Conference on Data
+Mining, Pisa, Italy, 15–19 December 2008; pp. 413–422. [CrossRef]
+18. Schölkopf, B.; Williamson, R.; Smola, A.; Shawe-Taylor, J. Support Vector Method for Novelty Detection. In Proceedings of
+the 1999 Advances in Neural Information Processing Systems (NIPS) Conference, Denver, CO, USA; 1999. Available online:
+https://papers.nips.cc/paper/1999/hash/8725fb777f25776ffa9076e44fcfd776-Abstract.html (accessed on 10 December 2021).
+19. Gibaja, E.; Ventura, S. Multi-label learning: A review of the state of the art and ongoing research. WIREs Data Min. Knowl. Discov.
+2014 ,4, 411–444. [CrossRef]
+20. Zhang, M.-L.; Zhou, Z.-H. A Review on Multi-Label Learning Algorithms. IEEE Trans. Knowl. Data Eng. 2013 ,26, 1819–1837.
+[CrossRef]
+21. Moyano, J.M.; Gibaja, E.; Cios, K.J.; Ventura, S. Review of ensembles of multi-label classiﬁers: Models, experimental study and
+prospects. Inf. Fusion 2018 ,44, 33–45. [CrossRef]
+22. Zheng, X.; Li, P .; Chu, Z.; Hu, X. A Survey on Multi-Label Data Stream Classiﬁcation. IEEE Access 2019 ,8, 1249–1275. [CrossRef]
+23. Sheng, S. Wind Turbine Gearbox Condition Monitoring Round Robin Study-Vibration Analysis. NREL Report No. TP-5000-54530;
+2012. Available online: https://www.nrel.gov/docs/fy12osti/54530.pdf (accessed on 26 November 2021).
+------------------------------End of the page -----------------------------------
+Energies 2022 ,15, 1514 13 of 13
+24. Musial, W.; McNiff, B. Wind Turbine Testing in the NREL Dynamometer Test Bed ; American Wind Energy Association conference
+WindPower: Palm Springs, CA, USA, 2000.
+25. Byrne, C. Signal Processing: A Mathematical Approach, Chapman and Hall ; A K Peters: Natick, MA, USA, 2014.
+26. Allen, J. Short term spectral analysis, synthesis, and modiﬁcation by discrete Fourier transform. IEEE Trans. Acoust. Speech Signal
+Process. 1977 ,25, 235–238. [CrossRef]
+27. Ioffe, S.; Szegedy, C. Batch Normalization: Accelerating Deep Network Training by Reducing Internal Covariate Shift. In
+Proceedings of the 32nd International Conference on Machine Learning, PMLR, Lille, France, 6–11 July 2015; Volume 37,
+pp. 448–456.
+28. Srivastava, N.; Hinton, G.; Krizhevsky, A.; Sutskever, I.; Salakhutdinov, R. Dropout: A simple way to prevent neural networks
+from overﬁtting. J. Mach. Learn. Res. 2014 ,15, 1929–1958.
+29. Kingma, D.; Ba, J. Adam: A method for stochastic optimization. In Proceedings of the 3rd International Conference on Learning
+Representations, San Diego, CA, USA, 7–9 May 2015.
+30. Tarekegn, A.; Giacobini, M.; Michalak, K. A Review of Methods for Imbalanced Multi-Label Classiﬁcation. Pattern Recognit. 2021 ,
+107, 2411–2502. [CrossRef]
+------------------------------End of the page -----------------------------------

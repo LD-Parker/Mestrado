@@ -1,0 +1,4252 @@
+Citation: Yan, J.; Liu, Y.; Ren, X.; Li, L.
+Wind Turbine Gearbox Condition
+Monitoring Using Hybrid Attentions
+and Spatio-Temporal BiConvLSTM
+Network. Energies 2023 ,16, 6786.
+https://doi.org/10.3390/
+en16196786
+Academic Editors: Davide Astolﬁ
+and Leonardo Chamorro
+Received: 8 August 2023
+Revised: 10 September 2023
+Accepted: 15 September 2023
+Published: 23 September 2023
+Copyright: © 2023 by the authors.
+Licensee MDPI, Basel, Switzerland.
+This article is an open access article
+distributed under the terms and
+conditions of the Creative Commons
+Attribution (CC BY) license (https://
+creativecommons.org/licenses/by/
+4.0/).
+energies
+Article
+Wind T urbine Gearbox Condition Monitoring Using Hybrid
+Attentions and Spatio-Temporal BiConvLSTM Network
+Junshuai Yan1,2, Yongqian Liu1,*, Xiaoying Ren1and Li Li1
+1School of New Energy, North China Electric Power University, Beijing 102206, China
+2Longyuan (Beijing) New Energy Engineering Technology Company Limited, Beijing 100034, China
+*Correspondence: yqliu@ncepu.edu.cn
+Abstract: Gearbox fault deterioration can signiﬁcantly impact the safety, reliability, and efﬁciency of
+wind turbines, resulting in substantial economic losses for wind farms. However, current condition
+monitoring methods face challenges in effectively mining the hidden spatio-temporal features within
+SCADA data and establishing reasonable weight allocations for model input variables. To tackle these
+issues, we proposed a novel condition monitoring method for wind turbine gearboxes called HBCE,
+which integrated a feature-time hybrid attention mechanism (HA), the bidirectional convolutional
+long short-term memory networks (BiConvLSTM), and an improved exponentially weighted moving-
+average (iEWMA). Speciﬁcally, utilizing historical health SCADA data acquired through the modiﬁed
+Thompson tau data-cleaning algorithm, a normal behavior model (HA-BiConvLSTM) of gearbox was
+constructed to effectively extract the spatio-temporal features and learn normal behavior patterns.
+An iEWMA-based outlier detection approach was employed to set dynamic adaptive thresholds,
+and real-time monitor the prediction residuals of HA-BiConvLSTM to identify the early faults of
+gearbox. The proposed HBCE method was validated through actual gearbox faults and compared
+with conventional spatio-temporal models (i.e., CNN-LSTM and CNN&LSTM). The results illustrated
+that the constructed HA-BiConvLSTM model achieved superior prediction precision in terms of
+RMSE, MAE, MAPE, and R2, and the proposed method HBCE can effectively and reliably identify
+early anomalies of a wind turbine gearbox in advance.
+Keywords: wind turbine gearbox; condition monitoring; attention mechanism; convolutional long
+short-term memory network; adaptive threshold
+1. Introduction
+Predictive maintenance aims to realize the detection of abnormal conditions for wind
+turbine key components such as blade, main bearings, gearbox, and generator, by real-
+time condition monitoring and statistical analysis. Then, timely maintenance measures
+can be taken to eliminate hidden dangers at the early stage of faults, preventing further
+expansion of faults and even catastrophic accidents [ 1]. As one of the key technologies
+of predictive maintenance, wind turbine condition monitoring (WTCM) has become an
+important research hotspot in the past decade [ 2]. By online monitoring, the operation
+conditions of wind turbine key components to issue early fault alarms is an effective
+way to improve the safety and reliability of wind turbines, and reduce the operation and
+maintenance (O&M) costs of wind farm [3].
+Condition monitoring methods for wind turbines can be broadly categorized into three
+groups: empirical knowledge-based methods [ 4,5], physical model-based methods [ 6–8],
+and data driven-based methods [ 9–11]. Empirical knowledge-based methods have disad-
+vantages of excessive dependence on the knowledge and experience of domain experts,
+making it difﬁcult to mine complex and highly reliable equipment failure mechanism
+features, and have signiﬁcant limitations with the application in the WTCM ﬁeld. With the
+increasing size and unit capacity of wind turbines, high complexity and strong coupling
+Energies 2023 ,16, 6786. https://doi.org/10.3390/en16196786 https://www.mdpi.com/journal/energies
+------------------------------End of the page -----------------------------------
+Energies 2023 ,16, 6786 2 of 22
+between different subsystems make it difﬁcult to establish accurate mathematical models
+for key components by physical model-based methods, which often results in unsatisﬁed
+monitoring performance. Different from empirical knowledge-based methods and physical
+model-based methods, data driven-based methods do not require massive priori knowl-
+edge or to establish an accurate mathematical model. They can learn the operating rules of
+wind turbines under health conditions by only mining spatio-temporal features inherent in
+massive high-dimensional SCADA operating data, and construct normal behavior models
+to carry out online condition monitoring for wind turbine key components, which make
+them research hotspots and they have achieved a widespread application in the WTCM
+ﬁeld recently.
+With the rapid development of sensor technologies based on vibration signals [ 12–14],
+oil signals [ 15], acoustic signals [ 16,17], and infrared thermal image [ 18,19], etc., numerous
+data driven WTCM methods were proposed for wind turbine key components and achieved
+good anomaly detection results. However, the above-mentioned methods often require
+installations of additional hardware such as acquisition, transmission, and storage, which
+is costly and difﬁcult to fully popularize.
+In order to ensure the daily management of wind farms and the effective operation
+and maintenance of wind turbines, most wind farms have implemented the supervisory
+control and data acquisition (SCADA) system. The SCADA system records abundant
+operation condition parameters of wind turbines (e.g., main bearing temperature, gearbox
+oil temperature, generator speed, and active power), and external environmental conditions
+information (e.g., wind speed, wind direction, temperature, humidity, and pressure). Due
+to its advantages of massive high-dimensional, easy-access, and low-cost characteristics,
+SCADA data have been widely used for condition monitoring and fault diagnosis of
+wind turbines.
+Traditional SCADA-based data driven methods, which utilize conventional machine
+learning algorithms such as back-propagation neural network (BPNN) [ 11], support vector
+machine (SVM) [ 20], transfer learning (TL) [ 21], isolation forest (IF) [ 22], Gaussian process
+(GP) [ 10], and XGBoost [ 23], have been employed to monitor operating conditions of wind
+turbine key components. However, faced with massive high-dimensional, multi-source
+heterogeneous SCADA data, it is often difﬁcult to mine the effective feature representa-
+tions hidden in SCADA data with the above-mentioned shallow machine models, which
+frequently results in unsatisﬁed model performance.
+Deep learning, due to its advantages of superior nonlinear ﬁtting and data representa-
+tion capabilities, has achieved a widespread application in the WTCM ﬁeld. There are deep
+learning algorithms, which possess powerful spatial features mining capabilities such as
+convolutional neural network (CNN) [ 24,25], restricted Boltzmann machine (RBM) [ 26],
+deep belief network (DBN) [ 27,28], denoising autoencoder (DAE) [ 29], and stacked denois-
+ing autoencoder (SDAE) [ 30], as well as temporal algorithms, which are good at processing
+time series, such as long short-term memory network (LSTM) [ 31], gated recurrent unit
+network (GRU) [ 32], and attention mechanism (AM) [ 33]. The above-mentioned spatial
+and temporal algorithms have been widely used in the condition monitoring and fault
+diagnosis of wind turbine key components.
+By comparing instantaneous monitoring parameters of four wind turbines with sig-
+niﬁcant correlation and analyzing their gearbox bearing power-temperature distribution,
+Guo et al. [ 24] employed a convolutional neural network to model historical health SCADA
+data to realize rapid warnings of gearbox bearing over-temperature faults. Using 24 h
+SCADA data prior to actual faults and employing Pearson correlation coefﬁcient to cal-
+culate coupling levels among different condition parameters, Wang et al. [ 25] built a
+correlation graph convolutional neural network to identify early fault signals for gener-
+ator brush fault and pitch system drive fault. Based on a stacked restricted Boltzmann
+machine, Yang et al. [ 26] established a normal behavior model using only health data
+instead of labeled data, and realized an unsupervised anomaly detection approach for wind
+turbine condition monitoring. To fulﬁll early detection of wind turbine gearbox sensor
+------------------------------End of the page -----------------------------------
+Energies 2023 ,16, 6786 3 of 22
+faults, a multiscale spatio-temporal convolutional deep belief network was construed by
+Wang et al. [ 27] to learn the spatio-temporal features inherent in SCADA data. By pre-
+training and ﬁne-tuning the weights and biases parameters using BPNN, and setting model
+hyper-parameters using an improved exponential change learning factor particle swarm
+optimization, Zhang et al. [ 28] proposed an IPSO-DBN based condition monitoring method
+to identify early anomalies of generator windings and bearings. Denoising autoencoder or
+stacked denoising autoencoder, due to their powerful nonlinear characteristic mining capa-
+bilities among multivariate variables, were employed by Jia et al. [ 29] and Zhang et al. [ 30]
+to build generator normal behavior models to automatically identify generator bearing
+early deteriorated conditions, respectively. To better capture temporal features inherent in
+high-dimensional SCADA time series, Wu et al. [ 31] proposed a novel early faults detection
+method, which incorporates long short-term memory network and the Kullback–Leibler
+divergence statistical algorithm for generator windings and gearbox bearings. Li et al. [ 32]
+used another improved variant of recurrent neural networks, a two-layer gated recurrent
+unit network, to establish the blade breakage detection model using SCADA data that were
+pre-processed by the Euclidian distance and feature simpliﬁcation random forest algorithm.
+In order to further improve model performance, Xiao et al. [ 33] combined an attention
+mechanism, which can optimize computational resource allocation and learn adaptive
+weights for model inputs, with bidirectional long short-term memory network to construct
+a dual-attention BiLSTM-based model for main bearing condition monitoring.
+However, SCADA data are essentially multivariate time series that possess dual spatio-
+temporal attributes. It is often difﬁcult to comprehensively consider the mining of inherent
+spatio-temporal characteristics with the above-mentioned single spatial or temporal mod-
+els. Consequently, composite models integrating spatial and temporal algorithms have
+recently attracted people’s attention. More and more spatio-temporal composite models
+integrating convolutional neural networks and recurrent neural networks in the parallel
+or sequential ways have been widely utilized in the wind turbine condition monitoring
+ﬁeld [ 34,35]. After using kernel principal component analysis to select monitoring variables
+as model inputs, Zhu et al. [ 36] established a new generator windings anomaly detection
+approach through employing convolutional neural networks cascaded with long short-
+term memory networks. Based on spatio-temporal feature fusion of SCADA data, Kong
+et al. [ 37] proposed a novel gearbox condition monitoring method, which ﬁrst mines spatial
+features by convolutional neural networks, then learns temporal characteristics using gated
+recurrent unit networks. To further optimize model performance, Xiang et al. [ 38] and
+Zhan et al. [ 39] introduction attention mechanisms and bidirectional network structures
+to construct normal behavior models to identify deterioration conditions for gearbox and
+main bearings, respectively.
+However, traditional composite models have certain limitations, which include issues
+like non-interactive or non-synchronous problems in extracting spatio-temporal features
+due to inherent defects in parallel or sequential structures. Therefore, there is still space for
+improvement of their performance.
+In summary, scholars have conducted numerous studies on condition monitoring
+methods for wind turbine key components, considering various types of modeling data
+and employing different model structures. However, there are still certain limitations that
+need to be addressed.
+(1) Existing condition monitoring approaches primarily incorporate attention mecha-
+nisms in the following two ways: (a) Introducing the feature attention mechanism
+on the model-input variables dimension to assign attention weights according to
+the impact of different model input features on model output; (b) Introducing the
+time attention mechanism on the time dimension to assign larger attention weights
+to time steps that are highly correlated with the current prediction. However, these
+approaches often lack consideration for a multi-dimensional attention fusion.
+(2) The network structures of spatio-temporal models in the previous studies have inher-
+ent disadvantages, speciﬁcally the issues of non-interactivity and non-synchronicity
+------------------------------End of the page -----------------------------------
+Energies 2023 ,16, 6786 4 of 22
+when attempting to extract spatio-temporal features from SCADA time series data.
+These limitations can have adverse effects on model performance.
+Consequently, to tackle the above-mentioned issues, combining multi-dimensional
+attention mechanisms, convolutional long short-term memory network, and a dynamic
+adaptive threshold, a novel hybrid-attention spatio-temporal condition monitoring method
+for a wind turbine gearbox was proposed in this study, with the following main contributions.
+(1) This study proposed a multi-dimensional hybrid-attention mechanism (HA). By
+introducing attention mechanisms into the spatial-dimension and temporal-dimension
+of model input data matrices produced by the sliding window approach, multi-
+dimensional attention weights can be calculated and assigned to input matrices
+to increase key feature weights and weaken or discard redundant features. The
+experimental results showed that the hybrid-attention mechanism can signiﬁcantly
+improve the model performance.
+(2) We constructed a novel HA-BiConvLSTM spatio-temporal normal behavior model
+(NBM) for a wind turbine gearbox. Convolutional long short-term memory (Con-
+vLSTM) perfectly integrates the powerful local spatial-feature extractive capability
+of CNN and the efﬁcient time series processing capability of LSTM, the embedded
+network structure of which compensates disadvantages of conventional parallel or
+sequential structures (denoted as CNN-LSTM and CNN&LSTM) to some extent. Com-
+pared with CNN-LSTM and CNN&LSTM, the constructed HA-BiConvLSTM model
+achieved better valuation result in terms of RMSE, MAE, MAPE, and R2metrics.
+(3) We designed an improved EWMA-based dynamic anomaly detection approach. Based
+on the exponentially weighted moving-average algorithm (EWMA), the adaptive
+outlier thresholds of prediction residuals of different well-trained gearbox NBMs can
+be calculated to identify outliers. To reduce false alarms caused by some isolated
+outliers, an anomaly detection index, i.e., the outlier ratio within a sliding window,
+was proposed to improve the reliability of early gearbox faults. Results of the case
+study illustrated that the proposed HA-BiConvLSTM-iEWMA (HBCE) method can
+detect gearbox deteriorated conditions earlier than conventional CNN-LSTM and
+CNN&LSTM models, which veriﬁed the effectiveness, superiority, and robustness of
+the constructed HA-BiConvLSTM model.
+The remainder of this paper is arranged as follows. Section 2 introduces the framework
+of the proposed HA-BiConvLSTM-iEWMA (HBCE) spatio-temporal condition monitoring
+method for wind turbine gearbox. Section 3 introduces the methodologies and structures
+of the constructed HA-BiConvLSTM gearbox normal behavior model. Section 4 introduces
+an improved EWMA-based dynamic anomaly detection approach. The proposed HBCE
+method is validated using actual gearbox oil over-temperature fault collected from a wind
+farm located in north China in Section 5, followed by brief conclusions in Section 6.
+2. Framework of the Proposed HBCE Method
+The framework of the proposed HA-BiConvLSTM-iEWMA (HBCE) condition moni-
+toring method is depicted in Figure 1, which mainly contains two phrases: ofﬂine training
+and online monitoring.
+Phase 1. Ofﬂine training.
+Step 1. Data preprocessing. In order to eliminate outliers caused by turbulent wind,
+power curtailment, and sensor failure, the modiﬁed Thompson tau approach was used
+for the data cleaning of the original historical SCADA data to acquire a health modeling
+dataset. Additionally, data normalization needs to be implemented to reduce the difﬁculty
+of model training and shorten training time.
+Step 2. Variable selection. Generally, when there are no limitations on computational
+resources and model complexity, the more input variables there are, the more likely it
+is to obtain a model with higher performance. However, to balance model complexity
+with model performance, a compound correlation analysis approach consisting of Pearson,
+------------------------------End of the page -----------------------------------
+Energies 2023 ,16, 6786 5 of 22
+Spearman, Kendall correlation coefﬁcients was employed to select model input variables
+that have high correlation with model output.
+Step 3. Data matrices for modeling. Sliding window approach was employed to
+process the selected model input variables to acquire modeling data matrices D, which
+were further split into train set D train and test set D testfor model training and test.
+Step 4. HA-BiConvLSTM model training and test. Based on train set Dtrain and test
+setDtestobtained in Step 3, the constructed HA-BiConvLSTM model in this study can be
+trained and tested to learn the behavior modes of a wind turbine gearbox when operating
+under health conditions.
+Phase 2. Online monitoring.
+Step 5. Predictions and prediction residuals of HA-BiConvLSTM. Based on the online
+SCADA data and the well-trained HA-BiConvLSTM model, real-time predictions of wind
+turbine gearbox temperature can be generated, and prediction residuals between the
+predictions and measurements can be calculated.
+Step 6. Condition monitoring and fault alarm. To reduce false alarm caused by some
+isolated outlier, the exponentially weighted moving-average algorithm was used to smooth
+residual sequence and calculate the upper limit of the control chart UCL as adaptive outlier
+threshold to identify anomaly conditions. Then, the outlier ratio was computed within a
+sliding window as an anomaly detection index to determine whether to issue early fault
+alarm signals.
+Energies 
+2023
+,
+ 
+16
+, x FOR PEER REVIEW
+ 
+5
+ 
+of 
+23
+ 
+ 
+ 
+ 
+Figure 1. 
+F
+ramework of the proposed HBCE condition monitoring method
+.
+ 
+Phase 1. Offline training.
+ 
+Step 1. Data preprocessing. In order to eliminate outliers caused by turbulent wind, 
+power curtailment, and sensor failure, the modified Thompson tau approach was used 
+for 
+the
+ 
+data cleaning of the original historical SCADA data to acquire
+ 
+a
+ 
+health modeling 
+dataset. Additionally, data normalization needs to be implemented to reduce the diffi-
+culty of model training and shorten training time.
+ 
+Step 2. Variable selection. Generally, when there are no limitations on computational 
+resources and model complexity, the more input variables there are, the more likely it is 
+to obtain a model with higher performance. However, to balance model complexity 
+with 
+model performance, a compound correlation analysis approach consisting of Pearson, 
+Spearman, Kendall correlation coefficients was employed to select model input variables 
+that 
+have high correlation with model output.
+ 
+Step 3. Data matrices for modeling. Sliding window approach was employed to pro-
+cess the selected model input variables to acquire modeling data matrices D, which 
+were 
+further split into train
+ 
+set 
+D
+     
+ 
+and test
+ 
+set 
+D
+    
+ 
+for model training and test.
+ 
+Step 4. HA
+-
+BiConvLSTM model training and test. Based on train
+ 
+set 
+D
+     
+ 
+and test
+ 
+set 
+D
+    
+ 
+obtained in Step 3, the constructed HA
+-
+BiConvLSTM model in this study can be 
+trained and tested to learn 
+the 
+behavior modes of 
+a 
+wind turbine gearbox when operating 
+under health conditions.
+ 
+Phase 2. Online monitoring.
+ 
+Step 5. Predictions and 
+prediction residuals of HA
+-
+BiConvLSTM. Based on the online 
+SCADA data and the well
+-
+trained HA
+-
+BiConvLSTM model, real
+-
+time predictions of wind 
+turbine gearbox temperature can be generated, and prediction residuals between the pre-
+dictions and measurements ca
+n be calculated.
+ 
+Step 6. Condition monitoring and fault alarm. To reduce false alarm caused by some 
+isolated outlier, the exponentially weighted moving
+-
+average algorithm was used to 
+smooth residual sequence and calculate the upper limit of 
+the 
+control chart UCL as adap-
+tive outlier threshold to identify anomaly conditions. Then, the outlier ratio
+ 
+was com-
+puted
+ 
+within a sliding window as an anomaly detection index to determine whether to 
+issue early fault alarm signals.
+ 
+Figure 1. Framework of the proposed HBCE condition monitoring method.
+3. Constructed HA-BiConvLSTM Model
+3.1. Data Preprocessing
+3.1.1. Data Cleaning
+Generally, the supervisory control and data acquisition (SCADA) system has been
+widely deployed in modern large-scale wind turbines regardless of online or ofﬂine wind
+farms, which can record and store massive high-dimensional and multi-source heteroge-
+neous operation data of wind turbine key components, as well as environmental infor-
+mation around wind turbines. However, original historical SCADA data often contain
+outliers caused by turbulent wind, power curtailment, and sensor failure, which need to be
+eliminated to achieve health SCADA data for modeling.
+------------------------------End of the page -----------------------------------
+Energies 2023 ,16, 6786 6 of 22
+In this study, the modiﬁed Thompson tau approach, which is a statistical method for
+deciding whether to keep or discard suspected outliers in a sample of a single variable,
+was employed for data cleaning using wind speed and active power of wind turbines. As
+for the wind speed and active power data, ﬁrst divide the wind speed range into 0.5 m/s
+contiguous bins centered on multiples of 0.5 m/s, and then group the active power data
+into wind speed intervals (i.e., bins).
+Mathematically , for the increasing ordered active power dataset Pi=fpi, 1,pi, 2, . . . , pi,ng
+of the ith wind speed bin, where i=1, 2, . . .,m,pi, 1pi, 1  pi,n,mrepresents
+the number of wind speed bins, nstands for the number of active power samples in each
+wind speed bin, the mean piand standard deviation SiofPican be calculated according to
+Equations (1) and (2).
+pi=1
+nn
+å
+j=1pi,j (1)
+Si=vuut1
+nn
+å
+j=1 
+pi,j pi
+(2)
+Then, for an active power sample pi,j, the absolute error di,jcan be calculated through
+Equation (3).
+di,j=pi,j pi (3)
+Generally, the larger the absolute error di,j, the more likely active power sample pi,jis
+to be a suspected outlier. Typically, either the ﬁrst or last active power samples are most
+suspected, since they are the lowest and highest values of Pi, respectively.
+Furthermore, the value of the modiﬁed Thompson tau t, which is a function of the
+number of active power samples (i.e., n), can be calculated by Equation (4).
+t=ta/2(n 1)r
+n
+n 2+t2
+a/2(4)
+where ta/2is the critical student’s t value, arefers to signiﬁcance level and is set as a=0.01
+in this study.
+The outlier detection strategy is as follows:
+Ifdi,j>tSi, remove the active power sample. It is an outlier.
+Ifdi,jtSi, keep the active power sample. It is not an outlier.
+One suspected outlier is detected and eliminated at each time, and the mean piand
+standard deviation SiofPiwill be recalculated. The process will be repeated until no more
+outliers are detected.
+3.1.2. Data Normalization
+SCADA data have multi-source heterogeneous characteristics and the values of dif-
+ferent monitoring variables vary in size. To eliminate the impact of different variables’
+dimensions on model training and to reduce the difﬁculty of model training, it is neces-
+sary to carry out data normalization to scale down the data range to [0, 1] according to
+Equation (5).
+x0=x xmin
+xmax xmin(5)
+where xis the original data, x0is the normalized data, xminandxmaxare the minimum and
+maximum of dataset X, respectively.
+3.1.3. Variable Selection
+The SCADA system records and stores hundreds of continuous or discrete operation
+condition parameters of wind turbine key components and environmental information
+around wind turbines. To reduce the complexity of the model and to improve the training
+------------------------------End of the page -----------------------------------
+Energies 2023 ,16, 6786 7 of 22
+efﬁciency, a hybrid correlation analysis approach was employed to select monitoring
+variables, which have high correlation with model output, as model inputs.
+The hybrid correlation analysis designed in this study consists of three correlation
+coefﬁcients, i.e., Pearson correlation coefﬁcient Rp, Spearman correlation coefﬁcient Rs, and
+Kendall correlation coefﬁcient Rk, which can be calculated according to Equations (6)–(8),
+respectively.
+Rp=åN
+i=1(xi x)(yi y)q
+åN
+i=1(xi x)2q
+åN
+i=1(yi y)2(6)
+Rs=1 6åN
+i=1d2
+i 
+rank(xi) rank(yi))2
+N(N2 1)(7)
+Rk=åi<jsign  
+xi xj 
+yi yj
+0.5N(N 1)(8)
+where Nrepresents the number of samples, xi,xj,yi,yjrepresent the measurements, x,y
+represent the average values of the measurements, direpresents the difference between the
+two variables in ranks of the “ ith” elements, rank () represents an order function, sign ()
+represents a sign function.
+Statistically, the absolute values of different correlation coefﬁcients can quantitatively
+measure the correlation between variables, | R| < 0.3 indicates a weak correlation between
+variables; 0.3 < | R| < 0.7 indicates a moderate correlation between variables; and | R| > 0.7
+indicates a strong correlation between variables. In this study, we directly chose 0.3 as the
+correlation threshold, based on which we carried out the variable selection procedure.
+3.1.4. Model Input Matrices Based on the Sliding Window Algorithm
+Additionally, prior to model training, the sliding window algorithm was employed
+to process the health modeling dataset obtained after data preprocessing and variable
+selection to acquire model input data matrices X1,X2,X3,. . .,Xn,. . .within windows.
+The brief data processing process of sliding window is displayed in Figure 2, and the nth
+model input matrix can be described as Equation (9).
+Xn= 
+x1,x2, . . . , xj, . . . , xk)T
+=
+x(n 1)s+1,x(n 1)s+2, . . . , x(n 1)s+i, . . . , x(n 1)s+w
+=0
+BBBBBBB@x(n 1)s+1, 1 x(n 1)s+2, 1 . . . x(n 1)s+i, 1 . . . x(n 1)s+w, 1
+x(n 1)s+1, 2 x(n 1)s+2, 2 . . . x(n 1)s+i, 2 . . . x(n 1)s+w, 2
+. . . . . . . . . . . . . . . . . .
+x(n 1)s+1,jx(n 1)s+2,j. . . x(n 1)s+i,j. . . x(n 1)s+w,j
+. . . . . . . . . . . . . . . . . .
+x(n 1)s+1,kx(n 1)s+2,k. . . x(n 1)s+i,k. . . x(n 1)s+w,k1
+CCCCCCCA(9)
+where sis the time step length of the sliding window, wis the width of the sliding window,
+kis the number of selected variables (i.e., model input features),
+x(n 1)s+i=
+x(n 1)s+i, 1,x(n 1)s+i, 2, . . . , x(n 1)s+i,j, . . . , x(n 1)s+i,k
+represents the fea-
+ture vector of the nth matrix at (n 1)s+i time point,
+xj=
+x(n 1)s+1,j,x(n 1)s+2,j, . . . , x(n 1)s+i,j, . . . , x(n 1)s+w,j
+represents the time se-
+ries of the jth feature.
+------------------------------End of the page -----------------------------------
+Energies 2023 ,16, 6786 8 of 22
+Energies 
+2023
+,
+ 
+16
+, x FOR PEER REVIEW
+ 
+8
+ 
+of 
+23
+ 
+ 
+ 
+ 
+ 
+=
+(
+ 
+ 
+,
+ 
+ 
+,
+…
+,
+ 
+ 
+,
+…
+,
+ 
+ 
+)
+ 
+=
+ 
+ 
+(
+ 
+ 
+ 
+)
+ 
+ 
+ 
+,
+ 
+(
+ 
+ 
+ 
+)
+ 
+ 
+ 
+,
+…
+,
+ 
+(
+ 
+ 
+ 
+)
+ 
+ 
+ 
+,
+…
+,
+ 
+(
+ 
+ 
+ 
+)
+ 
+ 
+ 
+ 
+=
+⎝
+⎜
+⎜
+⎛
+ 
+(
+ 
+ 
+ 
+)
+ 
+ 
+ 
+,
+ 
+ 
+(
+ 
+ 
+ 
+)
+ 
+ 
+ 
+,
+ 
+…
+ 
+(
+ 
+ 
+ 
+)
+ 
+ 
+ 
+,
+ 
+…
+ 
+(
+ 
+ 
+ 
+)
+ 
+ 
+ 
+,
+ 
+ 
+(
+ 
+ 
+ 
+)
+ 
+ 
+ 
+,
+ 
+ 
+(
+ 
+ 
+ 
+)
+ 
+ 
+ 
+,
+ 
+…
+ 
+(
+ 
+ 
+ 
+)
+ 
+ 
+ 
+,
+ 
+…
+ 
+(
+ 
+ 
+ 
+)
+ 
+ 
+ 
+,
+ 
+…
+…
+…
+…
+…
+…
+ 
+(
+ 
+ 
+ 
+)
+ 
+ 
+ 
+,
+ 
+ 
+(
+ 
+ 
+ 
+)
+ 
+ 
+ 
+,
+ 
+…
+ 
+(
+ 
+ 
+ 
+)
+ 
+ 
+ 
+,
+ 
+…
+ 
+(
+ 
+ 
+ 
+)
+ 
+ 
+ 
+,
+ 
+…
+…
+…
+…
+…
+…
+ 
+(
+ 
+ 
+ 
+)
+ 
+ 
+ 
+,
+ 
+ 
+(
+ 
+ 
+ 
+)
+ 
+ 
+ 
+,
+ 
+…
+ 
+(
+ 
+ 
+ 
+)
+ 
+ 
+ 
+,
+ 
+…
+ 
+(
+ 
+ 
+ 
+)
+ 
+ 
+ 
+,
+ 
+⎠
+⎟
+⎟
+⎞
+ 
+(
+9
+)
+where 
+s
+ 
+is the time step length of the sliding window, 
+w
+ 
+is the width of the sliding window, 
+k
+ 
+is the number of selected variables (i.e., model input features), 
+ 
+(
+ 
+ 
+ 
+)
+ 
+ 
+ 
+=
+(
+ 
+(
+ 
+ 
+ 
+)
+ 
+ 
+ 
+,
+ 
+,
+ 
+(
+ 
+ 
+ 
+)
+ 
+ 
+ 
+,
+ 
+,
+…
+,
+ 
+(
+ 
+ 
+ 
+)
+ 
+ 
+ 
+,
+ 
+,
+…
+,
+ 
+(
+ 
+ 
+ 
+)
+ 
+ 
+ 
+,
+ 
+)
+ 
+represents the feature vector of the nth 
+matrix at 
+(
+ 
+−
+1
+)
+ 
++
+ 
+ 
+time point, 
+ 
+ 
+=
+(
+ 
+(
+ 
+ 
+ 
+)
+ 
+ 
+ 
+,
+ 
+,
+ 
+(
+ 
+ 
+ 
+)
+ 
+ 
+ 
+,
+ 
+,
+…
+,
+ 
+(
+ 
+ 
+ 
+)
+ 
+ 
+ 
+,
+ 
+,
+…
+,
+ 
+(
+ 
+ 
+ 
+)
+ 
+ 
+ 
+,
+ 
+)
+ 
+represents the time series of the 
+j
+th feature.
+ 
+ 
+Figure 2. 
+Sliding window 
+(i.e., green background box) 
+for model input matrices.
+ 
+3.2. 
+Spatio
+-
+Temporal Hybrid Attention Mechanis
+m
+ 
+Attention mechanisms originate from the study of human vision. The earliest appli-
+cation of attention mechanism in deep learning is Bahdanau attention proposed by Bah-
+danau et al. 
+[40]
+, which is used to solve the alignment problem of source languages with 
+different lengths in machine translation. At present, attention mechanisms are widely 
+used in natural language processing, speech recognition, and other aspects. As a resource 
+allocati
+on strategy, attention mechanisms can adaptively allocate attention weights to in-
+put information, enhance the model
+’
+s attention to key features, weaken or even discard 
+redundant features, and ultimately achieve the goal of improving model performance. In 
+t
+his study, a hybrid attention mechanism consisting of feature attention and time attention 
+was designed to allocate attention weights to model input matrices.
+ 
+3.2.1. 
+Feature 
+Attention
+ 
+The feature attention module focuses on the correlation between different input var-
+iables and the target variable from the spatial dimension, assigning higher weights to in-
+put variables with higher correlation. Based on the model input matrix 
+X
+ 
+obtained by the 
+sliding window algorithm, the calculation process of feature attention can be described as 
+Figure 3.
+ 
+ 
+Figure 3. 
+Structure of the feature attention module.
+ 
+Active power
+Actual torque
+Blade 1 motor temp.
+Current L1
+Gearbox front bearing temp.
+Gearbox inlet oil temp.
+Gearbox oil pump pressure
+Gearbox rear bearing temp.
+Generator speed
+Generator winding U temp.
+Main bearing temp.
+Main bearing speed
+Wind speed
+Figure 2. Sliding window (i.e., green background box) for model input matrices.
+3.2. Spatio-Temporal Hybrid Attention Mechanism
+Attention mechanisms originate from the study of human vision. The earliest ap-
+plication of attention mechanism in deep learning is Bahdanau attention proposed by
+Bahdanau et al. [ 40], which is used to solve the alignment problem of source languages
+with different lengths in machine translation. At present, attention mechanisms are widely
+used in natural language processing, speech recognition, and other aspects. As a resource
+allocation strategy, attention mechanisms can adaptively allocate attention weights to in-
+put information, enhance the model’s attention to key features, weaken or even discard
+redundant features, and ultimately achieve the goal of improving model performance. In
+this study, a hybrid attention mechanism consisting of feature attention and time attention
+was designed to allocate attention weights to model input matrices.
+3.2.1. Feature Attention
+The feature attention module focuses on the correlation between different input vari-
+ables and the target variable from the spatial dimension, assigning higher weights to input
+variables with higher correlation. Based on the model input matrix Xobtained by the
+sliding window algorithm, the calculation process of feature attention can be described as
+Figure 3.
+Energies 
+2023
+,
+ 
+16
+, x FOR PEER REVIEW
+ 
+8
+ 
+of 
+23
+ 
+ 
+ 
+ 
+ 
+=
+(
+ 
+ 
+,
+ 
+ 
+,
+…
+,
+ 
+ 
+,
+…
+,
+ 
+ 
+)
+ 
+=
+ 
+ 
+(
+ 
+ 
+ 
+)
+ 
+ 
+ 
+,
+ 
+(
+ 
+ 
+ 
+)
+ 
+ 
+ 
+,
+…
+,
+ 
+(
+ 
+ 
+ 
+)
+ 
+ 
+ 
+,
+…
+,
+ 
+(
+ 
+ 
+ 
+)
+ 
+ 
+ 
+ 
+=
+⎝
+⎜
+⎜
+⎛
+ 
+(
+ 
+ 
+ 
+)
+ 
+ 
+ 
+,
+ 
+ 
+(
+ 
+ 
+ 
+)
+ 
+ 
+ 
+,
+ 
+…
+ 
+(
+ 
+ 
+ 
+)
+ 
+ 
+ 
+,
+ 
+…
+ 
+(
+ 
+ 
+ 
+)
+ 
+ 
+ 
+,
+ 
+ 
+(
+ 
+ 
+ 
+)
+ 
+ 
+ 
+,
+ 
+ 
+(
+ 
+ 
+ 
+)
+ 
+ 
+ 
+,
+ 
+…
+ 
+(
+ 
+ 
+ 
+)
+ 
+ 
+ 
+,
+ 
+…
+ 
+(
+ 
+ 
+ 
+)
+ 
+ 
+ 
+,
+ 
+…
+…
+…
+…
+…
+…
+ 
+(
+ 
+ 
+ 
+)
+ 
+ 
+ 
+,
+ 
+ 
+(
+ 
+ 
+ 
+)
+ 
+ 
+ 
+,
+ 
+…
+ 
+(
+ 
+ 
+ 
+)
+ 
+ 
+ 
+,
+ 
+…
+ 
+(
+ 
+ 
+ 
+)
+ 
+ 
+ 
+,
+ 
+…
+…
+…
+…
+…
+…
+ 
+(
+ 
+ 
+ 
+)
+ 
+ 
+ 
+,
+ 
+ 
+(
+ 
+ 
+ 
+)
+ 
+ 
+ 
+,
+ 
+…
+ 
+(
+ 
+ 
+ 
+)
+ 
+ 
+ 
+,
+ 
+…
+ 
+(
+ 
+ 
+ 
+)
+ 
+ 
+ 
+,
+ 
+⎠
+⎟
+⎟
+⎞
+ 
+(
+9
+)
+where 
+s
+ 
+is the time step length of the sliding window, 
+w
+ 
+is the width of the sliding window, 
+k
+ 
+is the number of selected variables (i.e., model input features), 
+ 
+(
+ 
+ 
+ 
+)
+ 
+ 
+ 
+=
+(
+ 
+(
+ 
+ 
+ 
+)
+ 
+ 
+ 
+,
+ 
+,
+ 
+(
+ 
+ 
+ 
+)
+ 
+ 
+ 
+,
+ 
+,
+…
+,
+ 
+(
+ 
+ 
+ 
+)
+ 
+ 
+ 
+,
+ 
+,
+…
+,
+ 
+(
+ 
+ 
+ 
+)
+ 
+ 
+ 
+,
+ 
+)
+ 
+represents the feature vector of the nth 
+matrix at 
+(
+ 
+−
+1
+)
+ 
++
+ 
+ 
+time point, 
+ 
+ 
+=
+(
+ 
+(
+ 
+ 
+ 
+)
+ 
+ 
+ 
+,
+ 
+,
+ 
+(
+ 
+ 
+ 
+)
+ 
+ 
+ 
+,
+ 
+,
+…
+,
+ 
+(
+ 
+ 
+ 
+)
+ 
+ 
+ 
+,
+ 
+,
+…
+,
+ 
+(
+ 
+ 
+ 
+)
+ 
+ 
+ 
+,
+ 
+)
+ 
+represents the time series of the 
+j
+th feature.
+ 
+ 
+Figure 2. 
+Sliding window 
+(i.e., green background box) 
+for model input matrices.
+ 
+3.2. 
+Spatio
+-
+Temporal Hybrid Attention Mechanis
+m
+ 
+Attention mechanisms originate from the study of human vision. The earliest appli-
+cation of attention mechanism in deep learning is Bahdanau attention proposed by Bah-
+danau et al. 
+[40]
+, which is used to solve the alignment problem of source languages with 
+different lengths in machine translation. At present, attention mechanisms are widely 
+used in natural language processing, speech recognition, and other aspects. As a resource 
+allocati
+on strategy, attention mechanisms can adaptively allocate attention weights to in-
+put information, enhance the model
+’
+s attention to key features, weaken or even discard 
+redundant features, and ultimately achieve the goal of improving model performance. In 
+t
+his study, a hybrid attention mechanism consisting of feature attention and time attention 
+was designed to allocate attention weights to model input matrices.
+ 
+3.2.1. 
+Feature 
+Attention
+ 
+The feature attention module focuses on the correlation between different input var-
+iables and the target variable from the spatial dimension, assigning higher weights to in-
+put variables with higher correlation. Based on the model input matrix 
+X
+ 
+obtained by the 
+sliding window algorithm, the calculation process of feature attention can be described as 
+Figure 3.
+ 
+ 
+Figure 3. 
+Structure of the feature attention module.
+ 
+Active power
+Actual torque
+Blade 1 motor temp.
+Current L1
+Gearbox front bearing temp.
+Gearbox inlet oil temp.
+Gearbox oil pump pressure
+Gearbox rear bearing temp.
+Generator speed
+Generator winding U temp.
+Main bearing temp.
+Main bearing speed
+Wind speed
+Figure 3. Structure of the feature attention module.
+Speciﬁcally, the original model input matrix Xwas fed into a one-hidden-layer fully
+connected network and a softmax-normalization layer to acquire the feature attention
+weights matrix A(f), which was further multiplied with Xto achieve the feature atten-
+tion weighted matrix
+X(f)
+. The detailed mathematical calculation process is shown in
+Equations (10)–(14).
+X=(x1,x2, . . . , xi, . . . , xw)
+=0
+BBBBBB@x1, 1 x2, 1 . . . xi, 1 . . . xw, 1
+x1, 2 x2, 2 . . . xi, 2 . . . xw, 2
+. . . . . . . . . . . . . . . . . .
+x1,jx2,j. . . xi,j. . . xw,j
+. . . . . . . . . . . . . . . . . .
+x1,kx2,k. . . xi,k. . . xw,k1
+CCCCCCA(10)
+------------------------------End of the page -----------------------------------
+Energies 2023 ,16, 6786 9 of 22
+ui=s
+Wfxi+bf
+=
+ui, 1,ui, 2, . . . , ui,j, . . . , ui,k)T(11)
+x(f)
+i,j=a(f)
+i,jxi,j=exp(ui,j)
+åk
+j=1ui,jxi,j (12)
+x(f)
+i=
+x(f)
+i, 1,x(f)
+i, 2, . . . ,x(f)
+i,j, . . . ,x(f)
+i,k)T(13)
+
+X(f)
+=
+x(f)
+1,x(f)
+2, . . . ,x(f)
+i, . . . ,x(f)
+w
+(14)
+where s(.) is the Sigmoid activation function, Wfis the weight matrix, bfis the bias
+vector, ui,janda(f)
+i,j, respectively, represent the feature attention weights before and after
+the softmax normalization.
+3.2.2. Time Attention
+The time attention module focuses on the correlation between the measurements
+different historical time points and the current prediction from the temporal dimension,
+assigning higher weights to historical time points with higher correlation. Based on the
+model input matrix Xobtained by the sliding window algorithm, the calculation process of
+time attention can be described as Figure 4.
+Energies 
+2023
+,
+ 
+16
+, x FOR PEER REVIEW
+ 
+9
+ 
+of 
+23
+ 
+ 
+ 
+Specifically, the original model input matrix 
+X
+ 
+was fed into a one
+-
+hidden
+-
+layer fully 
+connected network and a softmax
+-
+normalization layer to acquire the feature attention 
+weights matrix 
+ 
+(
+ 
+)
+, which was further multiplied with 
+X
+ 
+to achieve the feature attention 
+weighted matrix 
+ 
+ 
+(
+ 
+)
+. The detailed mathematical calculation process is shown in Equa-
+tions 
+(
+10
+)
+–
+(
+14
+)
+.
+ 
+ 
+=
+(
+ 
+ 
+,
+ 
+ 
+,
+…
+,
+ 
+ 
+,
+…
+,
+ 
+ 
+)
+=
+⎝
+⎜
+⎜
+⎛
+ 
+ 
+,
+ 
+ 
+ 
+,
+ 
+…
+ 
+ 
+,
+ 
+…
+ 
+ 
+,
+ 
+ 
+ 
+,
+ 
+ 
+ 
+,
+ 
+…
+ 
+ 
+,
+ 
+…
+ 
+ 
+,
+ 
+…
+…
+…
+…
+…
+…
+ 
+ 
+,
+ 
+ 
+ 
+,
+ 
+…
+ 
+ 
+,
+ 
+…
+ 
+ 
+,
+ 
+…
+…
+…
+…
+…
+…
+ 
+ 
+,
+ 
+ 
+ 
+,
+ 
+…
+ 
+ 
+,
+ 
+…
+ 
+ 
+,
+ 
+⎠
+⎟
+⎟
+⎞
+ 
+(
+10
+)
+ 
+ 
+=
+ 
+ 
+ 
+ 
+ 
+ 
++
+ 
+ 
+ 
+=
+(
+ 
+ 
+,
+ 
+,
+ 
+ 
+,
+ 
+,
+…
+,
+ 
+ 
+,
+ 
+,
+…
+,
+ 
+ 
+,
+ 
+)
+ 
+ 
+(
+11
+)
+ 
+ 
+ 
+,
+ 
+(
+ 
+)
+=
+ 
+ 
+,
+ 
+(
+ 
+)
+ 
+ 
+,
+ 
+=
+exp
+ 
+(
+ 
+ 
+,
+ 
+)
+∑
+ 
+ 
+,
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+,
+ 
+ 
+(
+12
+)
+ 
+ 
+ 
+(
+ 
+)
+=
+(
+ 
+ 
+ 
+,
+ 
+(
+ 
+)
+,
+ 
+ 
+ 
+,
+ 
+(
+ 
+)
+,
+…
+,
+ 
+ 
+ 
+,
+ 
+(
+ 
+)
+,
+…
+,
+ 
+ 
+ 
+,
+ 
+(
+ 
+)
+)
+ 
+ 
+(
+13
+)
+ 
+ 
+(
+ 
+)
+=
+ 
+ 
+ 
+ 
+(
+ 
+)
+,
+ 
+ 
+ 
+(
+ 
+)
+,
+…
+,
+ 
+ 
+ 
+(
+ 
+)
+,
+…
+,
+ 
+ 
+ 
+(
+ 
+)
+ 
+ 
+(
+14
+)
+where 
+σ 
+(.) is the Sigmoid activation function, 
+ 
+ 
+ 
+is the weight matrix, 
+ 
+ 
+ 
+is the bias vec-
+tor, 
+ 
+ 
+,
+ 
+ 
+and 
+ 
+ 
+,
+ 
+(
+ 
+)
+ 
+, 
+respectively
+,
+ 
+represent the feature attention weights before and after 
+the softmax normalization.
+ 
+3.2.2. 
+Time 
+Attention
+ 
+The time attention module focuses on the correlation between the measurements dif-
+ferent historical time points and the current prediction from the temporal dimension, as-
+signing higher weights to historical time points with higher correlation. Based on the 
+model input matrix 
+X
+ 
+obtained by the sliding window algorithm, the calculation process 
+of time attention can be described as Figure 4.
+ 
+ 
+Figure 4. 
+Structure of the time attention module.
+ 
+Specifically, the original model input matrix 
+X
+ 
+was fed into a one
+-
+hidden
+-
+layer fully 
+connected network and a softmax
+-
+normalization layer to acquire the time attention 
+weights matrix 
+ 
+(
+ 
+)
+, which was further multiplied with 
+X
+ 
+to achieve the time attention 
+weighted matrix 
+ 
+ 
+(
+ 
+)
+. The detailed mathematical calculation process is shown in Equa-
+tions 
+(
+15
+)
+–
+(
+19
+)
+.
+ 
+Figure 4. Structure of the time attention module.
+Speciﬁcally, the original model input matrix Xwas fed into a one-hidden-layer fully
+connected network and a softmax-normalization layer to acquire the time attention weights
+matrix A(t), which was further multiplied with Xto achieve the time attention weighted
+matrix
+X(t)
+. The detailed mathematical calculation process is shown in Equations (15)–(19).
+XT= 
+x1,x2, . . . , xj, . . . , xk
+=0
+BBBBBB@x1, 1 x2, 1 . . . xj, 1 . . . xk, 1
+x1, 2 x2, 2 . . . xj, 2 . . . xk, 2
+. . . . . . . . . . . . . . . . . .
+x1,ix2,i. . . xj,i. . . xk,i
+. . . . . . . . . . . . . . . . . .
+x1,wx2,w. . . xj,w. . . xk,w1
+CCCCCCA(15)
+vi=s 
+Wtxj+bt=
+vj, 1,vj, 2, . . . , vj,i, . . . , vj,w)T(16)
+x(t)
+j,i=a(t)
+j,ixj,i=exp(vj,i)
+åw
+i=1vj,ixj,i (17)
+x(t)
+j=
+x(t)
+j, 1,x(t)
+j, 2, . . . ,x(t)
+j,i, . . . ,x(t)
+j,w)T(18)
+------------------------------End of the page -----------------------------------
+Energies 2023 ,16, 6786 10 of 22
+
+X(t)
+=
+x(t)
+1,x(t)
+2, . . . ,x(t)
+j, . . . ,x(t)
+k
+(19)
+where s(.) is the Sigmoid activation function, Wtis the weight matrix, btis the bias vector,
+vj,ianda(t)
+j,i,respectively, represent the time attention weights before and after the softmax
+normalization.
+3.2.3. Hybrid Attention
+Based on the feature attention weighted matrix and the time attention weighted matrix,
+the hybrid attention weighted matrix can be calculated by Equation (20).
+
+X=
+X(s)K
+(
+X(t)
+)T(20)
+3.3. Bidirectional Conventional Long Short-Term Memory Network
+Recurrent neural networks (RNNs) are a family of neural networks with short-term
+memory capability, which are good at processing time series data. The neurons of recurrent
+neural networks can not only receive information from other neurons, but also from
+themselves, forming a network structure with loops. Recurrent neural networks have
+been widely used in speech recognition, language model, natural language generation
+and other tasks. The parameter learning of recurrent neural network can be learned
+according to the back-propagation through time (BPTT) algorithm [ 41], which can transfer
+the error information backward step by step in the reverse order of time. However, for
+the conventional recurrent neural network (RNN), when the input sequence is relatively
+long, there will be gradient explosion or gradient vanishing problems [ 42], also known as
+long-range dependence problems. In order to solve those problems, people have made
+many improvements to the conventional recurrent neural network, among which the most
+effective way is to introduce a gating mechanism.
+3.3.1. ConvLSTM
+Conventional long short-term memory network (ConvLSTM), proposed by Shi et al. [ 43]
+in 2015 for precipitation nowcasting, is an improved variant of the fully connected long
+short-term memory (FC-LSTM). Fully connected long short-term memory (FC-LSTM) is a
+variant of RNN, which takes one-dimensional sequential feature vectors as model input
+and calculates both the input-to-state and state-to-input transactions in the fully connected
+manner [ 44]. By replacing the fully connected operators with the convolution operators in
+the input-to-state and state-to-input transactions, the ConvLSTM network can possess the
+mining capabilities of local spatial features while learning the temporal feature hidden in
+model inputs. Additionally, different from traditional spatio-temporal models (i.e., CNN-
+LSTM and CNN&LSTM), which achieve both the spatial features and temporal features
+extraction capabilities by simply combining CNN and LSTM in sequential or parallel ways,
+the ConvLSTM network integrates CNN and LSTM in an embedded manner and has better
+spatiotemporal interaction and synchronization. The structure of the conventional long
+short-term memory unit is displayed in Figure 5.
+As can be seen from Figure 5, compared with the conventional FC-LSTM unit, the
+improvements of ConvLSTM unit are to replace the fully connected operations by the
+convolutional operations (i.e., the blue lines of the structure of the ConvLSTM unit), which
+make it additionally possess the powerful capabilities of mining the spatial feature hidden
+in the input data matrices, except for effectively handling the temporal correlations.
+The introduction of the gate mechanisms can make the convolutional long short-term
+networks (ConvLSTM) effectively address the problems of gradient disappearance or
+gradient explosion existed in the traditional deep recurrent neural networks. As can be
+seen from Figure 5, three gates—a forget gate that determines the information ratio that
+the memory cell Ct 1needs to discard, an input gate that determines the information ratio
+------------------------------End of the page -----------------------------------
+Energies 2023 ,16, 6786 11 of 22
+that the candidate memory cell
+Ctneed to reserve, and an output gate that determines the
+information ratio that the memory cell Ctneed to pass to the hidden state Ht.
+The input gate It, forget gate Ft, memory cell Ct, output gate Ot, and hidden state Ht
+can be calculated according to Equations (21)–(25).
+It=s
+WxiXt+WhiHt 1+WciK
+Ct 1+bi
+(21)
+Ft=s
+Wx fXt+Wh fHt 1+Wc fK
+Ct 1+bf
+(22)
+Ct=FtK
+Ct 1+ItK
+tanh(WxcXt+WhcHt 1+bc) (23)
+Ot=s
+WxoXt+WhoHt 1+WcoK
+Ct+bo
+(24)
+Ht=OtK
+tanh(Ct) (25)
+whererepresents the convolution operator,Jrepresents the Hadamard product.
+3.3.2. BiConvLSTM
+The bidirectional conventional long short-term memory network (BiConvLSTM) is
+composed of two ConvLSTM networks with identical structures and opposite propaga-
+tion directions, namely, the forward layer and the backward layer. The structure of the
+BiConvLSTM network is displayed in Figure 6. Compared with ConvLSTM, BiConvLSTM
+inherits its many advantages and can also capture sequence information in both positive
+and negative directions.
+Energies 
+2023
+,
+ 
+16
+, x FOR PEER REVIEW
+ 
+11
+ 
+of 
+23
+ 
+ 
+ 
+and temporal features extraction capabilities by simply combining CNN and LSTM in se-
+quential or parallel ways, the ConvLSTM network integrates CNN and LSTM in an em-
+bedded manner and has better spatiotemporal interaction and synchronization. The struc-
+ture 
+of the 
+c
+onventional long short
+-
+term memory unit is displayed in Figure 5.
+ 
+As can be seen from Figure 5, compared with the conventional FC
+-
+LSTM unit, the 
+improvements of ConvLSTM unit are to replace the fully connected operations by the 
+convolutional operations (i.e., the blue lines of the structure of the ConvLSTM unit), which 
+m
+ake it additionally possess the powerful capabilities of mining the spatial feature hidden 
+in the input data matrices, except for effectively handling the temporal correlations.
+ 
+T
+he introduction of the gate mechanisms
+ 
+can make the convolutional long
+ 
+short
+-
+term
+ 
+networks
+ 
+(
+ConvLSTM
+) 
+effectively address the problems of gradient disappearance or gra-
+dient explosion existed in the traditional deep recurrent neural networks
+. A
+s can be seen 
+from
+ 
+Figure
+ 
+5, three gates
+—
+a forget gate
+ 
+that
+ 
+determines
+ 
+the
+ 
+information ratio that the 
+memory cell
+ 
+ 
+ 
+ 
+ 
+ 
+need
+s
+ 
+to discard
+, 
+an input gate 
+that
+ 
+determines
+ 
+the
+ 
+information ratio 
+that the candidate memory cell 
+ 
+ 
+ 
+ 
+need to reserve
+, 
+and 
+an output gate 
+that
+ 
+determines
+ 
+the
+ 
+information ratio that
+ 
+the memory cell
+ 
+ 
+ 
+ 
+need to
+ 
+pass
+ 
+to the hidden state
+ 
+ 
+ 
+.
+ 
+ 
+Figure 5. 
+Structure of the ConvLSTM unit.
+ 
+The input gate 
+ 
+ 
+, forget gate 
+ 
+ 
+, memory cell 
+ 
+ 
+, output gate 
+ 
+ 
+, and hidden state 
+ 
+ 
+ 
+can be calculated according to Equations 
+(
+21
+)
+–
+(
+25
+)
+.
+ 
+ 
+ 
+=
+ 
+(
+ 
+  
+∗
+ 
+ 
++
+ 
+ 
+ 
+∗
+ 
+ 
+ 
+ 
++
+ 
+  
+ 
+⨀
+ 
+ 
+ 
+ 
+ 
++
+ 
+ 
+)
+ 
+(
+21
+)
+ 
+ 
+=
+ 
+ 
+ 
+  
+∗
+ 
+ 
++
+ 
+ 
+ 
+∗
+ 
+ 
+ 
+ 
++
+ 
+  
+ 
+⨀
+ 
+ 
+ 
+ 
+ 
++
+ 
+ 
+ 
+ 
+(
+22
+)
+ 
+ 
+=
+ 
+ 
+ 
+⨀
+ 
+ 
+ 
+ 
+ 
++
+ 
+ 
+ 
+⨀
+ 
+tanh
+(
+ 
+  
+∗
+ 
+ 
++
+ 
+ 
+ 
+∗
+ 
+ 
+ 
+ 
++
+ 
+ 
+)
+ 
+(
+23
+)
+ 
+ 
+=
+ 
+(
+ 
+  
+∗
+ 
+ 
++
+ 
+ 
+ 
+∗
+ 
+ 
+ 
+ 
++
+ 
+  
+ 
+⨀
+ 
+ 
+ 
++
+ 
+ 
+)
+ 
+(
+24
+)
+ 
+ 
+=
+ 
+ 
+ 
+⨀
+ 
+tanh
+ 
+(
+ 
+ 
+)
+ 
+(
+25
+)
+where 
+∗
+ 
+represents the convolution operator, 
+⨀
+ 
+represents the Hadamard product.
+ 
+3.3.2. 
+BiConvLSTM
+ 
+The bidirectional conventional long short
+-
+term memory network (BiConvLSTM) is 
+composed of two ConvLSTM
+ 
+networks with identical structure
+s
+ 
+and opposite propaga-
+tion directions, namely, the forward layer and the backward layer. The structure of the 
+BiConvLSTM network is displayed in Figure 6. Compared with ConvLSTM, BiConvLSTM 
+inherits its many advantages and can also capture sequence informat
+ion in both positive 
+and negative directions.
+ 
+Figure 5. Structure of the ConvLSTM unit.
+Energies 
+2023
+,
+ 
+16
+, x FOR PEER REVIEW
+ 
+12
+ 
+of 
+23
+ 
+ 
+ 
+ 
+Figure 6. 
+Structure of the BiConvLSTM network.
+ 
+Assuming that the forward and backward hidden states of the BiConvLSTM network 
+can be denoted as 
+ 
+ 
+ 
+⃗
+ 
+ 
+and 
+ 
+⃖
+ 
+ 
+ 
+, respectively
+,
+ 
+t
+he update of both two
+-
+direction hidden states 
+can be calculated by Equations 
+(
+26
+) and (
+27
+)
+.
+ 
+ 
+ 
+ 
+⃗
+ 
+ 
+=
+ 
+∅
+ 
+ 
+ 
+ 
+ 
+⃗
+ 
+ 
+ 
+ 
++
+ 
+ 
+ 
+ 
+⃗
+  
+ 
+ 
+ 
+⃗
+ 
+ 
+ 
++
+ 
+ 
+⃗
+ 
+ 
+ 
+(
+26
+)
+ 
+⃖
+ 
+ 
+ 
+=
+∅
+ 
+ 
+⃖
+ 
+ 
+ 
+ 
+ 
+ 
+ 
++
+ 
+⃖
+ 
+ 
+ 
+  
+ 
+⃖
+ 
+ 
+ 
+ 
+ 
++
+ 
+⃖
+ 
+ 
+ 
+ 
+(
+27
+)
+where 
+ 
+ 
+ 
+ 
+⃗
+ 
+ 
+, 
+ 
+⃖
+ 
+ 
+ 
+ 
+ 
+, 
+ 
+ 
+ 
+ 
+⃗
+  
+, 
+ 
+⃖
+ 
+ 
+ 
+  
+ 
+are weight parameter matrices, 
+ 
+ 
+⃗
+ 
+, 
+ 
+⃖
+ 
+ 
+ 
+are bias parameter 
+vectors.
+ 
+Then, the hidden state 
+ 
+ 
+ 
+ 
+can be achieved by concatenating the forward and back-
+ward hidden states, as shown by Equation 
+(
+28
+)
+,
+ 
+a
+nd the output 
+ 
+ 
+ 
+can be calculated by 
+Equation 
+(
+29
+)
+.
+ 
+ 
+ 
+ 
+=
+ 
+ 
+ 
+ 
+⃗
+ 
+,
+ 
+⃖
+ 
+ 
+ 
+ 
+ 
+(
+28
+)
+ 
+ 
+=
+ 
+ 
+ 
+ 
+ 
+ 
++
+ 
+ 
+ 
+(
+29
+)
+where 
+ 
+ 
+ 
+ 
+is the weight parameter matrix, 
+ 
+ 
+ 
+is the bias parameter vector.
+ 
+3.4. 
+Structure of the 
+Constructed 
+HA
+-
+BiConvLSTM 
+Mode
+l
+ 
+In summary, based on the sliding window algorithm, hybrid attention mechanism 
+(HA), and bidirectional convolutional long short
+-
+term memory network (BiConvLSTM), 
+the structure of the constructed HA
+-
+BiConvLSTM model in this study 
+is 
+shown in Figure 
+7, which consists of 
+the 
+sliding window module, spatio
+-
+temporal hybrid attention net-
+work, BiConvLSTM network, flatten layer, and two
+-
+layer fully connected network.
+ 
+Figure 6. Structure of the BiConvLSTM network.
+------------------------------End of the page -----------------------------------
+Energies 2023 ,16, 6786 12 of 22
+Assuming that the forward and backward hidden states of the BiConvLSTM network
+can be denoted as!
+Htand 
+Ht, respectively, the update of both two-direction hidden states
+can be calculated by Equations (26) and (27).
+!
+Ht=?!
+WxhXt+!
+Whh!
+Ht 1+!
+bh
+(26)
+ 
+Ht=? 
+WxhXt+ 
+Whh 
+Ht+1+ 
+bh
+(27)
+where!
+Wxh, 
+Wxh,!
+Whh, 
+Whhare weight parameter matrices,!
+bh, 
+bhare bias parameter vectors.
+Then, the hidden state
+Htcan be achieved by concatenating the forward and back-
+ward hidden states, as shown by Equation (28), and the output Htcan be calculated by
+Equation (29).
+
+Ht=!
+Ht, 
+Ht
+(28)
+Ht=Who
+Ht+bo (29)
+where Whois the weight parameter matrix, bois the bias parameter vector.
+3.4. Structure of the Constructed HA-BiConvLSTM Model
+In summary, based on the sliding window algorithm, hybrid attention mechanism
+(HA), and bidirectional convolutional long short-term memory network (BiConvLSTM),
+the structure of the constructed HA-BiConvLSTM model in this study is shown in Figure 7,
+which consists of the sliding window module, spatio-temporal hybrid attention network,
+BiConvLSTM network, ﬂatten layer, and two-layer fully connected network.
+Energies 
+2023
+,
+ 
+16
+, x FOR PEER REVIEW
+ 
+13
+ 
+of 
+23
+ 
+ 
+ 
+ 
+Figure 7. 
+Structure of the HA
+-
+BiConvLSTM model.
+ 
+3.5. 
+Evaluation 
+Metric
+s
+ 
+In this study, 
+four 
+commonly used evaluation metrics, i.e., 
+root mean square error 
+(RMSE), mean absolute error (MAE), mean absolute percentage error (MAPE), and deter-
+mination coefficient (R
+2
+), were employed to quantitatively evaluate model performance, 
+which can be computed by Equations 
+(
+30
+)
+–
+(
+33
+)
+.
+ 
+    
+=
+ 
+ 
+1
+ 
+ 
+(
+ 
+ 
+−
+ 
+ 
+ 
+ 
+)
+ 
+ 
+ 
+ 
+ 
+ 
+(
+30
+)
+   
+=
+ 
+1
+ 
+ 
+|
+ 
+ 
+−
+ 
+ 
+ 
+ 
+|
+ 
+ 
+ 
+ 
+ 
+(
+31
+)
+    
+=
+ 
+1
+ 
+ 
+|
+ 
+ 
+−
+ 
+ 
+ 
+ 
+|
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+(
+32
+)
+ 
+ 
+=
+ 
+1
+−
+ 
+∑
+(
+ 
+ 
+−
+ 
+ 
+ 
+ 
+)
+ 
+ 
+ 
+ 
+ 
+∑
+(
+ 
+ 
+−
+ 
+ 
+ 
+ 
+)
+ 
+ 
+ 
+ 
+ 
+ 
+(
+33
+)
+where 
+ 
+ 
+, 
+ 
+ 
+ 
+, 
+ 
+ 
+ 
+ 
+stand for the measurements, predictions, and the mean of measure-
+ments, respectively.
+ 
+Figure 7. Structure of the HA-BiConvLSTM model.
+------------------------------End of the page -----------------------------------
+Energies 2023 ,16, 6786 13 of 22
+3.5. Evaluation Metrics
+In this study, four commonly used evaluation metrics, i.e., root mean square error
+(RMSE), mean absolute error (MAE), mean absolute percentage error (MAPE), and deter-
+mination coefﬁcient (R2), were employed to quantitatively evaluate model performance,
+which can be computed by Equations (30)–(33).
+RMSE =s
+1
+nn
+å
+i=1(yi ˆyi)2 (30)
+MAE =1
+nn
+å
+i=1jyi ˆyij (31)
+MAPE =1
+nn
+å
+i=1jyi ˆyij
+yi(32)
+R2=1 ån
+i=1 
+yi ˆyi)2
+ån
+i=1(yi yi)2(33)
+where yi,ˆyi,yistand for the measurements, predictions, and the mean of measurements,
+respectively.
+4. Condition Monitoring
+Based on the historical health SCADA data, the constructed HA-BiConvLSTM nor-
+mal behavior model (NBM) for a wind turbine gearbox can be trained and tested. The
+well-trained HA-BiConvLSTM model can be further employed to carry out condition mon-
+itoring to identify early anomalies through online SCADA data. Generally, the predicted
+residuals between the real measurements and the predictions of NBMs are small with
+stable ﬂuctuations around zero when the wind turbine operates under health conditions.
+However, once the wind turbine gearbox suffers from condition deterioration, the predicted
+residuals will slowly increase and ﬂuctuate violently. Therefore, whether the operating
+conditions of the gearbox is normal or abnormal can be determined by real-time monitoring
+of the change trend of residuals, and further statistical analysis for the ratio of outliers can
+be used to judge whether to trigger the early fault alarms.
+In this study, an improved exponentially weighted moving-average algorithm (iEWMA)
+based anomaly detection approach was designed for gearbox condition monitoring. Specifi-
+cally, based on EWMA algorithm, the adaptive outlier threshold of prediction residuals is
+firstly calculated to identify outliers, then a further statistical analysis of the outlier ratio
+within a sliding window is conducted to reduce false alarms caused by some isolated outliers.
+According to the original predicted residual rtas shown by Equation (34), the EWMA-
+smoothed residual etcan be calculated by Equation (35).
+rt=yt ˆyt (34)
+et= (1 l)et 1+lrt= (1 l)te0+lt 1
+å
+k=0(1 l)krt k (35)
+where yt,ˆytare the measurements and predictions, respectively, l2(0, 1]represents the
+smoothing coefﬁcient. The larger the smoothing coefﬁcient l, the greater the weight of the
+current sample rt. In this study, we set l=0.2.
+Then, the mean metand standard deviation setof the EWMA-smoothed residual etcan
+be calculated by Equations (36) and (37), respectively.
+met=mrt (36)
+------------------------------End of the page -----------------------------------
+Energies 2023 ,16, 6786 14 of 22
+set2=l
+1  
+1 l)2t
+(2 l)nssrt2(37)
+where mrtrepresents the mean of the original residuals, srtrepresents the standard deviation
+of the original residuals, nsis the number of residual samples.
+The upper limit of the EWMA control chart UCL(t)can be further calculated by
+Equation (38) and used as an adaptive outlier threshold to identify anomaly conditions (i.e.,
+when residual exceeding UCL(t)) of the wind turbine gearbox.
+UCL(t)=met+gset=mrt+gsrts
+l[1 (1 l)2t]
+(2 l)ns(38)
+where gis a constant and set as 3 in this study.
+Additionally, an outlier ratio hwithin a sliding window was deﬁned to reduce false
+alarms caused by some isolated outliers, as shown by Equation (39).
+h=Noutlier
+Nwindow(39)
+where Noutlier andNwindow represent the number of outliers and the number of all residual
+samples within a sliding window, respectively. In this study, the window width was set as 6.
+5. Case Study
+5.1. Data Description
+In this study, the health dataset H acquired from the double-fed induction wind turbine
+WT #23 of a wind farm located in north China was used to train and test different normal
+behavior models (NBMs), which include the constructed HA-BiConvLSTM model and
+the traditional CNN-LSTM and CNN&LSTM spatio-temporal models. The fault dataset F
+collected from WT #17, which experienced a gearbox oil over-temperature fault on 5 July
+2023 at 9:00, was employed to verify early fault detection capabilities of different NBMs
+by carrying out condition monitoring on WT #17. Detailed information about the health
+dataset H and fault dataset F is listed in Table 1.
+Table 1. Detailed information of health and fault datasets for modeling.
+Dataset WT Number Time Range Data Size Fault Time Fault Type
+Health dataset H #23 1 January 2020–31 December 2020 51,451 —— ——
+Fault dataset F #17 10 June 2020–11 July 2020 2983 5 July 2023 9:00Gearbox oil
+overtemperature
+5.2. Data Preprocessing
+Based on the modiﬁed Thompson tau approach described in Section 3.1.1, data clean-
+ing can be implemented on the original health dataset H to acquire modeling dataset M,
+which will be further split by 0.7:0.3 to obtain train set A and test set B. Table 2 lists the
+detailed results of data cleaning and data splitting, and Figure 8 visually displays the
+results of data cleaning.
+Table 2. Results of data cleaning and data splitting.
+Original Health
+DatasetModel Dataset Train Set Test Set
+51,451 43,167 30,217 12,950
+------------------------------End of the page -----------------------------------
+Energies 2023 ,16, 6786 15 of 22
+Energies 
+2023
+,
+ 
+16
+, x FOR PEER REVIEW
+ 
+15
+ 
+of 
+23
+ 
+ 
+ 
+5. 
+Case 
+Stud
+y
+ 
+5.1. 
+Data 
+Description
+ 
+In this study, the health dataset H acquired from the double
+-
+fed induction wind tur-
+bine WT #23 of a wind farm located in north China was used to train and test different 
+normal behavior models (NBMs)
+,
+ 
+which includ
+e
+ 
+the constructed HA
+-
+BiConvLSTM model 
+and the traditional CNN
+-
+LSTM and CNN&LSTM spatio
+-
+temporal models. The fault da-
+taset F collected from WT #17
+,
+ 
+which experienced 
+a 
+gearbox oil over
+-
+temperature fault 
+on 
+5 July 2023
+ 
+at 
+9:00, was employed to verify early fault detection capabilities of different 
+NBMs by carrying out condition monitoring on WT #17. Detailed information about the 
+health dataset H and fault dataset F 
+is 
+listed in Table 1.
+ 
+Table 1. 
+Detailed information of health and fault datasets for modeling.
+ 
+Dataset
+ 
+WT 
+Number
+ 
+Time 
+Range
+ 
+Data 
+Size
+ 
+Fault 
+Time
+ 
+Fault 
+Type
+ 
+Health dataset H
+ 
+#23
+ 
+1 January 2020
+–
+31 December 2020
+ 
+51,451
+ 
+——
+ 
+——
+ 
+Fault dataset F
+ 
+#17
+ 
+10 June 2020
+–
+11 July 2020
+ 
+2983
+ 
+5 July 2023 
+9:00
+ 
+Gearbox oil 
+overtemperature
+ 
+5.2. 
+Data 
+Preprocessin
+g
+ 
+Based on the modified Thompson tau approach described in Section 
+3.1.1
+, data clean-
+ing can be implemented on the original health dataset H to acquire modeling dataset M, 
+which will be further split by 0.7:0.3 to 
+obtain train
+ 
+set A and test
+ 
+s
+et B. Table 2 list
+s
+ 
+the 
+detailed result
+s
+ 
+of data cleaning and data splitting, and Figure 8 visually display
+s
+ 
+the re-
+sult
+s
+ 
+of data cleaning.
+ 
+Table 2. 
+Result
+s
+ 
+of data cleaning and data splitting.
+ 
+Original 
+Health Dataset
+ 
+Model 
+Dataset
+ 
+Train
+ 
+S
+et
+ 
+Test
+ 
+S
+et
+ 
+51,451
+ 
+43,167
+ 
+30,217
+ 
+12,950
+ 
+ 
+Figure 8. 
+Result of data cleaning.
+ 
+Moreover, to decrease the NBMs’ training difficulty and enhance the NBMs’ training 
+speed, SCADA monitoring variables need to carry out data normalization 
+according to 
+Equation 
+(
+5
+)
+.
+ 
+5.3. 
+Variable 
+Selection
+ 
+To reduce the model complexity, based on the variable selection method described 
+in Section 
+3.1.3
+, the hybrid correlation analysis including Pearson, Spearman, and Kendall 
+correlation coefficients was performed on numerous SCADA monitoring variables to se-
+lect variables 
+that 
+had higher correlation
+s
+ 
+with the model output 
+as 
+the model inputs. In 
+0
+5
+10
+15
+20
+0
+500
+1,000
+1,500
+ 
+Normal data
+ 
+Abnormal data
+Wind speed (m/s)
+Active power (kW)
+Figure 8. Result of data cleaning.
+Moreover, to decrease the NBMs’ training difﬁculty and enhance the NBMs’ training
+speed, SCADA monitoring variables need to carry out data normalization according to
+Equation (5).
+5.3. Variable Selection
+To reduce the model complexity, based on the variable selection method described in
+Section 3.1.3, the hybrid correlation analysis including Pearson, Spearman, and Kendall
+correlation coefﬁcients was performed on numerous SCADA monitoring variables to select
+variables that had higher correlations with the model output as the model inputs. In
+this study, comprehensively considering the correlation analysis result and wind turbine
+operation control principle, we selected 13 variables with correlation coefﬁcients greater
+than 0.3 (i.e., active power, actual torque, blade 1 motor temperature, current L1, gearbox
+front bearing temperature, gearbox inlet oil temperature, gearbox oil pump pressure,
+gearbox rear bearing temperature, generator speed, generator winding U temperature,
+main bearing temperature, main bearing speed, wind speed) as the model inputs, gearbox
+oil temperature as the model output. It should be noted that for variables like currents
+(L1, L2, L3) and generator winding temperature (U, V , W), we only chose one phase as
+the model input. Detailed calculation results of three correlation coefﬁcients are shown
+in Figure 9.
+Energies 
+2023
+,
+ 
+16
+, x FOR PEER REVIEW
+ 
+16
+ 
+of 
+23
+ 
+ 
+ 
+this study, comprehensively considering the correlation analysis result and wind turbine 
+operation control principle, we selected 13 variables with correlation coefficients greater 
+than 0.3 (i.e., active power, actual torque, blade 1 motor temperature, cur
+rent L1, gearbox 
+front bearing temperature, gearbox inlet oil temperature, gearbox oil pump pressure, 
+gearbox rear bearing temperature, generator speed, generator winding U temperature, 
+main bearing temperature, main bearing speed, wind speed) as the model
+ 
+inputs, gearbox 
+oil temperature as the model output. It should be noted that 
+for 
+variables like currents 
+(L1, L2, L3) and generator winding temperature (U, V, W), we only chose one phase as the 
+model input.
+ 
+Detailed calculation results of three correlation coefficients 
+are 
+shown in Fig-
+ure 9.
+ 
+ 
+Figure 9. 
+Results of Pearson, Spearman, and Kendall correlation coefficients.
+ 
+5.4. 
+Model 
+Train 
+and 
+Tes
+t
+ 
+Based on the train
+ 
+set A and test
+ 
+set B acquired in Section 
+5.2
+, the constructed HA
+-
+BiConvLSTM model and three other comparative models (i.e., CNN
+-
+LSTM, CNN&LSTM, 
+ConvLSTM) were trained and tested. 
+In this study, the mean square error (MSE) loss was 
+used to training the constructed model, and the learning rate, the batch size, the number 
+of epochs were set as 0.001, 64, 1000, respectively. 
+The quantitative evaluation metrics (i.e., 
+RMSE, MAE, MAPE, R
+2
+) of prediction residuals of different well
+-
+trained gearb
+ox normal 
+behavior models for the test
+ 
+set B are listed in Table 3.
+ 
+Table 3. 
+Evaluation results of different NBMs.
+ 
+Model
+ 
+RMSE
+ 
+MAE
+ 
+MAPE
+ 
+R
+2
+ 
+CNN
+-
+LSTM
+ 
+1.5003
+ 
+1.1395
+ 
+0.0196
+ 
+0.9533
+ 
+CNN&LSTM
+ 
+1.3537
+ 
+1.0252
+ 
+0.0176
+ 
+0.9669
+ 
+ConvLSTM
+ 
+0.9759
+ 
+0.7471
+ 
+0.0129
+ 
+0.9814
+ 
+HA
+-
+BiConvLSTM
+ 
+0.7683
+ 
+0.5696
+ 
+0.0098
+ 
+0.9918
+ 
+As can be observed from Table 3, compared with CNN
+-
+LSTM and CNN&LSTM, the 
+ConvLSTM
+ 
+model presented better performance with lower RMSE, MAE, and MAPE val-
+ues and a higher R
+2
+ 
+value, obtaining the RMSE, MAE, MAPE reductions by about 31.61%, 
+30.97%, 
+and 
+30.79% and the R2 improvement by 2.22% on average.
+ 
+The possible reason 
+behind those may be that the special embedded network structure of ConvLSTM perfectly 
+overcome the disadvantages of the non
+-
+interactive problem caused by the CNN&LSTM 
+parallel network structure, or the non
+-
+synchronous problem caused by 
+the CNN
+-
+LSTM 
+cascaded network structur
+e, which 
+means that 
+it can effectively mine the spatial
+-
+temporal 
+features inherent in the massive high
+-
+dimensional SCADA time series.
+ 
+Among all four comparative models, the constructed HA
+-
+BiConvLSTM model pos-
+sessed the best prediction performance, due to the bidirectional network structure 
+that 
+Wind speed
+Main bearing temp.
+Main bearing speed
+Generator winding U temp.
+Generator speed
+Gearbox rear bearing temp.
+Gearbox oil pump pressure
+Gearbox inlet oil temp.
+Gearbox front bearing temp.
+Current L1
+Blade 1 motor temp.
+Actual torque
+Active power
+0.0
+0.1
+0.2
+0.3
+0.4
+0.5
+0.6
+0.7
+0.8
+0.9
+1.0
+ 
+Kendall
+ 
+Spearman
+ 
+Pearson
+Figure 9. Results of Pearson, Spearman, and Kendall correlation coefﬁcients.
+5.4. Model Train and Test
+Based on the train set A and test set B acquired in Section 5.2, the constructed HA-
+BiConvLSTM model and three other comparative models (i.e., CNN-LSTM, CNN&LSTM,
+ConvLSTM) were trained and tested. In this study, the mean square error (MSE) loss was
+------------------------------End of the page -----------------------------------
+Energies 2023 ,16, 6786 16 of 22
+used to training the constructed model, and the learning rate, the batch size, the number of
+epochs were set as 0.001, 64, 1000, respectively. The quantitative evaluation metrics (i.e.,
+RMSE, MAE, MAPE, R2) of prediction residuals of different well-trained gearbox normal
+behavior models for the test set B are listed in Table 3.
+Table 3. Evaluation results of different NBMs.
+Model RMSE MAE MAPE R2
+CNN-LSTM 1.5003 1.1395 0.0196 0.9533
+CNN&LSTM 1.3537 1.0252 0.0176 0.9669
+ConvLSTM 0.9759 0.7471 0.0129 0.9814
+HA-BiConvLSTM 0.7683 0.5696 0.0098 0.9918
+As can be observed from Table 3, compared with CNN-LSTM and CNN&LSTM,
+the ConvLSTM model presented better performance with lower RMSE, MAE, and MAPE
+values and a higher R2value, obtaining the RMSE, MAE, MAPE reductions by about 31.61%,
+30.97%, and 30.79% and the R2 improvement by 2.22% on average. The possible reason
+behind those may be that the special embedded network structure of ConvLSTM perfectly
+overcome the disadvantages of the non-interactive problem caused by the CNN&LSTM
+parallel network structure, or the non-synchronous problem caused by the CNN-LSTM
+cascaded network structure, which means that it can effectively mine the spatial-temporal
+features inherent in the massive high-dimensional SCADA time series.
+Among all four comparative models, the constructed HA-BiConvLSTM model pos-
+sessed the best prediction performance, due to the bidirectional network structure that can
+capture the sequential information from both forward and backward directions simultane-
+ously, and the hybrid-attention introduction that can adaptively assign attention weights
+to input variables to enhance the model’s focus on key features or weaken the redundant
+features. The RMSE, MAE, and MAPE values of the HA-BiConvLSTM networks were
+0.7683C, 0.5696C, and 0.0098, which were 21.27%, 23.75%, and 23.97% lower than those
+of the ConvLSTM network, respectively. The R2value of the HA-BiConvLSTM network
+was 0.9918, which was 1.06% higher than that of the ConvLSTM network.
+Figures 10–12 intuitively display the timing diagrams of prediction residuals of differ-
+ent models for test set B, the probability density distributions (PDF) of prediction residuals
+of different models for test set B, and the gearbox oil temperature predictions of different
+models for partial test set B, respectively.
+Energies 2023 , 16, x FOR PEER REVIEW 17 of 23 
+ 
+ can capture the sequential information from both forward and backward directions sim-
+ultaneously, and the hybrid-attention introduc tion that can adaptively assign attention 
+weights to input variables to enhance the model’s focus on key features or weaken the redundant features. The RMSE, MAE, and MAPE values of the HA-BiConvLSTM net-
+works were 0.7683 °C, 0.5696 °C, and 0.0098, which were 21.27%, 23.75%, and 23.97% 
+lower than those of the ConvLSTM network, respectively. The R
+2 value of the HA-BiCon-
+vLSTM network was 0.9918, which was 1.06% high er than that of the ConvLSTM network. 
+Figures 10–12 intuitively display the timing diagrams of prediction residuals of dif-
+ferent models for test set B, the probability density distributions (PDF) of prediction re-
+siduals of different models for test set B, and the gearbox oil temperature predictions of 
+different models for partial test set B, respectively. 
+  
+Figure 10. Residual of different models for test set B. 
+ 
+Figure 11. PDFs of prediction residual of different models for test set B. 
+ 
+Figure 12. Gearbox oil temperature predictions of different models for partial test set B. 0 2,000 4,000 6,000 8,000 10,000 12,000-8-404812
+Time (10 mins ) CNN-LSTM
+ CNN&LSTM
+ ConvLSTM
+ HA-BiConvLSTMResidual ( ) ℃
+−−
+-6 -4 -2 0 2 4 603006009001,2001,500 Count
+ CNN-LSTM
+ CNN&LSTM
+ ConvLSTM
+ HA-BiConvLSTM
+Residual ()℃− − −
+0 400 800 1,200 1,600 2,0003540455055606570
+ Real
+ CNN-LSTM
+ CNN&LSTM
+ ConvLSTM
+ HA-BiConvLSTM
+Time (10 mins )Gearbox oil temp. ( ) ℃
+Figure 10. Residual of different models for test set B.
+------------------------------End of the page -----------------------------------
+Energies 2023 ,16, 6786 17 of 22
+Energies 2023 , 16, x FOR PEER REVIEW 17 of 23 
+ 
+ can capture the sequential information from both forward and backward directions sim-
+ultaneously, and the hybrid-attention introduc tion that can adaptively assign attention 
+weights to input variables to enhance the model’s focus on key features or weaken the redundant features. The RMSE, MAE, and MAPE values of the HA-BiConvLSTM net-
+works were 0.7683 °C, 0.5696 °C, and 0.0098, which were 21.27%, 23.75%, and 23.97% 
+lower than those of the ConvLSTM network, respectively. The R
+2 value of the HA-BiCon-
+vLSTM network was 0.9918, which was 1.06% high er than that of the ConvLSTM network. 
+Figures 10–12 intuitively display the timing diagrams of prediction residuals of dif-
+ferent models for test set B, the probability density distributions (PDF) of prediction re-
+siduals of different models for test set B, and the gearbox oil temperature predictions of 
+different models for partial test set B, respectively. 
+  
+Figure 10. Residual of different models for test set B. 
+ 
+Figure 11. PDFs of prediction residual of different models for test set B. 
+ 
+Figure 12. Gearbox oil temperature predictions of different models for partial test set B. 0 2,000 4,000 6,000 8,000 10,000 12,000-8-404812
+Time (10 mins ) CNN-LSTM
+ CNN&LSTM
+ ConvLSTM
+ HA-BiConvLSTMResidual ( ) ℃
+−−
+-6 -4 -2 0 2 4 603006009001,2001,500 Count
+ CNN-LSTM
+ CNN&LSTM
+ ConvLSTM
+ HA-BiConvLSTM
+Residual ()℃− − −
+0 400 800 1,200 1,600 2,0003540455055606570
+ Real
+ CNN-LSTM
+ CNN&LSTM
+ ConvLSTM
+ HA-BiConvLSTM
+Time (10 mins )Gearbox oil temp. ( ) ℃
+Figure 11. PDFs of prediction residual of different models for test set B.
+Energies 2023 , 16, x FOR PEER REVIEW 17 of 23 
+ 
+ can capture the sequential information from both forward and backward directions sim-
+ultaneously, and the hybrid-attention introduc tion that can adaptively assign attention 
+weights to input variables to enhance the model’s focus on key features or weaken the redundant features. The RMSE, MAE, and MAPE values of the HA-BiConvLSTM net-
+works were 0.7683 °C, 0.5696 °C, and 0.0098, which were 21.27%, 23.75%, and 23.97% 
+lower than those of the ConvLSTM network, respectively. The R
+2 value of the HA-BiCon-
+vLSTM network was 0.9918, which was 1.06% high er than that of the ConvLSTM network. 
+Figures 10–12 intuitively display the timing diagrams of prediction residuals of dif-
+ferent models for test set B, the probability density distributions (PDF) of prediction re-
+siduals of different models for test set B, and the gearbox oil temperature predictions of 
+different models for partial test set B, respectively. 
+  
+Figure 10. Residual of different models for test set B. 
+ 
+Figure 11. PDFs of prediction residual of different models for test set B. 
+ 
+Figure 12. Gearbox oil temperature predictions of different models for partial test set B. 0 2,000 4,000 6,000 8,000 10,000 12,000-8-404812
+Time (10 mins ) CNN-LSTM
+ CNN&LSTM
+ ConvLSTM
+ HA-BiConvLSTMResidual ( ) ℃
+−−
+-6 -4 -2 0 2 4 603006009001,2001,500 Count
+ CNN-LSTM
+ CNN&LSTM
+ ConvLSTM
+ HA-BiConvLSTM
+Residual ()℃− − −
+0 400 800 1,200 1,600 2,0003540455055606570
+ Real
+ CNN-LSTM
+ CNN&LSTM
+ ConvLSTM
+ HA-BiConvLSTM
+Time (10 mins )Gearbox oil temp. ( ) ℃
+Figure 12. Gearbox oil temperature predictions of different models for partial test set B.
+As can be seen from Figures 10–12, compared with CNN-LSTM and CNN&LSTM, the
+prediction results clearly illustrated the ConvLSTM’s advantages of smaller residual values,
+less residual outliers, more stable residual ﬂuctuations, sharper probability density function
+(PDF) curve, and predictions closer to the real measurements, which verify the superiority
+of the network structure of ConvLSTM as a gearbox normal behavior model. It can be also
+found that the introduction of hybrid-attention and bidirectional-structure improved the
+model performance of ConvLSTM, and the constructed HA-BiConvLSTM model of this
+study performed best in all aspects (i.e., smallest residual values, sharpest PDF curve, and
+closest to the real measurements), which was consistent with the quantitative evaluation
+results in terms of RMSE, MAE, MAPE, and R2values, as listed in Table 3.
+Overall, from both a quantitative metric and qualitative display perspective, the above-
+mentioned results listed in Table 3 and displayed in Figures 10–12 veriﬁed the effectiveness
+and superiority of the constructed HA-BiConvLSTM model due to its powerful spatio-
+temporal feature mining ability, as a normal behavior model for a gearbox.
+5.5. Condition Monitoring
+When model ofﬂine training is completed, the well-trained HA-BiConvLSTM normal
+behavior model can be employed to implement online condition monitoring for a wind
+turbine gearbox. Generally, when a wind turbine operates normally, the NBMs prediction
+residuals would be small with stable ﬂuctuations. Nevertheless, when a wind turbine
+gearbox suffers from condition deteriorations, the NBMs prediction residuals would be
+larger with violent ﬂuctuations. Therefore, by real-time monitoring the change trend of the
+NBMs prediction residuals and residual statistical analysis using sliding windows, early
+faults of wind turbine gearboxes can be identiﬁed automatically in advance.
+An actual gearbox fault case collected from a wind farm located in north China was
+used to verify the effectiveness of the proposed HBCE method for early fault detection.
+------------------------------End of the page -----------------------------------
+Energies 2023 ,16, 6786 18 of 22
+Meanwhile, to verify the superiority of the proposed HBCE method, conventional spatio-
+temporal models (i.e., CNN-LSTM, CNN&LSTM) were employed to compare and analyze
+the early fault detection results with the constructed HA-BiConvLSTM model. According
+to the alarm records of the SCADA system and the operation and maintenance logs of
+wind farm, WT #17 experienced a gearbox oil over-temperature fault on 5 July 2023 at
+9:00. Approximate one month SCADA data around 5 July 2023 9:00 were selected for the
+validation analysis of the model’s early anomaly capability.
+Figure 13 displays the wind speed and active power of WT #17, from which it can be
+found that the wind speed ﬂuctuated violently between 5.4 m/s and 11.69 m/s during the
+period from 24 June 2023 15:40 to 27 June 2023 20:00, and gradually climbed from 3.31 m/s
+to the maximum 13.12 m/s during the period from 2 July 2023 23:40 to 5 July 2023 9:00.
+Energies 
+2023
+,
+ 
+16
+, x FOR PEER REVIEW
+ 
+18
+ 
+of 
+23
+ 
+ 
+ 
+As can be seen from Figures 10
+–
+12, compared with CNN
+-
+LSTM and CNN&LSTM, 
+the prediction results clearly illustrated the ConvLSTM’s advantages of smaller residual 
+values, less residual outliers, more stable residual fluctuations, sharper probability den-
+sity function (PDF) curve, and predi
+ctions closer to the real measurements, which verify 
+the superiority of 
+the 
+network structure of ConvLSTM as a gearbox normal behavior 
+model. It can be also found that the introduction of hybrid
+-
+attention and bidirectional
+-
+st
+ructure improved the model performance of ConvLSTM, and the constructed HA
+-
+Bi-
+ConvLSTM model of this study performed best in all aspects (i.e., smallest residual values, 
+sharpest PDF curve, and closest to the real measurements), which was consistent with th
+e 
+quantitative evaluation results in terms of RMSE, MAE, MAPE, and R
+2
+ 
+values, as listed in 
+Table 3.
+ 
+Overall, from both 
+a 
+quantitative metric and qualitative display perspective, the 
+above
+-
+mentioned results listed in Table 3 and displayed in Figures 10
+–
+12 verified the ef-
+fectiveness and superiority of the constructed HA
+-
+BiConvLSTM model due to its power-
+ful spatio
+-
+temporal feature mining ability, as a normal behavior model for 
+a 
+gearbox.
+ 
+5
+.
+5
+. 
+Condition 
+Monitoring
+ 
+When model offline training 
+is 
+completed, the well
+-
+trained HA
+-
+BiConvLSTM normal 
+behavior model can be employed to implement online condition monitoring for 
+a 
+wind 
+turbine gearbox. Generally, when 
+a 
+wind turbine operat
+es
+ 
+normally, the NBMs prediction 
+residuals would be small with stable fluctuations. Nevertheless, when 
+a 
+wind turbine 
+gearbox suffer
+s
+ 
+from condition deteriorations, the NBMs prediction residuals would be 
+larger with violent fluctuations. Therefore, by real
+-
+time monitoring the change trend of 
+th
+e NBMs prediction residuals and residual statistical analysis using sliding windows, 
+early faults of wind turbine gearboxes can be identified automatically in advance.
+ 
+An actual gearbox fault case collected from a wind farm located in north China was 
+used to verify the effectiveness of the proposed HBCE method for early fault detection. 
+Meanwhile, to verify the superiority of the proposed HBCE method, conventional spatio
+-
+temporal models (i.e., CNN
+-
+LSTM, CNN&LSTM) were employed to compare and analyze 
+the early fault detection results with the constructed HA
+-
+BiConvLSTM model.
+ 
+According 
+to the alarm records of 
+the 
+SCADA system and the operation and maintenance logs of 
+wind f
+arm, WT #17 experienced 
+a 
+gearbox oil over
+-
+temperature fault 
+on 
+5 July 2023 
+at 
+9:00. Approximate one month SCADA data around 
+5 July 2023 
+9:00 
+were 
+selected for the 
+validation analysis of 
+the 
+model’s early anomaly capability.
+ 
+Figure 13 display
+s
+ 
+the wind speed and active power of WT #17, from which it can
+ 
+be
+ 
+found that 
+the 
+wind speed fluctuated violently between 5.
+4 m
+/s and 11.6
+9 m
+/s during the 
+period from 
+24 June 2023 
+15:40 to 
+27 June 2023 
+20:00, and gradually climbed from 3.3
+1 m
+/s 
+to the maximum 13.1
+2 m
+/s during the period from 
+2 July 2023 
+23:40 to 
+5 July 2023 
+9:00.
+ 
+ 
+Figure 13. 
+Wind speed and active power of WT #17.
+ 
+0
+500
+1,000
+1,500
+2,000
+2,500
+3,000
+0
+400
+800
+1,200
+1,600
+0
+5
+10
+15
+Time (10 mins)
+ 
+Wind speed
+ 
+Active power
+Active power (kW)
+Wind speed (m/s)
+2023/6/24 15:40—2023/6/27 20:00
+2023/7/2 23:40—2023/7/5 9:00
+Figure 13. Wind speed and active power of WT #17.
+Figure 14 displays the real measurements and different NBMs’ predictions of WT #17
+gearbox oil temperature.
+Energies 2023 , 16, x FOR PEER REVIEW 19 of 23 
+ 
+ Figure 14 displays the real measurements and different NBMs’ predictions of WT #17 
+gearbox oil temperature. 
+ 
+Figure 14. Different NBMs’ predictions and real meas urements of WT #17 gearbox oil tempera-
+ture. 
+As can be observed in Figure 14, at beginning of the period, different NBMs’ predic-
+tions are very close to real measurements and consistent with the variation trend of real 
+gearbox oil temperature. However, from around  24 June 2023, prediction residuals that 
+indicate differences between predictions and measurements start to increase little by little 
+with bigger fluctuations, and the consistencies of predictions and measurements also 
+gradually deteriorate until the real gearbox oi l temperature exceeds 80 °C on 5 July 2023 
+at 9:00. 
+Then, different NBMs’ prediction residual s can be calculated by predictions and 
+measurements and smoothed by the exponentially weighted moving-average (EWMA) 
+method, which can be further employed to calculate adaptive outlier thresholds by Equa-
+tion (38). Then, through statistical analysis of outliers using sliding windows, early fault 
+alarm can be triggered if the number of out liers in the window exceeds 6 (i.e., gearbox 
+abnormal condition lasting for more than one hour). In this study, we set the window 
+range as 6 and an alarm signal will be issued if the outlier ratio reaches 1. 
+For the fault dataset acquired from WT #1 7, which experienced a gearbox oil over-
+temperature fault, the original prediction re siduals, smoothed residuals, adaptive thresh-
+olds, and outlier sliding window statistical results of three contrastive NBMs (i.e., the con-
+structed HA-BiConvLSTM model in this study,  the conventional spatio-temporal models 
+CNN-LSTM and CNN&LSTM) are displayed in Figures 15–17. 
+Figure 15 displays the condition monitoring results of the traditional CNN-LSTM 
+model for WT #17. 
+ 
+Figure 15. Condition monitoring result of CNN-LSTM for WT #17. 0 500 1,000 1,500 2,000 2,500 3,00 0304050607080
+Time (10 mins ) Real
+ CNN-LSTM
+ CNN&LSTM
+ HA-BiConvLSTMGearbox oil temp. ( ) ℃2023/7/5 9:00
+−60612
+0 500 1,000 1,500 2,000 2,500 3,0000.00.51.0 Residual
+ Residual_ewma
+ Alarm threshold
+UCL = 2.83Residual ( ) ℃2023/6/12 3:20 2023/6/20 4:30 2023/6/29 21:10Outlier ratio
+Time (10 mins ) Outlier ratio
+2023/6/12 3:20 2023/6/20 4:302023/6/29 21:10
+Figure 14. Different NBMs’ predictions and real measurements of WT #17 gearbox oil temperature.
+As can be observed in Figure 14, at beginning of the period, different NBMs’ pre-
+dictions are very close to real measurements and consistent with the variation trend of
+real gearbox oil temperature. However, from around 24 June 2023, prediction residuals
+that indicate differences between predictions and measurements start to increase little
+by little with bigger ﬂuctuations, and the consistencies of predictions and measurements
+also gradually deteriorate until the real gearbox oil temperature exceeds 80C on 5 July
+2023 at 9:00.
+Then, different NBMs’ prediction residuals can be calculated by predictions and mea-
+surements and smoothed by the exponentially weighted moving-average (EWMA) method,
+which can be further employed to calculate adaptive outlier thresholds by Equation (38).
+Then, through statistical analysis of outliers using sliding windows, early fault alarm can
+be triggered if the number of outliers in the window exceeds 6 (i.e., gearbox abnormal
+------------------------------End of the page -----------------------------------
+Energies 2023 ,16, 6786 19 of 22
+condition lasting for more than one hour). In this study, we set the window range as 6 and
+an alarm signal will be issued if the outlier ratio reaches 1.
+For the fault dataset acquired from WT #17, which experienced a gearbox oil over-
+temperature fault, the original prediction residuals, smoothed residuals, adaptive thresh-
+olds, and outlier sliding window statistical results of three contrastive NBMs (i.e., the
+constructed HA-BiConvLSTM model in this study, the conventional spatio-temporal mod-
+els CNN-LSTM and CNN&LSTM) are displayed in Figures 15–17.
+Energies 2023 , 16, x FOR PEER REVIEW 19 of 23 
+ 
+ Figure 14 displays the real measurements and different NBMs’ predictions of WT #17 
+gearbox oil temperature. 
+ 
+Figure 14. Different NBMs’ predictions and real meas urements of WT #17 gearbox oil tempera-
+ture. 
+As can be observed in Figure 14, at beginning of the period, different NBMs’ predic-
+tions are very close to real measurements and consistent with the variation trend of real 
+gearbox oil temperature. However, from around  24 June 2023, prediction residuals that 
+indicate differences between predictions and measurements start to increase little by little 
+with bigger fluctuations, and the consistencies of predictions and measurements also 
+gradually deteriorate until the real gearbox oi l temperature exceeds 80 °C on 5 July 2023 
+at 9:00. 
+Then, different NBMs’ prediction residual s can be calculated by predictions and 
+measurements and smoothed by the exponentially weighted moving-average (EWMA) 
+method, which can be further employed to calculate adaptive outlier thresholds by Equa-
+tion (38). Then, through statistical analysis of outliers using sliding windows, early fault 
+alarm can be triggered if the number of out liers in the window exceeds 6 (i.e., gearbox 
+abnormal condition lasting for more than one hour). In this study, we set the window 
+range as 6 and an alarm signal will be issued if the outlier ratio reaches 1. 
+For the fault dataset acquired from WT #1 7, which experienced a gearbox oil over-
+temperature fault, the original prediction re siduals, smoothed residuals, adaptive thresh-
+olds, and outlier sliding window statistical results of three contrastive NBMs (i.e., the con-
+structed HA-BiConvLSTM model in this study,  the conventional spatio-temporal models 
+CNN-LSTM and CNN&LSTM) are displayed in Figures 15–17. 
+Figure 15 displays the condition monitoring results of the traditional CNN-LSTM 
+model for WT #17. 
+ 
+Figure 15. Condition monitoring result of CNN-LSTM for WT #17. 0 500 1,000 1,500 2,000 2,500 3,00 0304050607080
+Time (10 mins ) Real
+ CNN-LSTM
+ CNN&LSTM
+ HA-BiConvLSTMGearbox oil temp. ( ) ℃2023/7/5 9:00
+−60612
+0 500 1,000 1,500 2,000 2,500 3,0000.00.51.0 Residual
+ Residual_ewma
+ Alarm threshold
+UCL = 2.83Residual ( ) ℃2023/6/12 3:20 2023/6/20 4:30 2023/6/29 21:10Outlier ratio
+Time (10 mins ) Outlier ratio
+2023/6/12 3:20 2023/6/20 4:302023/6/29 21:10
+Figure 15. Condition monitoring result of CNN-LSTM for WT #17.
+Energies 2023 , 16, x FOR PEER REVIEW 20 of 23 
+ 
+ As can be observed from Figure 15, during  approximately the first half of the study 
+period, the CNN-LSTM prediction residuals, including the original residual and the 
+EWMA smoothed residual ,were small with st able fluctuations; most residuals were un-
+der the adaptive outlier threshold UCL = 2.83 °C except for two isolated outliers on 12 
+June 2023 at 3:20 and 20 June 2023 at 4:30. Ho wever, from around 24 June 2023, prediction 
+residuals started to gradually increase and fluctuate violently in amplitude until continu-
+ously exceeding the outlier threshold UCL = 2.83  °C around 29 June 2023 21:10, and the 
+outlier ratio within a sliding window continuously reached the maximum 1 after 29 June 2023 21:10, which indicates that the CNN-LSTM model can identified the early fault signal 
+131.83 h in advance of the actual failure time 2023/7/5 9:00. 
+Figure 16 displays the condition monitori ng results of the traditional CNN&LSTM 
+model for WT #17. 
+ 
+Figure 16. Condition monitoring result of CNN&LSTM for WT #17. 
+As can be observed from Figure 16, the condition monitoring results of CNN&LSTM 
+for WT #17 were similar to CNN-LSTM during  approximately the first half of the study 
+period, and most residuals were under the adaptive outlier threshold UCL = 2.62 °C, ex-
+cept for an isolated outlier on 18 June 2023  at 9:50. Moreover, within the second half-pe-
+riod, prediction residuals started to gradually increase and fluctuate violently in ampli-tude until continuously exceeding the outlier threshold UCL = 2.82 °C around 26 June 
+2023 5:30, and the outlier ratio within a sliding window continuously reached the maxi-
+mum 1 after 26 June 2023 5:30, which indicates that the CNN&LSTM model can identified 
+the early fault signal 219.5 h in advance of the actual failure time 5 July 2023 9:00. 
+Figure 17 displays the condition monitoring results of the constructed HA-BiCon-
+vLSTM model for WT #17. 
+ 
+Figure 17. Condition monitoring result of  HA-BiConvLSTM for WT #17. 
+As can be observed from Figure 17, diff erent from the conventional CNN-LSTM and 
+CNN&LSTM models, the prediction residuals of the constructed HA-BiConvLSTM model −60612
+0 500 1,000 1,500 2,000 2,500 3,0000.00.51.0 Residual
+ Residual_ewma
+ Alarm threshold
+UCL = 2.62Residual ( ) ℃2023/6/18 9:50 2023/6/26 5:30Outlier ratio
+Time (10 mins ) Outlier ratio
+2023/6/18 9:502023/6/26 5:30
+−60612
+0 500 1,000 1,500 2,000 2,500 3,0000.00.51.0 Residual
+ Residual_ewma
+ Alarm threshold
+UCL = 2.48Residual ( ) ℃2023/6/24 19:50Outlier ratio
+Time (10 mins ) Outlier ratio2023/6/24 19:50
+Figure 16. Condition monitoring result of CNN&LSTM for WT #17.
+Energies 2023 , 16, x FOR PEER REVIEW 20 of 23 
+ 
+ As can be observed from Figure 15, during  approximately the first half of the study 
+period, the CNN-LSTM prediction residuals, including the original residual and the 
+EWMA smoothed residual ,were small with st able fluctuations; most residuals were un-
+der the adaptive outlier threshold UCL = 2.83 °C except for two isolated outliers on 12 
+June 2023 at 3:20 and 20 June 2023 at 4:30. Ho wever, from around 24 June 2023, prediction 
+residuals started to gradually increase and fluctuate violently in amplitude until continu-
+ously exceeding the outlier threshold UCL = 2.83  °C around 29 June 2023 21:10, and the 
+outlier ratio within a sliding window continuously reached the maximum 1 after 29 June 2023 21:10, which indicates that the CNN-LSTM model can identified the early fault signal 
+131.83 h in advance of the actual failure time 2023/7/5 9:00. 
+Figure 16 displays the condition monitori ng results of the traditional CNN&LSTM 
+model for WT #17. 
+ 
+Figure 16. Condition monitoring result of CNN&LSTM for WT #17. 
+As can be observed from Figure 16, the condition monitoring results of CNN&LSTM 
+for WT #17 were similar to CNN-LSTM during  approximately the first half of the study 
+period, and most residuals were under the adaptive outlier threshold UCL = 2.62 °C, ex-
+cept for an isolated outlier on 18 June 2023  at 9:50. Moreover, within the second half-pe-
+riod, prediction residuals started to gradually increase and fluctuate violently in ampli-tude until continuously exceeding the outlier threshold UCL = 2.82 °C around 26 June 
+2023 5:30, and the outlier ratio within a sliding window continuously reached the maxi-
+mum 1 after 26 June 2023 5:30, which indicates that the CNN&LSTM model can identified 
+the early fault signal 219.5 h in advance of the actual failure time 5 July 2023 9:00. 
+Figure 17 displays the condition monitoring results of the constructed HA-BiCon-
+vLSTM model for WT #17. 
+ 
+Figure 17. Condition monitoring result of  HA-BiConvLSTM for WT #17. 
+As can be observed from Figure 17, diff erent from the conventional CNN-LSTM and 
+CNN&LSTM models, the prediction residuals of the constructed HA-BiConvLSTM model −60612
+0 500 1,000 1,500 2,000 2,500 3,0000.00.51.0 Residual
+ Residual_ewma
+ Alarm threshold
+UCL = 2.62Residual ( ) ℃2023/6/18 9:50 2023/6/26 5:30Outlier ratio
+Time (10 mins ) Outlier ratio
+2023/6/18 9:502023/6/26 5:30
+−60612
+0 500 1,000 1,500 2,000 2,500 3,0000.00.51.0 Residual
+ Residual_ewma
+ Alarm threshold
+UCL = 2.48Residual ( ) ℃2023/6/24 19:50Outlier ratio
+Time (10 mins ) Outlier ratio2023/6/24 19:50
+Figure 17. Condition monitoring result of HA-BiConvLSTM for WT #17.
+Figure 15 displays the condition monitoring results of the traditional CNN-LSTM
+model for WT #17.
+As can be observed from Figure 15, during approximately the ﬁrst half of the study
+period, the CNN-LSTM prediction residuals, including the original residual and the EWMA
+smoothed residual, were small with stable ﬂuctuations; most residuals were under the
+adaptive outlier threshold UCL = 2.83C except for two isolated outliers on 12 June 2023
+------------------------------End of the page -----------------------------------
+Energies 2023 ,16, 6786 20 of 22
+at 3:20 and 20 June 2023 at 4:30. However, from around 24 June 2023, prediction residuals
+started to gradually increase and ﬂuctuate violently in amplitude until continuously ex-
+ceeding the outlier threshold UCL = 2.83C around 29 June 2023 21:10, and the outlier ratio
+within a sliding window continuously reached the maximum 1 after 29 June 2023 21:10,
+which indicates that the CNN-LSTM model can identiﬁed the early fault signal 131.83 h in
+advance of the actual failure time 2023/7/5 9:00.
+Figure 16 displays the condition monitoring results of the traditional CNN&LSTM
+model for WT #17.
+As can be observed from Figure 16, the condition monitoring results of CNN&LSTM
+for WT #17 were similar to CNN-LSTM during approximately the ﬁrst half of the study
+period, and most residuals were under the adaptive outlier threshold UCL = 2.62C, except
+for an isolated outlier on 18 June 2023 at 9:50. Moreover, within the second half-period,
+prediction residuals started to gradually increase and ﬂuctuate violently in amplitude until
+continuously exceeding the outlier threshold UCL = 2.82C around 26 June 2023 5:30, and
+the outlier ratio within a sliding window continuously reached the maximum 1 after 26
+June 2023 5:30, which indicates that the CNN&LSTM model can identiﬁed the early fault
+signal 219.5 h in advance of the actual failure time 5 July 2023 9:00.
+Figure 17 displays the condition monitoring results of the constructed HA-BiConvLSTM
+model for WT #17.
+As can be observed from Figure 17, different from the conventional CNN-LSTM and
+CNN&LSTM models, the prediction residuals of the constructed HA-BiConvLSTM model
+in this study did not include isolated outliers when the wind turbine gearbox operated
+under health conditions during approximately the ﬁrst half-period, which illustrates the ro-
+bustness of HA-BiConvLSTM. All residuals were below the outlier threshold UCL = 2.48C
+until continuously exceeding it around 24 June 2023 19:50, and the outlier ratio within
+a sliding window continuously reached the maximum 1 after 24 June 2023 19:50, which
+indicates that the HA-BiConvLSTM model can identify the early fault signal 253.17 h in
+advance of the actual failure time 5 July 2023 9:00.
+In summary, through contrastively analyzing the condition monitoring results of
+different NBMs for fault wind turbine WT #17, the effectiveness, superiority, and robustness
+of the HA-BiConvLSTM model for wind turbine gearbox early fault detection were veriﬁed.
+6. Conclusions
+In this study, based on the hybrid attention mechanism (HA), the convolutional long
+short-term memory network (BiConvLSTM), and the improved exponentially weighted
+moving-average algorithm (iEWMA) based anomaly detection approach, we proposed a
+novel spatio-temporal condition monitoring method (HBCE) for a wind turbine gearbox.
+The effectiveness, superiority, and robustness of the proposed HBCE method was veriﬁed
+by the SCADA datasets collected from a wind farm in north China, and further compared
+with two conventional spatio-temporal models (i.e., CNN-LSTM and CNN&LSTM). The
+following conclusions can be drawn from the comparative experimental results.
+(1) The ConvLSTM model efﬁciently integrates CNN and LSTM through an embedded
+network structure, and overcomes the non-interactive or non-synchronous problems
+of conventional models when extracting spatio-temporal features. Compared with
+CNN-LSTM and CNN&LSTM, the ConvLSTM model presented better performance
+with lower RMSE, MAE, and MAPE values and a higher R2value.
+(2) The introduced hybrid attention mechanism can signiﬁcantly enhance the model
+performance by calculating and assigning different attention weights from the spatio-
+temporal dimension for model input features. The constructed HA-BiConvLSTM
+model achieved the RMSE, MAE, and MAPE reductions by about 21.27%, 23.75%, and
+23.97%, and the R2improvement by 1.06%, in comparison with the ConvLSTM model.
+(3) The proposed HBCE method has superior and robust early fault warning capabilities,
+which can efﬁciently identify early deteriorated conditions of a wind turbine gearbox
+------------------------------End of the page -----------------------------------
+Energies 2023 ,16, 6786 21 of 22
+253.17 h in advance of the actual failure time, and 121.34 h, 33.67 h earlier than
+CNN-LSTM and CNN&LSTM.
+In the future study, we will attempt to apply the proposed HBCE method to other
+different components (e.g., blade motor, main bearings, or generator) of wind turbines of
+the same or different type, to expand its application and evaluate its generalization.
+Author Contributions: Conceptualization, J.Y.; methodology, J.Y.; software, J.Y.; validation, J.Y.;
+formal analysis, J.Y.; investigation, J.Y. and X.R.; resources, J.Y.; data curation, J.Y.; writing—original
+draft preparation, J.Y.; writing—review and editing, Y.L. and L.L.; visualization, J.Y.; supervision,
+Y.L. and L.L.; project administration, Y.L and L.L. All authors have read and agreed to the published
+version of the manuscript.
+Funding: This research was funded by the National Key Research and Development Program of
+China, grant number 2019YFE0104800.
+Data Availability Statement: Not applicable.
+Conﬂicts of Interest: The authors declare no conﬂict of interest.
+References
+1. Wang, J.; Liang, Y.; Zheng, Y.; Gao, R.X.; Zhang, F. An Integrated Fault Diagnosis and Prognosis Approach for Predictive
+Maintenance of Wind Turbine Bearing with Limited Samples. Renew. Energy 2020 ,145, 642–650. [CrossRef]
+2. Wang, Z.; Liu, C. Wind Turbine Condition Monitoring Based on a Novel Multivariate State Estimation Technique. Measurement
+2021 ,168, 108388. [CrossRef]
+3. Park, J.; Kim, C.; Dinh, M.-C.; Park, M. Design of a Condition Monitoring System for Wind Turbines. Energies 2022 ,15, 464.
+[CrossRef]
+4. Zhu, Y.; Zhu, C.; Song, C.; Li, Y.; Chen, X.; Yong, B. Improvement of Reliability and Wind Power Generation Based on Wind
+Turbine Real-Time Condition Assessment. Int. J. Electr. Power Energy Syst. 2019 ,113, 344–354. [CrossRef]
+5. Zhu, Y.; Zhu, C.; Tan, J.; Wang, Y.; Tao, J. Operational State Assessment of Wind Turbine Gearbox Based on Long Short-Term
+Memory Networks and Fuzzy Synthesis. Renew. Energy 2022 ,181, 1167–1176. [CrossRef]
+6. Pérez-P érez, E.-J.; L ópez-Estrada, F.-R.; Puig, V .; Valencia-Palomo, G.; Santos-Ruiz, I. Fault Diagnosis in Wind Turbines Based on
+ANFIS and Takagi–Sugeno Interval Observers. Expert Syst. Appl. 2022 ,206, 117698. [CrossRef]
+7. Cho, S.; Choi, M.; Gao, Z.; Moan, T. Fault Detection and Diagnosis of a Blade Pitch System in a Floating Wind Turbine Based on
+Kalman Filters and Artiﬁcial Neural Networks. Renew. Energy 2021 ,169, 1–13. [CrossRef]
+8. Su, H.; Zhao, Y.; Wang, X. Analysis of a State Degradation Model and Preventive Maintenance Strategies for Wind Turbine
+Generators Based on Stochastic Differential Equations. Mathematics 2023 ,11, 2608. [CrossRef]
+9. Jiang, G.; Jia, C.; Nie, S.; Wu, X.; He, Q.; Xie, P . Multiview Enhanced Fault Diagnosis for Wind Turbine Gearbox Bearings with
+Fusion of Vibration and Current Signals. Measurement 2022 ,196, 111159. [CrossRef]
+10. Pandit, R.K.; Inﬁeld, D. SCADA-Based Wind Turbine Anomaly Detection Using Gaussian Process Models for Wind Turbine
+Condition Monitoring Purposes. IET Renew. Power Gener. 2018 ,12, 1249–1255. [CrossRef]
+11. Sun, P .; Li, J.; Wang, C.; Lei, X. A Generalized Model for Wind Turbine Anomaly Identiﬁcation Based on SCADA Data. Appl.
+Energy 2016 ,168, 550–567. [CrossRef]
+12. Xie, T.; Xu, Q.; Jiang, C.; Lu, S.; Wang, X. The Fault Frequency Priors Fusion Deep Learning Framework with Application to Fault
+Diagnosis of Offshore Wind Turbines. Renew. Energy 2023 ,202, 143–153. [CrossRef]
+13. Zhang, J.; Xu, B.; Wang, Z.; Zhang, J. An FSK-MBCNN Based Method for Compound Fault Diagnosis in Wind Turbine Gearboxes.
+Measurement 2021 ,172, 108933. [CrossRef]
+14. Liu, X.; Guo, H.; Liu, Y. One-Shot Fault Diagnosis of Wind Turbines Based on Meta-Analogical Momentum Contrast Learning.
+Energies 2022 ,15, 3133. [CrossRef]
+15. López de Calle, K.; Ferreiro, S.; Rold án-Paraponiaris, C.; Ulazia, A. A Context-Aware Oil Debris-Based Health Indicator for Wind
+Turbine Gearbox Condition Monitoring. Energies 2019 ,12, 3373. [CrossRef]
+16. Fuentes, R.; Dwyer-Joyce, R.S.; Marshall, M.B.; Wheals, J.; Cross, E.J. Detection of Sub-Surface Damage in Wind Turbine Bearings
+Using Acoustic Emissions and Probabilistic Modelling. Renew. Energy 2020 ,147, 776–797. [CrossRef]
+17. Ma, Z.; Zhao, M.; Luo, M.; Gou, C.; Xu, G. An Integrated Monitoring Scheme for Wind Turbine Main Bearing Using Acoustic
+Emission. Signal Process. 2023 ,205, 108867. [CrossRef]
+18. Attallah, O.; Ibrahim, R.A.; Zakzouk, N.E. CAD System for Inter-Turn Fault Diagnosis of Offshore Wind Turbines via Multi-CNNs
+& Feature Selection. Renew. Energy 2023 ,203, 870–880. [CrossRef]
+19. Attallah, O.; Ibrahim, R.A.; Zakzouk, N.E. Fault Diagnosis for Induction Generator-Based Wind Turbine Using Ensemble Deep
+Learning Techniques. Energy Rep. 2022 ,8, 12787–12798. [CrossRef]
+20. Heydari, A.; Garcia, D.A.; Fekih, A.; Keynia, F.; Tjernberg, L.B.; De Santoli, L. A Hybrid Intelligent Model for the Condition
+Monitoring and Diagnostics of Wind Turbines Gearbox. IEEE Access 2021 ,9, 89878–89890. [CrossRef]
+------------------------------End of the page -----------------------------------
+Energies 2023 ,16, 6786 22 of 22
+21. Zhu, Y.; Zhu, C.; Tan, J.; Tan, Y.; Rao, L. Anomaly Detection and Condition Monitoring of Wind Turbine Gearbox Based on
+LSTM-FS and Transfer Learning. Renew. Energy 2022 ,189, 90–103. [CrossRef]
+22. McKinnon, C.; Carroll, J.; McDonald, A.; Koukoura, S.; Plumley, C. Investigation of Isolation Forest for Wind Turbine Pitch
+System Condition Monitoring Using SCADA Data. Energies 2021 ,14, 6601. [CrossRef]
+23. Tao, T.; Liu, Y.; Qiao, Y.; Gao, L.; Lu, J.; Zhang, C.; Wang, Y. Wind Turbine Blade Icing Diagnosis Using Hybrid Features and
+Stacked-XGBoost Algorithm. Renew. Energy 2021 ,180, 1004–1013. [CrossRef]
+24. Guo, P .; Fu, J.; Yang, X. Condition Monitoring and Fault Diagnosis of Wind Turbines Gearbox Bearing Temperature Based on
+Kolmogorov-Smirnov Test and Convolutional Neural Network Model. Energies 2018 ,11, 2248. [CrossRef]
+25. Wang, D.; Cao, C.; Chen, N.; Pan, W.; Li, H.; Wang, X. A Correlation-Graph-CNN Method for Fault Diagnosis of Wind Turbine
+Based on State Tracking and Data Driving Model. Sustain. Energy Technol. Assess. 2023 ,56, 102995. [CrossRef]
+26. Yang, W.; Liu, C.; Jiang, D. An Unsupervised Spatiotemporal Graphical Modeling Approach for Wind Turbine Condition
+Monitoring. Renew. Energy 2018 ,127, 230–241. [CrossRef]
+27. Wang, H.; Wang, H.; Jiang, G.; Wang, Y.; Ren, S. A Multiscale Spatio-Temporal Convolutional Deep Belief Network for Sensor
+Fault Detection of Wind Turbine. Sensors 2020 ,20, 3580. [CrossRef]
+28. Zhang, Z.; Wang, S.; Wang, P .; Jiang, P .; Zhou, H. Research on Fault Early Warning of Wind Turbine Based on IPSO-DBN. Energies
+2022 ,15, 9072. [CrossRef]
+29. Jia, X.; Han, Y.; Li, Y.; Sang, Y.; Zhang, G. Condition Monitoring and Performance Forecasting of Wind Turbines Based on Denoising
+Autoencoder and Novel Convolutional Neural Networks ; Social Science Research Network: Rochester, NY, USA, 2021.
+30. Zhang, C.; Hu, D.; Yang, T. Anomaly Detection and Diagnosis for Wind Turbines Using Long Short-Term Memory-Based Stacked
+Denoising Autoencoders and XGBoost. Reliab. Eng. Syst. Saf. 2022 ,222, 108445. [CrossRef]
+31. Wu, Y.; Ma, X. A Hybrid LSTM-KLD Approach to Condition Monitoring of Operational Wind Turbines. Renew. Energy 2022 ,181,
+554–566. [CrossRef]
+32. Li, G.; Wang, C.; Zhang, D.; Yang, G. An Improved Feature Selection Method Based on Random Forest Algorithm for Wind
+Turbine Condition Monitoring. Sensors 2021 ,21, 5654. [CrossRef] [PubMed]
+33. Xiao, X.; Liu, J.; Liu, D.; Tang, Y.; Qin, S.; Zhang, F. A Normal Behavior-Based Condition Monitoring Method for Wind Turbine
+Main Bearing Using Dual Attention Mechanism and Bi-LSTM. Energies 2022 ,15, 8462. [CrossRef]
+34. Xiang, L.; Wang, P .; Yang, X.; Hu, A.; Su, H. Fault Detection of Wind Turbine Based on SCADA Data Analysis Using CNN and
+LSTM with Attention Mechanism. Measurement 2021 ,175, 109094. [CrossRef]
+35. Pang, Y.; He, Q.; Jiang, G.; Xie, P . Spatio-Temporal Fusion Neural Network for Multi-Class Fault Diagnosis of Wind Turbines
+Based on SCADA Data. Renew. Energy 2020 ,161, 510–524. [CrossRef]
+36. Zhu, A.; Zhao, Q.; Yang, T.; Zhou, L.; Zeng, B. Condition Monitoring of Wind Turbine Based on Deep Learning Networks and
+Kernel Principal Component Analysis. Comput. Electr. Eng. 2023 ,105, 108538. [CrossRef]
+37. Kong, Z.; Tang, B.; Deng, L.; Liu, W.; Han, Y. Condition Monitoring of Wind Turbines Based on Spatio-Temporal Fusion of SCADA
+Data by Convolutional Neural Networks and Gated Recurrent Units. Renew. Energy 2020 ,146, 760–768. [CrossRef]
+38. Xiang, L.; Yang, X.; Hu, A.; Su, H.; Wang, P . Condition Monitoring and Anomaly Detection of Wind Turbine Based on Cascaded
+and Bidirectional Deep Learning Networks. Appl. Energy 2022 ,305, 117925. [CrossRef]
+39. Zhan, J.; Wu, C.; Yang, C.; Miao, Q.; Wang, S.; Ma, X. Condition Monitoring of Wind Turbines Based on Spatial-Temporal Feature
+Aggregation Networks. Renew. Energy 2022 ,200, 751–766. [CrossRef]
+40. Bahdanau, D.; Cho, K.; Bengio, Y. Neural Machine Translation by Jointly Learning to Align and Translate. arXiv 2016 ,
+arXiv:1409.0473.
+41. Werbos, P .J. Backpropagation through Time: What It Does and How to Do It. Proc. IEEE 1990 ,78, 1550–1560. [CrossRef]
+42. Kolen, J.F.; Kremer, S.C. Gradient Flow in Recurrent Nets: The Difﬁculty of Learning LongTerm Dependencies. In A Field Guide to
+Dynamical Recurrent Networks ; IEEE: New York, NY, USA, 2001; pp. 237–243. ISBN 978-0-470-54403-7.
+43. Shi, X.; Chen, Z.; Wang, H.; Yeung, D.-Y.; Wong, W.; Woo, W. Convolutional LSTM Network: A Machine Learning Approach for
+Precipitation Nowcasting. Adv. Neural Inf. Process. Syst. 2015 ,28.
+44. Graves, A. Generating Sequences with Recurrent Neural Networks. arXiv 2014 , arXiv:1308.0850.
+Disclaimer/Publisher’s Note: The statements, opinions and data contained in all publications are solely those of the individual
+author(s) and contributor(s) and not of MDPI and/or the editor(s). MDPI and/or the editor(s) disclaim responsibility for any injury to
+people or property resulting from any ideas, methods, instructions or products referred to in the content.
+------------------------------End of the page -----------------------------------

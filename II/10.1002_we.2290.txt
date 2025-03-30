@@ -1,0 +1,824 @@
+Wind Turbine Gearbox Failure and Remaining Useful Life 
+Prediction  Using Machine Learning  Techniques .  
+James Carroll *, Sofia Koukoura , Alasdair McDonald, Anastasis Charalambous  
+Stephan Weiss and Stephen McArthur  
+ 
+All Authors: Electronic and E lectrical Engineering , Uni versity of Strathclyde, Glasgow, Scotland  
+*Corresponding Author Email: j.carroll@strath.ac.uk   
+*Corresponding Author Address: Room 336, EEE Department, University of Strathclyde, Glasgow,  G1 1XD  
+ 
+ABSTRA CT 
+This research investigate s the predicti on of  failure and remaini ng useful life  (RUL)  of gearboxes for modern 
+multi -megawatt  wind turbines . Failure  and RUL  are predicted through the use of  machine learning techniques 
+and large amounts of  labelled  wind turbine  SCADA and  vibration  data.  The novelty of this w ork stems from 
+unprecedented  access to one of  the world’s  largest wind turbine operational  and reliability databases, 
+containing  thousands of  turbine  gearbox failure  examples  and complete  SCADA and vibration data in the 
+build up to those failures . Through access to that data this paper is unique in having enough failure examples  
+and data  to draw the conclusions detailed in the reminder of this abstract.    
+This paper show s that artificial  neural networks provide the most accurate failure and RUL  prediction  out of 
+three  machine learning techniques trialled . This work  also demonstrates  that SCAD A data can be used to 
+predict failure up to a month before it  occurs and high frequency vibration data can be used to extend that 
+accurate prediction capability to 5 -6 months before fail ure. T his paper demonstrates that two clas s neural 
+networks can correc tly predict gearbox failures between 72.5  and 75 % of the time depending on the failure 
+mode when trained with SCADA data and 100% of the time when trained with vibration data.  Data trends in 
+the build up to failure and weighting of the SCADA data inputs ar e also provided.  Lastly, this work show s 
+how multi -class neural networks demonstrate  more potential  in predicting  gearbox failure when trained with 
+vibration  data as opposed to training with  SCADA data.  
+Keywords:  Failure, R emaining Useful Life , Prediction , Wind Turbine, Gearbox, Machine Learning, 
+Vibration , SCADA  
+------------------------------End of the page -----------------------------------
+1. Introduction  
+The cost of energy (CoE) for offshore wind is  currently too high to make it truly competitive with traditional  
+fossil fuel  energy gen eration techniques .1 Past analys is has shown that  costs for offs hore wind energy are 
+roughly 40% higher th an gas turbine generation and  30% higher than onshore wind .2  Consequently,  industry, 
+research institutes and academia are working towards lowering the CoE for  offshore wind. High  opera tion 
+and maint enance (O&M) costs present an opportunity to lower this CoE . O&M costs  can be up to 30%  of 
+the overall CoE  for some offshore wind farms 3 and it is expected that this could further increase in the 
+coming years  as wind farms move further offshore and into h arsher environments .  
+Both downtime and costs – as a consequence of poor maintenance planning – can be reduced through an 
+ability to predict if and when wind turbine components will fail . Data analytics , feature extraction an d 
+machine learning techniques  show promising potential to achieve this .4-10 The gearbox has one of the highest 
+downtimes and replacement costs out o f all wind turbine components.11 Consequently,  trying to predict  
+gearbox  failure has been the focus of a number of past  papers.4, 6, 10, 12-21 Amongst techniques to predict 
+gearbox failure, there are both model -based 13, 17 and data -driven  4, 7, 8, 19, 22 approaches.  In the past, m odel-
+based approaches have utilised  a non-linear model of the system 13 or a temperatu re model of the gearbox. 17 
+The quality of the failure prediction will depend on the complexity and accuracy of the model, which may 
+be adjusted by data -driven components .15 Data -driven approaches are typically based on supervisory control 
+and data acquisition (SCADA) measurements  and relate d inputs. 6, 10, 12, 15 , 20 
+For da ta-driven approaches, r eference 10 outlines a method for detecting wind turbine gearbox and generator  
+failures  using SCADA data. It explains how anomaly -detec tion techniques and multi -agent systems could be 
+used to create a decision support tool for wind turbine operators . The anomaly dete ction techniques used in 
+10 model predicted gearbox oil and bearing temperature based on  other SCADA data inputs, specifically,  
+power generated  and n acelle temperature. Expected  gearbox and oil temperatures were modeled for given 
+power generated and nacelle temperature readings. If the actual  values varied by a cert ain amount from the 
+modeled  value an anomaly was detected.  
+------------------------------End of the page -----------------------------------
+Data -driven methods are typically trained to extract fea tures from data and execute a classification by 
+machi ne learning techniques such as artific ial neural networks  (ANNs) .12, 15, 20 Since often a significant 
+number of parameters have to be adjusted, the size of the data set available for training is importan t. The lack 
+of large data sets is further exacerbated by the need to isolate a test set from the data, which is used to assess 
+the performance of the method and must be separate from the training set. One  way that has been attempted   
+to combat this has be en to utilize  fast-adaptation for ANNs in order to be able to reduce the size o f the training 
+data set.15 
+In this paper, we address the detection of gearbox failure and remaining useful life predictions through the 
+use of large amounts of o perational and r eliability data . This data comprises of SCADA, but additionally 
+includes  high frequency vibration data, O&M orders and logs.   This data is used to train and test machine 
+learning algorithms to predict failure.  High frequency vibration data has prove d useful in the prediction of 
+gearbox failures in automotive applications . 23, 24  
+The analysis presented in this paper rests on three novel aspects : (i) the large data set on which the analysis 
+is based ; (ii) the inclusion of high -frequency vib ration  data into the failure and RUL prediction  of gearboxes 
+specifically for wind turbine s; and (iii) the availability of a significantly high er number of failure cases than 
+had previously been reported else where . On the latter point, past papers 5, 10, 20, 25, all re lied on less than 5 
+failure examples for their training , while this work relies on hundreds of failure cases from thousands of 
+turbines. Based on this data and methodology for predicting the failure and remaining useful life of wind 
+turbine gearboxes, enou gh examples of the exact same failure mode exist to allow for failure mode specific 
+remaining useful life predictions , which have not been reported  in the literature previously.  
+2. Method  
+2.1 Overview  
+The method s used to predict failure and remaining useful life typically require large amounts of failure 
+examples and wind turbine operational data to train and test the machine learning algorithms. A leading wind 
+turbine manufacturer  provided full access to their operational logs, failure logs, SCADA data and vibrat ion 
+------------------------------End of the page -----------------------------------
+data from the tens of thousands of turbines they monitor located in thousands of wind farms globally. D ue to 
+the gearbox being the sub -system of the turbine that has the highest fa ilure cost associated with  it 5, the 
+industrial partners agreed that it should be t he component that is the focus  of this work. Working with the 
+wind turbine manufacture r, a large number of the same type of gearbox failures from the same type of gearbox 
+model were identified. Details of these failur e modes can be seen in Secti on 2.2 . Using the failure logs the 
+date of each failure was recorded  and SCADA data and vibration data from various time periods in the build 
+up to  failure were  identified,  obtained  and labeled . Once the SCADA data and vibration data was obtained it 
+was preprocessed and plotted to qualitatively determine how it changed at various points in the build up to 
+failure. The SCADA and vibration data was then used to test and train the machine learning algorithms. 
+Different machine learning algorithms and training groups were then tested to determine the algorithm and 
+training method that provided the most accurate failure and remaining useful life predictions.  Weightings of 
+the inputs were determined and c onclusions were then drawn on the possibility of predicting failure and 
+remaining useful life using machine learning techniques tested and trained with SC ADA and Vibration data. 
+The following 6 steps  provide a high level overview of each of the work packages  required to complete  this 
+research . The following sub -sections then provide  further details on each  of the steps outlined below . Step 2 
+aligns with Subsection 2.2, step 3 aligns with Subsection 2.3 and so on up to step 5.  
+Step 1:  Obtain Access to the operational data of a major wind turbine manufacturer . 
+Step 2: Identify a population of failures from the same gearbox model and same failure mode . 
+Step 3:  Obtain the SCADA data and vibration data in the build up to failures from the populations identified 
+in Step 2 . 
+Step 4:  Pre-process and plot the SCADA and vibr ation data in the build up to failures . 
+Step 5:  Train and test  different machine learning algorithms using different training groups and determine 
+weightings . 
+Step 6:  Draw conclusions on the use of machine learning algorithms trained with SCADA and vibration data 
+for predicting failure and RUL . 
+------------------------------End of the page -----------------------------------
+2.2 Failure modes  and Population details  
+This sub -section provides further  details on Step 2 from  Section 2.1 . When selecting popu lations of failure 
+modes and gearbox models to use in this work, two gearbox models that encountered repeated failures were 
+chosen. Both of  the gearbox models include  a low speed planetary stage , an intermediate  stage  and a  high 
+speed  parallel  stage  (Figure 1) . The two gearbox models come from a different turbine type. Both gearbo x 
+models are used in multi -MW scale turbines with a rating of  between  2MW  and 4MW  and a r otor diameter 
+of between  80 and 120  metres . Both turbine types use high speed gearbo xes with induction generators.  The 
+failure examples in this paper come from over 50 different wind farms located throughout Europe.  Further 
+details on the turbine types cannot be provided for confidentiality reasons.  
+All gearboxes that encounter the gear bearing  issue are the same gearbox model and for the same turbine type  
+(‘A’) . Similarly, all gearboxes that encounter the gear tooth  issue are the same gearbox model and for the 
+same turbine type  (‘B’) .  
+Both gearbox configurations and locations of where t he vibration readings were obtained are seen in Figure 
+1. Gearbox “A” has two planetary stages and one parallel stage and gearbox type “B” has one planetary stage 
+and two parallel stages:  
+ 
+ 
+Figure 1 . Gearbox confi gurations and location of accele rometers  
+ 
+
+------------------------------End of the page -----------------------------------
+For the purpose of this analysis the date of failure is defined as the date at which the wind turbine was stopped 
+for the gearbox to be replaced or repaired. As far as the author is aware these repairs and replacem ents were 
+carried out due to critical fail ures rather than due to the predicted possibility of a critical failure.  In this case , 
+components reached the point of critical failure because the condition monitoring system used did not pick 
+up the possibility of failure in advance.    
+ 
+2.2.1 Gearbox Be aring Issue  
+The gearbox planet bearing issue is located on the low speed planetary stage of the gearbox. The bearing 
+issue eventually results in complete failure of the bearing and subsequently the gearbox. When this occurs 
+the turbine is shut down and onl y restarted once a complete gearbox exchange occurs. For training and testing 
+of the machine learning algorithms in this work, the data from 200 different examples of this fa ilure were 
+obtained from turbine  type A and gearbox model A. Figure 2 shows a borescope image of the bearing in the 
+lead up to failure in which indents in the raceway and rolling element can be seen.  
+ 
+                                            Figure 2. Borescope  image of bearing i ssue showing indents   
+2.2.2 Gear Tooth  Issue  
+The gearbox tooth issue is located on the pinion of the intermediate stage of the gearbox. The tooth issue 
+eventually results in complete failure of the intermediate stage of the gearbox. When this occurs the turbine 
+is shut down and only restarted once an exchange of the intermediate gearbox stage occurs. For training and 
+testing of the machine learning algorithms in this work, the data from 28 different examples of this fa ilure 
+
+------------------------------End of the page -----------------------------------
+were obtained from turbine  type B and gearbox model B. Figure 3 shows a  borescope image of the gear tooth 
+in the lead up to failure  in which the damaged pinion tooth can be seen . 
+ 
+                                                   Figure 3. Borescope  image of pinion tooth damage   
+ 
+2.3 Obtain SCADA and Vibration Data  
+In the wind  turbine manufacture r’s operational data centre a number of different data bases exist. Once  a 
+failure date was identifi ed for a certain gearbox in one  database, a second database  was accessed to get the 
+SCADA data  in the build up to that failure. This proc ess was carried out for each failure in both the gearbox 
+bearing issue population and the gear tooth issue population. The SCADA data was exported from the wind 
+turbine manufacturer’s data center  using SQL. As the vibration data is such high frequency data , it is stored 
+in a different manner to the SCADA data. It is located on a server in a text file format for ease of storage. 
+The required vibration files were found through the wind farm name and turbine ID and subsequently 
+downloaded.  
+2.4 SCADA and Vibration Data P re-processing  and Trending  
+This sub -section provides further details on  Step 4 from Section 2.1,  the pre -processing of the SCADA data 
+and the vibration data . In this research , monthly intervals were used when describing the time to failure  for 
+both t he SCADA and vibration data . The authors and industrial partner decided to work  with monthly 
+intervals fo llowing an early discussion about the  industrial partner ’s needs in terms of  failure warning periods 
+for maintenance planning. Following that discussio n, it was agreed that for maintenance planning reasons  (in 
+this particular case)  know ledge that  a component would fail in the next month was equally as useful as 
+knowing it would fail i n the next week or day. For that  reason , monthly periods were chosen.  
+
+------------------------------End of the page -----------------------------------
+2.4.1 SCADA data pre -processing  and Trending  
+SCADA data from a number of periods before failure were taken. One thousand and eight , ten-minute  
+averaged data points per sensor, or one week’s worth of data, from 1 month, 2 months, 3 months, 6 months,  
+1 year  and 1.5 years  before failure were obtained. Once  the data was obtained , the SCADA data quality was 
+checked to ensure no  large  periods were missing. After the SCADA da ta quality was confirmed,  the sensor 
+temperature readings were subtracted from each other to provide differences in temperature (ΔT) to train the 
+machine learning algorithms. For example, directl y from the SCADA system a  gear oil temperature reading  
+(Toil) and an ambient temperature reading  (Tamb) were obtained, and the difference in temperatures was found 
+ΔT  = Toil – Tamb. This ΔT was considered because if the ambient or nacelle temperature r ises significantly 
+then the gearbox oil temperature may also rise even when the gearbox is in a healthy state.  To determine the 
+importance of fe ature engineering ( e.g. using the deltas)  in this case, a results comparison was carried out 
+when deltas were included and excluded. When the neural network hyper -parameters were not optimized , 
+the number of correct predictions were 3% higher when deltas were included. However, when hyper -
+parameters were optimized the correct predictions were the same , regardless of whether the deltas were 
+included.  As having the deltas  included  did not decrease  the accuracy of the predictions it was decid ed to 
+include them in this anal ysis. 
+The following SCADA data columns  were obtained from the bearing issue in gearbox model A/turbine type 
+A. The column  headings  shown in italic  did not come directly from the SC ADA system, those data points 
+are the deltas between the readings that came directly from the SCADA system (shown as non -italic 
+headings). All readings including  the temperature deltas resulted in 2 7 inputs for the training of the machine 
+learning algorith ms for the gearbox bearing issue . 
+1. Gear Oil Temp erature (S ensor 1 ) 
+2. Gear Oil Temperature (Sensor 2)  
+3. ΔT Oil Sensor  1 and Oil Sensor  2 
+4. ΔT Oil Sensor 1 and Nacelle  
+5. ΔT Oil Sensor 1 and Ambient  6. ΔT Oil Sensor 2 and Nacelle  
+7. ΔT Oil Sensor 2 and Ambient  
+8. Gear Bear ing 1  Temperature  
+9. Gear Bearing 2 Temperature  
+10. Gear Bearing 3 Temperature  
+------------------------------End of the page -----------------------------------
+11. Gear Bearing 4 Temperature  
+12. Gear Bearing 5 Temperature  
+13. ΔT Bearing 1 and Nacelle  
+14. ΔT Bearing 1 and Ambient  
+15. ΔT Bearing 2 and Nacelle  
+16. ΔT Bearing 2 and Ambient  
+17. ΔT Bearing 3 and Nacelle  
+18. ΔT Bearing 3 and Ambient  
+19. ΔT Bearing 4 and Nacelle  20. ΔT Bearing 4 and Ambient  
+21. ΔT Bearing 5 and Nacelle  
+22. ΔT Bearing 5 and Ambient  
+23. Nac elle Temp erature  
+24. Rotor Speed  
+25. Wind  Speed  
+26. Amb ient Temp erature  
+27. Total Power P roduction  
+ 
+The same procedure was followed for the gear tooth issue. However,  Turbine Type B’s SCADA system is 
+less advanced than type A. It consist s of less sensors around the gearbox resulting i n less direct readings and 
+less temperature d eltas. In total 12 input columns  were obtained for testing and training the machine learning 
+algorithms.  
+1. Gen erator Speed  
+2. Gear Oil Temperature S ensor  
+3. ΔT Oil Sensor and Nacelle  
+4. ΔT Oil Sensor and Ambient  
+5. Gear Bear ing Temperature  
+6. ΔT Gear Bearing and Nacelle  7. ΔT Gear Bearing and Ambient  
+8. Nacelle Temperature  
+9. Rotor Speed  
+10. Wind Speed  
+11. Ambient Temperature  
+12. Total Power Production  
+ 
+The SCADA temperature data was then plotted to determine the trends in the data in the build up to failure. 
+Thes e plots ca n be seen in Section 3.1 .   
+2.4.2 Vibration data pre -processing  and trending : 
+As mentione d in the previous step the vibration  data was obtained from the industrial partner  in a text file 
+format .  Vibration data from a number of periods before failure were taken. One te xt file was taken each 
+week in the build up to failure. As the accelerometers were providing data above  25 kHz  and each file 
+contained 10 seconds  of data,  over 250,000 readings were provided per accelerometer. Each file contains  
+data from 10 different accelerometers  or tachometers  from various  locations on the drivetrain, so each 10  
+second  file has over 2,500,000 data points. In the case of the intermediate stage pinion tooth issue, the 
+intermediate stage accelerometer and tachom eter were  the focus of the work. The 256,000  vibration  data 
+readings were imported to MATLAB  and through the application of  Fast Fourier Transform  (FFT)  and Order 
+------------------------------End of the page -----------------------------------
+Tracking functions the spectrum plots  shown in Figure 4 and Figure 10  were created (order tra cking accounts 
+for the varying rotational speed in modern variable speed wind turbines). The vibration d ata from various 
+time instances before the failure were consider  and plotted to show the vibration trends in the build up to 
+failure.  A picture emerges of the side bands rising around the gear meshing frequency as the time axis gets 
+closer to the point for failure. The resulti ng plot can be seen in Section 3. 2, Figure 10 . A similar process for 
+the bearing issue was followed, however the t rends toward failure were not clear when an FFT was applied. 
+For that  reason and based on 26 an envelope analysis was carried  out. Even with the envelope analysis , clear 
+trends were not seen around the ball passing frequencies  on the bearing issue . 
+To obta in inputs for training the machine learning algorithms with the vibration data, magnitude readings 
+were t aken from the spectrum. Figure 4 shows the spectrum from one time period in the build up to failure  
+of the gear tooth . The rising sidebands can be seen  around the gear meshing frequen cy. The red lines on 
+Figure 4 indicate s the point s on the spectrum where magnitude readings were taken  (indicated in red, above 
+the spectrum) . Past literature suggest s that the magnitude and shape of the gear meshing frequen cy and its 
+side bands is ind icative of a gear tooth issue 27. This was repeated  for the 2nd, 3rd and 4th harmonic s, as 
+suggested by  27.  
+ 
+Figure 4. Data points taken from spectrum for training of machine learning techniques . (Figure created using vibration 
+data from gear tooth issue)  
+
+------------------------------End of the page -----------------------------------
+While clear trends are seen around the gear meshing frequency for the gear tooth issue shown in Figure 4, no 
+clear trends around ba ll passing frequencies were easily identified in the bearing issue. Accordingly , a large 
+number of magnitude reading s were taken from the spectral area  around  the ball passing frequencies . The 
+magnitude readings as shown in  Figure 4 and from the bearing issue spectrum were then used to train the 
+machine learning algorithms.   
+2.5 Machine le arning algorithms selection testing and training  
+Three popular machine learning algorithms were  trained and t ested in this research:  an artificial neural 
+network, a support vector machine (SVM) and a logistic regression  approach . An analysis (results shown i n 
+Section 3.3 ) compared the numbe r of correct predictions from the three different techniques . The algorithm 
+that provided the highest number of correct prediction s then became the focus of the other failure and 
+remaining useful l ife prediction analyses in this paper.  
+The labeled SCADA and vibration data detailed in Section 2.4.1 and 2.4.2  were imported to Azure Ma chine 
+Learning St udio 28 for algorithm testing and training. In this research the SCADA  and vibration  data were 
+split, with 70% used for training and 30% used for testing of all machine learning algorithms , as in 29. This 
+SCADA and vibration data split  can be seen for the gear bearing issue  in Figure 5 . The same 70/30 split was 
+used for the gear tooth issue.   
+  
+Figure 5. SCADA and Vibration Data Split for Gear Bearing Issue  
+ 
+
+------------------------------End of the page -----------------------------------
+The input dimensionality for the SCADA data gear bearing model is the 2 7 SCADA data readings detailed 
+in Section 2.4.1. The input dimensionality for the SCADA data gear tooth model is the additional 12 SCADA 
+data readings detailed in Section 2.4.1.  
+The input dimensionality for the vibration data gear tooth model is the  63 magnitude readings from the 
+spectrum (after an FFT has been carried out on the raw vibration data  as shown in Figur e 4) at the gear 
+meshing frequencies and the sidebands of the gear meshing frequencies. 63 magnitude readings are taken 
+from the spectr um for the first, second , third  and fourth  gear meshing frequency giving a total of 252 inputs.   
+The input dimensionality  for the vibration data gear bearing model is the 30 magnitude readings  either side 
+of the ball passing frequency spread at 0.25Hz spacing. With 30 readings either side of the ball passing 
+frequency a total of 60 magnitude readings are taken for each ball passing frequency. In total , magnitude 
+readings are taken from the spectrum for the firs t 4 b all passing frequencies  (as for the gear tooth issue)  
+giving a total of 240 inputs.  
+In both vibration examples mentioned above, m agnitude readings are taken from the spectrum around 
+frequencies of interest and used as training inputs to allow the algorithms to learn the behavior of important 
+parts of the spectrum in labeled healthy and unhealthy data.   
+A number of different algorit hm hyper -parameters were used in the training of the neural networks, SVMs 
+and logistic regression algorithms . To optimize the r esults of this work the hyper -parameters were tuned.   
+In the machine learning software used for this analysis (Azure Machine Lea rning Studi o) the function used 
+to tune the hyper -parameters is called “Tune Model Hyper -parameter”. To tune the hyper -parameters this 
+function tests multiple models, using different combinations from a grid of inputs, and compares metrics over 
+all models to get the optimum combination of settings. For this case , the optimum combination of settings is 
+determined  by the highest number of correct predictions. To tune the model , this function performs a 
+parameter sweep over the entire grid of parameter setting s, and learns the optimum inputs  to obtain the 
+highest number of correct predictions.  
+------------------------------End of the page -----------------------------------
+With the  optimized  hyper -parameters , shown below,  and the raw data used in this analysis,  the results in this 
+paper can  be replicated in Azure Machine Learning Studio.   
+The following  optimized  hyper -parameters were used in the training of the  two-class  and multi -class  artificial 
+neural network s. Further detail from each parameter can also be found in 28 
+ Number of hidden nodes: The mean of the number of inputs and number of outputs.  
+ Learning rate: 0. 08 
+ Number of learning iterations: 400 
+ Initial learning weight: 0.1  
+ Momentum: 0  
+Normalizer:  Min-max normali zer  
+The training procedure for the neural network employs stochastic gradient descent using back propagation 
+as a gradient computing technique. The learning rate input determines the size of the step that is used in 
+stochastic gradient descent.  The loss function used in this case is the cross-entropy loss function.  
+The following parameters were used in the training of  the two-class  SVM:  
+ Number of iterations: 10 0 
+ Lamda: 0.00001 
+The following parameters were used in the training of the  two-class  logistic regression algorithm:  
+ Optimisation tolerance: 1 ×10-7 
+ L1 regularisation weight: 0.1 
+ L2 regularisation weight: 0.01 
+ Memory size for L -BFGS: 50 
+Following the training of the  two-class and multi -class  machine learning algorithms with 70% of the data , 
+the remaining 30% of the data was used to test the algorithms to determine the number of correct predictions, 
+missed failur es and false positives. For the purpose of this paper , a “false positive” is defined as an output 
+labeled as closer to the point of failure than it actually is. For example, an output saying the gear bearing is 
+1-2 months to failure wh en in reality it is 5 -6 months would be considered a false positive.  A number of 
+different data groupings were tested for training a n artificial neural network. These gro upings are outlined in 
+Section 3.5 .  
+------------------------------End of the page -----------------------------------
+Weightings of the 2 7 SCADA data inputs  for the bearing issue  were determined using a “permutation feature 
+importance”  (PFI)  function .30 The function returns an importance score for each input used in the prediction. 
+The evaluation metr ic was chosen to be the accuracy  of the learning algorithm. The PFI function  computes 
+the sensitivity of a model in terms of the evaluation metric to random change s of the input values. Once 
+weightings were established using the PFI function, a  backward elimination process was implemented to 
+evaluate the accuracy. More specificall y, starting with all the inputs of the model, the feature wit h the least 
+importance score was  pruned in each it eration until all but one of the inputs were  removed . This method is 
+discussed in 31. The accuracy and the new importance scores were estima ted in each iteration. The feature  
+importance scores, from higher to lower imp ortance and other results of this weighting analysis are shown  in 
+Secti on 3.6 .  
+ 
+3. Results  and Discussion  
+ 
+3.1 SCADA data trends  
+From a wind turbine operator’s perspective, it would be ideal if  gearbox bearing and oil temperature trends 
+could be monitored to provide an indication of when a gearbox bearing failure or tooth issue will occur. 
+However, the results shown in Figure s 6-9 – which correspond s with the experience provided by the industrial 
+partner – indicate that a simple temperature trending approach alone is rarely successful  in highlighting 
+potential failures . Figure 6  is a box plot of one week of SCADA bear ing temperature readings from 200  
+different turbines i n the build up to gearbox  bearing failure s. In total each o f the 6 box plot contains ~201 ,600 
+ten-minute  data points. With the hypothesis that both failure mechanisms lead to a rise in heat production 
+inside the gearbox, failure should be indicated by a temperature rise. For iss ue detection to occur through a 
+basic temperature trending technique  an operator would need to see a rise in the bearing temp erature  readings 
+in the months leading up to the failure and a lower temperature in the readings classified as “healthy” (gr eater 
+than 1.5 years before failure in this case ). However as seen in Figure 6 , although there is a difference between 
+------------------------------End of the page -----------------------------------
+the temperature distributions for the healthy gearboxes and the data for 1 -year-to-failure gearboxes – which 
+could potentially  indicate f ault inception – there appears to be  no consistent changes thereafter.  
+ 
+Figure 6 . Gear Bearing Temp erature  at various times before failure . (Figure created using SCADA data from gear 
+bearing issue)  
+Past papers have suggested a rise in oil temperature in the build up to failur e 32, consequently the authors also 
+looked at the same number of SCADA data reading for the oil temperature in the build up to failure as 
+outlined in the previous paragraph. Once again , there are some differences between healthy and 1 -year-to-
+failure cases, but thereafter  no clear trends were observed.  
+ 
+Figure 7 . Gear Oil Temp erature  at various times before failure . (Figure created using SCADA data from gear bearing 
+issue)  
+
+------------------------------End of the page -----------------------------------
+As the ambient temperature could potentially influence the temperature readings in Figure 6  and Figure 7 , 
+the delta between the  ambient temperature  and gear oil  was analyzed  and the results are seen in Figure 8 . For 
+example,  if the ambient temperature was very low in the mo nth before failure it might mitigate  a temperature 
+rise trend presenting itself  in Figure 6  and 7. However as seen in Figure 8  the box plots follow the same trend 
+as Figure 7 indicating that gearbox temperature is not greatly influenced by  the ambient temperature. The 
+ambient temperature display s little variance in the different time periods to failure.    
+ 
+ 
+Figure 8 . Difference in g ear oil and a mbient  temperatures  at various times before failure . (Figure created using SCADA 
+data from gear bearing issue)  
+The temperature o f the gear bearing and gear oil  is also influenc ed by power production. Figure 9  shows the 
+power production for each of the time periods in the build up to failure. When Figure 9  is compared with 
+Figures 6 and 7 a similar  trend  in the power production and temperatures  can be see n which indicates the 
+amount of power produced influences the temperature.  For example, “2 months” and “1 Year” have the 
+highest power production and highest temperature readings.  While it is expected that the time period before 
+the failure still has an ef fect on the temperature of the gearbox bearing and gear o il temperature, Figures 6-9 
+suggest that the influence of power production seems to outweigh the effect of time period to failure.  
+
+------------------------------End of the page -----------------------------------
+ 
+Figure 9 . Power Production at various times before failure . (Figure created using SCADA data from gear bearing issue)  
+Through the analysis of  the Figures 6-9, it is clear that other variables outside of time period to failure also 
+influence the temperature of gear bearings and gear oil temperature.  For example , gear oil cooling systems 
+will likely reduce the increase in gear oil temperature.  A similar analysis  to this gear bearing analysis  was 
+carried out for the gear tooth issue outlined earlier in this paper and no clear temperature trends were seen in 
+the build u p to failure for that failure mode  either.  As no clear trends are identified,  simple temperature 
+trending  in isolation  may not be enough to correctly identify potential failures  due to the influence of other 
+variables . For that reason, a machine learning approach  that considers many variables will be used, as 
+demonstrated in Section 3 .4. 
+ 
+3.2 Vibration data trends  
+Figure 10  shows the spectrum with order tracking applied  to the vibration data at a number of time periods 
+before a gear tooth failure . This technique uses the raw vibration data from the wind turbine ’s accelerometer s 
+and combines it with tachometer data to offset the variable speed of the turbine allowing for a like for like 
+trending analysis in the build up to failur e. Order number 6 in Figur e 10 is the gear mesh ing frequency . It is 
+obvious from Figure 10  that a number of sidebands start to rise around the gear meshing frequency as the 
+turbine gets closer to the point of failure. The trend gets clearer once the time period to failure is less t han 6 
+
+------------------------------End of the page -----------------------------------
+months. The magnitude  of the meshing peaks and side bands are ob tained  and labeled with their time period 
+to failure to be used in the training of a neural network.   
+ 
+Figure 10 . Vibration data  showing sidebands developing around the gear meshing frequency (order 6) . (Figure created 
+using vibration data from gear tooth issue)  
+Figure 10  displays the trends for the gear tooth issue in vibration data. A similar analysis was carried out with 
+the vib ration data for the bearing issue detailed earlier in this paper. Unlike the gear tooth issue, no visible 
+trends were seen in the gear bearing issue vibration data.  The bearing is located in the planetary stage of the 
+gearbox and there is a lot of noise ar ound the ball passi ng frequencies, leaving it difficult  for the authors to 
+pick out  failure indicative trends.  Consequently  ~260  magnitude readings from a round the ball passing 
+frequencies  of the bearing were obtained  for each  text file for each  bearing failure , labeled with the time 
+period to failure and used to tra in and test the classification  algorithms. Even though no visible  trends were 
+clear when the bearing spectrum was plotted, machine learning algorithms c ould be able to recognize trend s 
+in the magnitude readings from the classified vibration data to train a model to be able to classify unlabeled 
+data.  This is tested in Section  3.4. 
+3.3 Machine  learning algorithm selection  for gear bearing failures  using SCADA input  
+To determine  which machin e learning algorithm provided the most correct health predictions three  differ ent 
+two-class classification algorithms were trained and tested with SCADA data  for the gear bearing issue . The 
+
+------------------------------End of the page -----------------------------------
+three algorithms considered are the artificial neural network, a  SVM and logistic regression. The 2 7 SCADA 
+data input s used are outlined in Section 2.4.1 . Following the training and testing procedure described in 
+Section 2.5 , the results shown in Table 1  were obtained.  A correct prediction means that the algorithm 
+correctly stated whether the gearbox bearing would fail in less than one mo nth or more than one month. A 
+missed failure means the algorithm predicted the gearbox would not fail in the next month but the data came 
+from a gearbox that did fail in that month. A f alse positive means the algorithm predicted the failure would 
+occur in the next month when in reality it did not.   
+It can be seen that  out of the three algorithms tested,  the artificial neural network provides the most correct  
+failures and least missed fai lures , with 72.5% of  failures being correctly predicted . The support vector 
+machine trained and tuned in this analysis used a linear kernel and produced 60% correct predictions. This 
+correct prediction rate may be increased through the use of a different k ernel . Whilst the logistic regression 
+had a  similar  number of correct predictions to the SVM , the SVM showed fewer false positives  but more 
+missed failures  than Logistic Regr ession .  
+ Artificial Neural 
+Network  Support Vector 
+Machine  Logistic Regression  
+Correct Prediction  72.5 % 60% 59% 
+Missed Failure  20% 36% 31% 
+False Positive  7.5% 4% 10% 
+Table 1 : Results of machine learning algorithm comparison  for gear bearing issue  
+As the artificial neural network provided the highest number of correct predictions it became the focus of the 
+remainder of the paper.  
+3.4 Two -class neural  network predictions  for gear bearing and gear tooth failures, using both SCADA and 
+vibration data  
+Table 2  shows the res ults from the training of a two -class neural network  for both the gear bearing and gear 
+tooth issue using both SCADA data and vibration data  to predict if those failure modes will occur within the 
+next month or outside of the next month,  as outlined in Section 2.5 . It can be seen  in Table 2  that the artificial 
+------------------------------End of the page -----------------------------------
+neural network is very successful in  predicting a gear tooth failure in the next mont h using vibration data, 
+and successful 72.5% of the time at predicting a gear bearing issue in t he next month using SCADA data.  
+The number of correct predictions  start to increase  slightly  for the gear tooth issue when using SCAD A data.  
+The gear bearing failure predictions based on vibration data show the lowest number of correct predictions. 
+As dis cussed in sub -section 3.2, the  bearing issue is located in the planetary stage of the gearbox where there 
+is a lot of noise around the ball passi ng frequencies . Feature extraction on the planetary stage vibration data  
+is an area of further work for the a uthors and it is hoped improvemen t will lead to a higher number of correct 
+predictions from the artificial neural network.    
+Fault  Result  Based on SCADA Data  Based on Vibration Data  
+ 
+Gear Bearing  Correct Prediction  72.5 % 63% 
+Missed Failure  20% 13% 
+False  Positive  7.5% 25% 
+ 
+Gear Tooth  Correct Prediction  75%  100%  
+Missed Failure  13%  0% 
+False Positive  12%  0% 
+Table 2 : Results of two -class neural network predictions for SCADA and vibration data  
+3.5 Data groupings  
+When training the machine learning alg orithm for the gear bearing issue  in Section  3.3, SCADA data from 1 
+month , 2 months, 3 months, 6 months  before failure , and healthy (greater than 1  year) were used. However,  
+when testing the algorithm only data from less than one month  before failure and greater than 1 year before 
+failure  (Healthy)  were used. To further test the algorithm , SCADA  data from two months before failure, 3 
+months before failure and 6 months before failure were also used to determine the algorithms ability to 
+correctly predict failures.  As seen in Table 3  there are four category columns and four  score columns. Each 
+category column heading indicates the data grouping for training the artificial neural network. For example, 
+“1 Month vs Healthy” means the algorithm was trained with only those two data groupings , whereas  “1 
+Month vs 2 Months to Healthy” means the algorithm was trained with 1 month to failure data  as the first 
+class  and then the combination of the data from 2 months, 3 months, six months and 1 year before failure 
+------------------------------End of the page -----------------------------------
+grouped as  the second  “healthy ” class . Unbalanced data means the number of training samples in the 
+“healthy ” section out -weigh  the number of “1 Month” before failure samples . “Balanced” means the number 
+of training samples in both classes are equal.  Each row then pr ovides the percentage of correct predictions, 
+missed failures  of false positives when tested with data from 1 month before failure, 2 months before failure, 
+3 months before failure, 6 months before failure and  greater than  1 year before failure (Healthy).   
+Up to this point in this  paper the algorithms have been trained using the groupin gs highlighted in red in Table 
+3 “1 Month vs 2 Months to Healthy”. It can be seen from Table 3  that when the same groupings are used 
+with unbalanced data (more “healthy ” examples than 1 month samples) the Neural Network then has a bias 
+towards “Healthy Predictions ”. While this leads to a high number of correct predictions when the “Healthy” 
+data is tested , it leads to a very high number for missed failures, 79.2% when “1 Mont h” before failure data 
+is tested. From the 5 groupings tested the “1 Month vs 2 Month s to Healthy (Balanced Data)”  grouping 
+provides the best performance in  terms of maximized correct predictions  and minimized missed failures or 
+false positives. Consequently, this grouping has been used throughout this paper.  
+1 Month vs 
+Healthy  Score  1& 2 Month vs 
+Healthy  Score  1 Month vs 2 
+Months to 
+Healthy (Un  
+balance d 
+Data)  Score  1 Month vs 2 
+Months to 
+Healthy 
+(Balance d Data)  Score  1 & 2 Month 
+vs 3 Months to 
+Healthy  Score  
+1 Month   1 Month (1-2)  1 Month   1 Month   1 Month  (1&2)   
+Correct  65.6% Correct  74.2% Correct  20.8% Correct  72.5% Correct  67.3% 
+False Positive  N/A False Positive  N/A False Positive  N/A False Positive  N/A False Positive  N/A 
+Missed Failure  34.4% Missed Failure  25.8% Missed Failure  79.2% Missed Failure  27.5% Missed Failure  32.7% 
+          
+2 Months (H )  2 Months ( 1 -2)  2 Months (H )  2 Months (H)   2 Months 
+(1&2)   
+Correct  46% Correct  59.4% Correct  100%  Correct  52.4% Correct  39.4% 
+False Positive  54% False Positive  N/A False Positive  0% False Positive  47.6% False Positive  N/A 
+Missed Failure  N/A Missed Failure  40.6% Missed Failure  N/A Missed Failure  N/A Missed Failure  60.6% 
+          
+3 Months (H )  3 Months (H )  3 Months (H )  3 Months (H)   3 Months (H )  
+Correct  46% Correct  0% Correct  100%  Correct  59.4% Correct  19.4% 
+False Positive  54% False Positive  100% False Positive  0% False Positive  40.6% False Positive  80.6% 
+Missed Failure  N/A Missed Failure  N/A Missed Failure  N/A Missed Failure  N/A Missed Failure  N/A 
+          
+6 Months (H )  6 Months (H )  6 Months (H )  6 Months (H)   6 Months (H )  
+Correct  66.3% Correct  0% Correct  100%  Correct  72.8% Correct  61.4% 
+False Positive  33.7% False Positive  100% False Positive  0% False Positive  27.2% False Positive  38.6% 
+Missed Failure  N/A Missed Failure  N/A Missed Failure  N/A Missed Failure  N/A Missed Failure  N/A 
+          
+------------------------------End of the page -----------------------------------
+Healthy   Healthy   Healthy   Healthy   Healthy   
+Correct  77.5% Correct  14.6% Correct  100%  Correct  75.7% Correct  66.4% 
+False Positive  22.5% False Positive  85.4% False Positive  0% False Positive  24.3% False Positive  33.6% 
+Missed Failure  N/A Missed Failure  N/A Missed Failure  N/A Missed Failure  N/A Missed Failure  N/A 
+Table 3 : Results of different data groupings for two class neural netw ork predictions with SCADA data  
+ 
+ 
+3.6 Input weightings  
+The results of the weighting analysis described in Section 2.5 are  shown below  where inputs are ranked in 
+order of importance . As expected , the gearbox temperature sensors , and their delta readings, located closest 
+to the planetary stage bearing  where the failure occurred , carry the greatest weight in predicting failure. Gear 
+oil tempe rature however, is not ranked  highly. This indicates that little or no temperature change  from the 
+bearing issue is picked up by the gear oil sensors.  
+ 
+1. Delta Bearing 1 Temp and Nac Temp  
+2. Delta Bearing 1 Temp and Amb Temp  
+3. Bearing 1 Temp  
+4. Delta Bearing 2 Temp and Nac Temp  
+5. Delta Bearing 3 Temp and Nac Temp  
+6. Delta Bearing 4 Temp and Nac Temp  
+7. Delta Bearing 2 Temp and Amb Temp  
+8. Bearing 3 Temp  
+9. Bearing 2 Temp  
+10. Delta Bearing 4 Temp and Amb Temp  
+11. Delta Bearing 3 Temp and Amb Temp  
+12. Bearing 4 Temp  
+13. Delta Bearing 5 Temp and Nac Temp  
+14. Delta Bearing 5 Temp and Amb Temp  
+  
+15. Average Wind Speed  
+16. Total Production  
+17. Bearing 5 Temp  
+18. Delta Gear Oil Temp 1 and Amb Temp  
+19. Gear Oil Temp 1  
+20. Delta Gear Oil Temp 2 and Nac Temp  
+21. Amb Temp Avg  
+22. Delta Gear Oil Temp 2 and Amb Temp  
+23. Delta Gear Oil Temp 1 and Nacelle Temp  
+24. Nac Temp Avg  
+25. Gear Oil Temp 2  
+26. Delta Gear Oil Temp 2 and Gear Oil temp 1  
+27. Rtr RPM Avg  
+ 
+ 
+The accuracy of the model for the different num ber of i nputs is illustrated in  Figure 11 , the numbers on the 
+x-axis match the numbers in the previous ranking . The features are removed one by one starting with the 
+least important. Figure 11 shows that the accuracy of the overall predictions drop slowly at first while the 
+features of less importance are removed. As the most important 7 or 8 features are removed the graph displays 
+a faster incline in prediction accuracy.   
+ 
+------------------------------End of the page -----------------------------------
+ 
+Figure 11 : Accuracy of neural network predictions as the number of SCADA data input vary. (Figure created using 
+SCADA data from gear bearing issue)  
+# of 
+Inputs  Correct 
+Predictions  # of 
+Inputs  Correct 
+Predictions  # of 
+Inputs  Correct 
+Predictions  # of 
+Inputs  Correct 
+Predictions  
+27 72.5 % 26 72% 25 71.8 % 24 71.6 % 
+23 71.5 % 22 71.8 % 21 71.4 % 20 71.7 % 
+19 71.1 % 18 70.2 % 17 70.2 % 16 71.5 % 
+15 69.3 % 14 69.4 % 13 69% 12 69% 
+11 69.5 % 10 68.2 % 9 68.2 % 8 68.1 % 
+7 67.6 % 6 66.8 % 5 65.8 % 4 64.1 % 
+3 61.7 % 2 57.9 % 1 55.2 % 0 0% 
+Table 4 : Results of different number of inputs for two class neural network predictions with SCADA data for bearing issue  
+3.7 Multi -class artificial neural network prediction  
+Table 5  shows the re sults from the training of a multi -class neural network for both the gear bearing and gear 
+tooth issue using bo th SCADA and vibration  data to predict if those failure modes will occur within  month  
+0-1, 1-2, 2-3 or outside 3 months ( labeled  as healthy) for SCADA data . For vibration data  it was labeled as  
+month 1 -2, 5-6 or g reater than 1 year  (labeled as healthy).  The 3 -4 month and 6 -12 month intervals were not 
+included in the vibration based models due to a data acquisition and storage issue. The high frequency 
+vibration data was greater than 25kHz so with such large amounts of data to be acquired, stored and analy zed 
+the authors had to be selective in the months they used. For data reduction purposes the authors sampled the 
+data from a time period close to failure (1 -2 months) a healthy point (Over 1 year to failure) and a point in 4045505560657075
+0 5 10 15 20 25 30Accuracy (%)
+Number of Inputs
+------------------------------End of the page -----------------------------------
+between (5 -6 months).  Correct pr edictions shown in Table 5  are highli ghted across the diagonal of each  
+confusion  matrix.  It can be seen that the  multi -class  neural network is most  successful in predicting a gear  
+tooth failure using vibration data . The numb er of correct predictions starts  to drop for the gear bearing issue 
+when vibration  data is used because of the failure feature extraction issue in the high frequen cy data as 
+detailed in Section 3.2 . For both failure modes the multi -class neural  networks  trained with SCADA data  
+struggle t o predict failures  correctly, particularly in months 2 and 3. One reason for this may be that the 10-
+minute  averaged  SCADA readin gs have little or no dif ferences in months previous to one  month before 
+failure. For example, the failure issue may not show itself in the 10-minute  averaged data  so clearly  until 
+roughly 1 month before failure.     
+Fault  Based on SCADA Data  Based on Vibration Data  
+ 
+ 
+ 
+ 
+Gear Bearing   
+  
+  
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+Gear Tooth  
+ 
+  
+ 
+ 
+ 
+ 
+Table 5 : Results of multi -class class neural network predictions for SCADA and Vibration data  
+4. Conclusion  
+
+------------------------------End of the page -----------------------------------
+This section will conclude each  of the sub -sections outlined in  Results  and Discussion, Section 3 . 
+ 
+This work found that trends in 10 -minute SCADA oil or bearing temperature data showed no indication  of 
+failure when consi dered alone. Th rough analysis of  thousands of wind turbines  with hundreds of  gearbox 
+tooth or bearing failures  it was shown  that temperatures could be lower in the month  before failure than over 
+a year before failure depending on a turbine ’s power production in that period. Consequently, it was 
+concluded that rather than simple temperature trending in isolation, algorithms that consider a larger number 
+of SCADA data input s such as power pr oduction, gen erator  RPM, rotor RPM, bearing temperature and  so on 
+were required to correctly predict failure and remaining useful life.   
+Through analysis of gearbox vibration data in the build up to gearbox failure related to gear tooth issue s this 
+work showed that trends (side bands around gear meshing frequencies) could be clearly seen in the data, six 
+to seven months before failure occurred. While trends could be seen for gear tooth issues, to date, this work 
+did not discover trends in  the vibration data in the build up to gearbox planetary stage  bearing  issues.  
+In this paper, three  machine learning algorithms were trained and tested to determine which provided the 
+most correct predictions and lowest missed failures/false positives whe n trained with SCADA data in the 
+build up to gea rbox bearing failures. This paper  found that a n artificial neural network out performed both 
+support vector machines  (with a linear kernel)  and logistic regression  for the above purpose . 
+A two class neural ne twork  was trained and tested  using both SCADA data and vibration data  for failure 
+prediction of a planetary gear bearing and an intermediate stage gear tooth. Results showed that a  neural 
+network is the most  successful in predicting a n intermediate  gear tooth failure  using vibration data, this is  
+followed by predicting the same gear tooth  issue  using SCADA data. It can  be concluded that the use of 
+vibration data provides the most correct predictions when clear features can be extracted from the spectrum 
+(as in the gear tooth issue in this paper). In this paper a lower number of correct failure predictions were seen 
+for the gear bearing issue based on vibration data because of the lack of clear feature extraction from the 
+spectrum.   
+------------------------------End of the page -----------------------------------
+When training two clas s neural networks based on wind turbine data, a number of  different groupings can be 
+used. For a two class prediction this paper found that  the most successful method for  grouping the training 
+data is to group  SCADA data that is recorded one month before f ailure  as the first class  and the second class 
+is represented by SCADA data that is recorded at points in 2 months, 3 months, 6 mon ths and greater than 1 
+year before failure. Both the first class and the second class  mentioned above  should be balanced  in terms of 
+the amount of data used to train the algorithm  to ensure the most correct predictions.  
+The SCADA d ata input weighting analysis in  this paper showed that the gearbox bearing temperatures, and 
+their deltas that are closest to the failing plan etary s tage bearing carry the most weight in predictin g the failure 
+out of all of the inputs examined. The gear oil temperatures are less important suggesting this failure mode 
+does not influence the gearbox oil in manner that the algorithm identifies as indicati ve of failure.  
+Lastly this paper shows  results from the training of a multi -class artificial neural network for both the gear 
+bearing and gear tooth issue using bo th SCADA and vibration d ata. This work found that multi -class 
+classification was possible for predicting failure and remaining useful life but was  more successful with 
+vibration data than  SCADA data.  
+5. Acknowledgements  
+This work was funded by the E ngineering and Physical Sciences Research Council EP/G037728/1  
+6. References  
+[1] Bakhshi  R, Sand born P. A Return on Investment Model for the Implementation of New Technologies on 
+Wind Turbines IEEE Transactions on Sustainable Energy 2017  
+ 
+[2] Department of Energy and Climate Change UK. Electricity Generation Costs 2013  
+ 
+[3] Crabtree  C, Zappala  D, Hogg  S. Wind energy: UK experiences and offshore operational challenges Power 
+and Energy 2015, Vol. 229(7) 727746 IMechE 2015  
+ 
+[4] Bach -Andersen  M, Rømer -Odgaard  B, Winther  O. Deep learning for automated drivetrain fault detection. 
+Wind Energy, 21(1):29 –41, January 2018.  
+ 
+------------------------------End of the page -----------------------------------
+[5] Lau BCP, Ma EWM, Pecht  M. Review of offshore wind turbine failures and fault prognostic methods. In 
+Proceedings of the IEEE Prognostics and System Health Management Conference, pages 1 –5, May 2012.  
+ 
+[6] Feng  Y, Qiu Y, Crabtr ee CJ, Long  H, Tavner  PJ. Monitoring wind turbine gearboxes. Wind Energy, 
+16(5):728 –740, 2013.  
+ 
+[7] Qiao  W, Lu D. A survey on wind turbine condition monitoring and fault diagnosis — Part I: Components 
+and subsystems. IEEE Transactions on Industrial Electro nics, 62(10):6536 –6545, Oct 2015.  
+ 
+[8] Qiao  W, Lu D. A survey on wind turbine condition monitoring and fault diagnosis — Part II: Signals and 
+signal processing methods. IEEE Transactions on Industrial Electronics, 62(10):6546 –6557, October 2015.  
+ 
+[9] Qiao  W, Zhang  P, Chow  MY. Condition monitoring, diagnosis, prognosis, and health management for 
+wind energy conversion systems. IEEE Transactions on Industrial Electronics, 62(10):6533 –6535, October 
+2015.  
+ 
+[10] Zaher  A, McArthur  S, Infield  D, Patel  Y. Online wind turbine fault detection through automated SCADA 
+data analysis. Wind Energy, 12(6):574 –593, September 2009.  
+ 
+[11] Carroll  J, McDonald  A, Dinwoodie  I, McMillan  D, Revie  M, Lazakis  I. Availability, operation and 
+maintenance costs of offshore wind turbine s with different drive train configurations. Wind Energy, 
+20(2):361 –378, February 2017.  
+ 
+[12] Bangalore  P, Letzgus  S, Karlsson  D, Patriksson  M. An artificial neural network based condition 
+monitoring method for wind turbines, with application to the monito ring of the gearbox. Wind Energy, 
+20(8):1421 –1438, August 2017.  
+ 
+[13]   Cao M, Qiu Y, Feng  Y, Wang  H, Li D. Study of wind turbine fault diagnosis based on unscented 
+Kalman filter and SCADA data. Energies, 9(10):1 –18, 2016.  
+ 
+[14]  Cheng  F, Qu L, Qiao  W. Fau lt prognosis and remaining useful life prediction of wind turbine gearboxes 
+using current signal analysis. IEEE Transactions on Sustainable Energy, 9(1):157 –167, January 2018.  
+ 
+[15] Qian  P, Ma X, Cross  P. Integrated data -driven model -based approach to cond ition monitoring of the 
+wind turbine gearbox. IET Renewable Power Generation, 11(9):1177 – 1185, September 2017.  
+ 
+[16] Qiu Y, Chen  L, Feng  Y, Xu Y. An approach of quantifying gear fatigue life for wind turbine gearboxes 
+using supervisory control and data acquisition data. Energies, 10(8), 2017.  
+ 
+[17] Qiu Y, Feng  Y, Sun J, Zhang  W, Infield  D. Applying thermophysics for wind turbine drivetrain fault 
+diagnosis using scada data. IET Renewable Power Generation, 10(5):661 –668, 2016.  
+ 
+[18] Sadeghi  MH, Raflee  J, Arvani  F, Harifi  A. A fault detection and identification system for gearboxes 
+using neural networks. In 2005 International Conference on Neural Networks and Brain, volume 2, pages 
+964–969, October 2005.  
+ 
+[19] Strączkiewicz  M, Barszcz  T. Application of arti ficial neural network for damage detection in planetary 
+gearbox of wind turbine. Shock and Vibration, 2016:1 –12, 2016.  
+ 
+------------------------------End of the page -----------------------------------
+[20] Wang  L, Zhang  Z, Long  H, Xu J, Liu R. Wind turbine gearbox failure identification with deep neural 
+networks. IEEE Transactions on I ndustrial Informatics, 13(3):1360 –1368, June 2017.  
+ 
+[21] Zappal a D, Tavner  PJ, Crabtree  CJ, Sheng  S. Side -band algorithm for automatic wind turbine gearbox 
+fault detection and diagnosis. IET Renewable Power Generation, 8(4):380 –389, May 2014.  
+ 
+[22] Zhao  W, Siegel  D, Lee J, Su L. An integrated framework of drivetrain degradation assessment and fault 
+localization for offshore wind turbines. International Journal of Prognostics and Health Management, 4:46 –
+58, 2013.  
+ 
+[23] Rafiee  J, Arvani  F, Harifi  A, Sadeghi  MH. Intelligent condition monitoring of a gearbox using artificial 
+neural network. Mechanical Systems and Signal Processing 2006  
+ 
+[24] Tian Z. An artificial neural network method for remaining usful life prediction of equipment subject to 
+condition monito ring J Intell. Manuf. 2012  
+ 
+[25] Garcia  M, Sanz Bobi  M, del Pico  J. SIMAP: Intelligent System for Predictive Maintenance Application 
+to the Health Condition Monitoring of a Wind Turbine Gearbox Computers in Industry 2016  
+ 
+[26] Gao R, Wang  J, Yan R. Defect Diagnosis in Wind Turbine Gearbox based on Sideband Energy a nd 
+Enveloping Spectral Analysis.  NREL Round Robin 2012  
+ 
+[27] Tamilselvan  P, Wang  P, Sheng  S, Twomey  J. A Two -Stage Diagnosis Framework for Wind Turbine 
+Gearbox Condition Mon itoring.  NREL Round Rob in 2012  
+ 
+[28] Microsoft Azure. A-Z List of Machine Learning Studio Modules.  Accessed at: 
+https://msdn.microsoft.com/en -us/library/azure/dn906033.aspx. Accessed on 10/08/2017  
+ 
+[29] Jena M, Samantaray  S. D ata-mining -based intelligent differential relaying fo r transmission line s 
+including UPFC and wind farms.  IEEE Transactions on Neural Networks and Learning Systems 2016  
+ 
+[30] Microsoft Azure: Permutation Feature Importance.  Accessed at: https://msdn.microsoft.com/en -
+us/library/azure/dn997262.aspx Accessed on 06/08/2017  
+ 
+[31] Satizábal H, Pérez -Uribe  A. Relevance Metrics to Reduce Input Dimensions in Artificial Neural 
+Networks. ICANN 2007  
+ 
+[32] Feng  Y, Qiu Y, Crabtree  C, Long  H, Tavner  P.  Use of SCADA and CMS Signals for Failure Detection 
+and Di agnosis of Wind Turbine Gearbox.  EWEA 2011  
+ 
+[33] Cheng  F, Wang  J, Qu L, Qiao  W. Rotor -Current -Based Fault Diagnosis for DFIG Wind Turbine 
+Drivetrain Gearboxes Using Frequency  Analysis and a Deep Classifier.  IEEE Trans. On Industry 
+Applications Vol 54 No.2 April 2018  
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+------------------------------End of the page -----------------------------------

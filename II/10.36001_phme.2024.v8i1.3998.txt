@@ -1,0 +1,803 @@
+Virtual Sensor for Real-Time Bearing Load Prediction Using
+Heterogeneous Temporal Graph Neural Networks
+Mengjie Zhao1, Cees Taal2, Stephan Baggerohr3, and Olga Fink4
+1,4Intelligent Maintenance and Operations Systems, EPFL, Lausanne, Switzerland
+mengjie.zhao@epfl.ch
+olga.fink@epfl.ch
+2, 3SKF , Research and Technology Development, Houten, the Netherlands
+cees.taal@skf.com
+stephan.baggerohr@skf.com
+ABSTRACT
+Accurate bearing load monitoring is essential for their Prog-
+nostics and Health Management (PHM), enabling damage as-
+sessment, wear prediction, and proactive maintenance. While
+bearing sensors are typically placed on the bearing housing,
+direct load monitoring requires sensors inside the bearing it-
+self. Recently introduced sensor rollers enable direct bear-
+ing load monitoring but are constrained by their battery life.
+Data-driven virtual sensors can learn from sensor roller data
+collected during a battery’s lifetime to map operating condi-
+tions to bearing loads. Although spatially distributed bear-
+ing sensors offer insights into load distribution (e.g., correlat-
+ing temperature with load), traditional machine learning algo-
+rithms struggle to fully exploit these spatial-temporal depen-
+dencies. To address this gap, we introduce a graph-based vir-
+tual sensor that leverages Graph Neural Networks (GNNs) to
+analyze spatial-temporal dependencies among sensor signals,
+mapping existing measurements (temperature, vibration) to
+bearing loads. Since temperature and vibration signals exhibit
+vastly different dynamics, we propose Heterogeneous Tem-
+poral Graph Neural Networks (HTGNN), which explicitly
+models these signal types and their interactions for effective
+load prediction. Our results demonstrate that HTGNN outper-
+forms Convolutional Neural Networks (CNNs), which strug-
+gle to capture both spatial and heterogeneous signal charac-
+teristics. These findings highlight the importance of capturing
+the complex spatial interactions between temperature, vibra-
+tion, and load.
+Mengjie Zhao et al. This is an open-access article distributed under the terms
+of the Creative Commons Attribution 3.0 United States License, which per-
+mits unrestricted use, distribution, and reproduction in any medium, provided
+the original author and source are credited.1. INTRODUCTION
+Bearings are essential components in mechanical systems,
+ensuring the efficient and reliable operation of machinery and
+equipment across diverse industries, including wind energy,
+aerospace, and automotive sectors. Real-time monitoring of
+bearing conditions is crucial for optimal performance and proac-
+tive maintenance (Hou & Wang, 2021). Knowing the ac-
+tual load experienced by bearings offers several key benefits.
+Firstly, deviations from the original design loads signal the
+need for adjustments to operational parameters and mainte-
+nance schedules. This allows for proactive prescription of
+health-aware load profiles, potentially extending the bearing’s
+service life. Moreover, load monitoring aids in early detec-
+tion of misalignments, enabling timely proactive adjustments
+to prevent further damage (Widner & Littmann, 1976). Addi-
+tionally, knowledge of bearing load facilitates more accurate
+diagnosis of potential bearing faults (Peng et al., 2020). Fi-
+nally, bearing loads are a key factor influencing bearing lifes-
+pan and failure (Harris & Kotzalas, 2006), and their under-
+standing enables predicting damage propagation (Morales et
+al., 2019). An in-depth understanding of the load is essen-
+tial for accurate Remaining Useful Life (RUL) prediction and
+effective Prognostic and Health Management (PHM).
+Directly measuring bearing loads during operation presents
+complex challenges. Traditional approaches, typically using
+strain gauges, require direct contact or close proximity to the
+bearing’s rolling elements. This introduces significant logisti-
+cal and technical hurdles (Konopka et al., 2023), including ac-
+cessing power and establishing sensor communication, mak-
+ing installation more expensive than conventional condition
+monitoring sensors, such as for vibration and temperature.
+Recently, wireless sensor roller technology has been intro-
+duced, wherein sensors are embedded inside a rolling element
+to allow in-operation measurement of bearing loads (Baggerohr,
+1Proceedings of the 8th European Conference of the Prognostics and Health Management Society 2024 - ISBN – 978-1-936263-40-0
+Page 927
+------------------------------End of the page -----------------------------------
+VIRTUAL SENSOR FOR REAL-TIMEBEARING LOAD PREDICTION
+2023). However, their utility is still constrained by battery
+life. A virtual sensor could overcome this limitation by pro-
+viding continuous, long-term load predictions, even when the
+sensor roller’s battery is depleted. Specifically, our goal is
+to develop a virtual sensor that maps the measurements of
+conventional bearing condition monitoring sensors to loads.
+Since the relationships between these sensors and load are in-
+fluenced by factors such as stiffness, damping, and thermal
+behavior, and are often unknown in real-world applications,
+we adopt a data-driven approach. Sensor roller provides cru-
+cial ground-truth load data, which is significant for enabling
+the development of this virtual sensor. Estimating the load
+without such direct data is extremely difficult without exten-
+sive modeling. Our approach not only extends the value of
+the physical sensor roller but also supports advanced PHM.
+Virtual sensors have been applied in many different applica-
+tions ranging from environmental sensing to complex indus-
+trial systems. They leverage readily available measurements
+and computational models to infer quantities that are chal-
+lenging or costly to measure directly (Martin et al., 2021).
+They also play a crucial role in digital twins, providing in-
+sights beyond what physical sensors can capture (Song et
+al., 2023). Two primary directions exist for virtual sensors:
+model-based anddata-driven . Model-based approaches rely
+on well-defined physical laws and principles to develop mod-
+els describing the system of interest. In contrast, data-driven
+approaches use machine learning and data mining algorithms
+to find patterns and relationships within sensor data. Model-
+based virtual sensors require using existing sensor data to ac-
+curately infer and update model parameters to ensure accu-
+rate estimations. Methods such as Kalman filtering, which
+dynamically updates model states in real-time based on noisy
+sensor measurements, are well-established for calibrating physics-
+based virtual sensors for load estimation models (Kerst et al.,
+2019). Alternatively, Gaussian processes can be applied to
+latent force models to infer unknown load dynamics from a
+sensor network (Bilbao et al., 2022). While powerful, these
+methods rely on prior knowledge of the system’s physics,
+which can be challenging or infeasible to obtain in many real-
+world cases. In contrast, data-driven virtual sensing offers
+flexibility by directly learning complex relationships from data.
+For example, (Dimitrov & G ¨oc ¸men, 2022) demonstrated the
+potential of Long Short-Term Memory (LSTM) networks for
+predicting wind turbine blade root bending moment using
+SCADA data. (Wang et al., 2021) developed a Deep Belief
+Network (DBN) with event-triggered learning (DBN-EL) to
+improve the efficiency and accuracy of a water quality soft-
+sensing model for the wastewater treatment processes from
+the sensor data.
+Model-based methods often depend on prior knowledge of
+the system’s physics. In contrast, data-driven approaches can
+overcome this limitation but may require other forms of ground
+truth to learn the functional relationships, such as simulationdata (Dimitrov & G ¨oc ¸men, 2022) or periodic lab-based mea-
+surements (Wang et al., 2021), making them difficult to apply
+in real-world scenarios. Fortunately, bearing sensor rollers al-
+low direct measurement of bearing load in operation, offering
+a direct ground truth that enables us to learn the complex re-
+lationships between load and conventional bearing condition
+monitoring sensors through supervised learning.
+For large-size bearings, such as main shaft bearings in wind
+turbines, a common approach for bearing condition moni-
+toring involves positioning multiple sensors around the bear-
+ing to measure rotational speed, vibration, and temperature.
+Although a correlation exists between load and these sensor
+readings, the relationships are complex and difficult to model
+accurately due to the lack of exact physical models. However,
+there exists an additional inductive bias in the form of spatial
+information, such as the correlation between higher temper-
+atures and areas of increased load. Leveraging this spatial
+information can offer valuable insights into load distribution.
+While traditional machine learning algorithms struggle to ef-
+fectively utilize this spatial information, Graph Neural Net-
+works (GNNs) are well-suited for handling spatial-temporal
+dependencies (Jin et al., 2023). By modeling sensors and
+their connections as a graph, GNNs can directly capture the
+spatial dependencies and relationships between different sen-
+sor readings. They utilize message-passing techniques, where
+information from neighboring sensors is iteratively processed
+and aggregated, building a global understanding from local
+information (Gilmer et al., 2017). GNNs have been success-
+fully applied in areas such as bearing remaining useful life
+prediction (Yang et al., 2022), cyber-physical attack detection
+for water distribution systems (Deng & Hooi, 2021), sensor
+calibration for air pollution (Niresi et al., 2023) and fault de-
+tection for chemical process plants (Zhao & Fink, 2023).
+Nevertheless, existing GNN methods often assume relatively
+similar feature characteristics across nodes. Although GNNs
+have been applied to heterogeneous sensor networks, the fo-
+cus has typically been on handling different sensor types (e.g.,
+temperature, humidity, pressure). In these cases, while the
+data originates from diverse sources, the signal characteris-
+tics often exhibit some similarities. In our scenario, the het-
+erogeneity is in signal characteristics. Vibration and temper-
+ature signals exhibit very different dynamics and frequencies.
+This poses a novel and significant challenge for GNNs, which
+often struggle to effectively integrate and learn from such
+highly diverse signal characteristics.
+To address the challenge of heterogeneous sensor characteris-
+tics, we propose a novel virtual load sensor based on Hetero-
+geneous Temporal Graph Neural Networks (HTGNNs). By
+explicitly modeling high and low-frequency signals as dis-
+tinct node types and differentiating their interaction types, our
+HTGNN effectively fuses the information from diverse sen-
+sors. This enables more accurate load prediction, overcoming
+2Proceedings of the 8th European Conference of the Prognostics and Health Management Society 2024 - ISBN – 978-1-936263-40-0
+Page 928
+------------------------------End of the page -----------------------------------
+VIRTUAL SENSOR FOR REAL-TIMEBEARING LOAD PREDICTION
+the limitations of traditional GNNs. To the best of our knowl-
+edge, this represents the first design of such an architecture to
+analyze diverse sensor types for bearing load estimation.
+The remainder of this paper is organized as follows: Sec. 2
+describes the task of a bearing virtual sensor. Sec. 3 elabo-
+rates on HTGNN’s core components to model the heteroge-
+neous dynamic relationships within the bearing system. Sec. 4
+describes the case study, experimental setup, and the baseline
+method Sec. 5 presents the results of and offers a thorough
+discussion. Finally, Sec. 6 summarizes key findings and pro-
+poses directions for further research.
+2. V IRTUAL SENSOR FOR LOAD PREDICTION
+In this paper, we establish the notation where bold uppercase
+letters (e.g., X), bold lowercase letters (e.g., x), and calli-
+graphic letters (e.g., V) to denote matrices, vectors, and sets,
+respectively. Time steps are indicated by Superscripts (e.g.,
+Xtis the matrix Xat time t), while subscripts identify spe-
+cific nodes (e.g., xiis the vector for node i).
+2.1. Problem Statement
+In our case study, we focus on monitoring a bearing with a
+heterogeneous network of sensors. The data are collected
+from a test rig and comprise Nsensor signals captured at
+discrete time instances. We particularly examine temperature
+and vibration data, which are represented as vectors:
+xTt= [xt
+T1, xt
+T2, ..., xt
+TNT]T∈RNT, (1)
+xVt= [xt
+V1, xt
+V2, ..., xt
+VNV]T∈RNV, (2)
+where NTandNVare the number of each sensor type, while
+xt
+Tiandxt
+Videnote the measurements at time tfrom the ith
+sensor for temperature and vibration. Additionally, the rota-
+tional speed is recorded as wt∈Rat time t. Importantly, this
+characterizes the system’s operational state and acts as a con-
+trol parameter, rather than being a direct sensor measurement.
+To construct time-series samples for each sensor type, we em-
+ploy a sliding window of length L, resulting in the following
+representations:
+XTtl:t= [xTtl,···,xTt−1,xTt]∈RNT×L, (3)
+XVtl:t= [xVtl,···,xVt−1,xVt]∈RNV×L, (4)
+wtl:t= [wtl,···, wt−1, wt]∈RL, (5)
+where tl=t−L+ 1>0marks the beginning of the obser-
+vation window.
+Our goal is to develop a function f, referred to as a virtual
+sensor, to accurately estimate the bearing load yt∈Rdat
+timet, targeting both axial and radial loads ( d= 2). This
+function learns from heterogeneous sensor data XTtl:t,XVtl:t,
+andWtl:t. Several challenges arise in developing such a
+function. Firstly, temperature and vibration signals exhibitinherently distinct characteristics. Temperature signals, typi-
+cally monitored at lower frequencies, reflect gradual changes
+in the system’s thermal state. In contrast, vibration signals are
+captured at high frequencies, offering insights into the imme-
+diate mechanical interactions and anomalies within the sys-
+tem. These differences in frequency not only affect the data
+processing strategy but also the interpretation of these signals
+in real-time monitoring. Additionally, the dynamic operating
+conditions introduce further complexity. Variations in load,
+speed, and environmental factors can significantly alter the
+base characteristics of both temperature and vibration data.
+3. G RAPH -BASED LOAD PREDICTION MODEL
+3.1. Framework Overview
+We propose a novel Heterogeneous Temporal Graph Neu-
+ral Network (HTGNN) for real-time bearing load prediction.
+Our framework learns a virtual sensor function, f(XTtl:t,
+XVtl:t,WTtl:t) = Yt, to accurately estimate the bearing
+loadYtat a given time t. The HTGNN’s main novelty lies
+in its ability to effectively capture the heterogeneity of sen-
+sor data and model the interactions between different sensor
+types. We achieve this by representing different sensor types
+as distinct node types in an aggregated temporal graph. This
+allows us to extract unique dynamics of each sensor type us-
+ing tailored models and then model their interactions with
+specialized GNNs, This offers a significant advantage over
+traditional homogeneous temporal GNN methods that con-
+sider only a single type of relation. Fig. 1 illustrates the HT-
+GNN architecture. The model’s key components are:
+1.Heterogeneous temporal graph construction , which
+constructs the bearing graph. (Sec. 3.2).
+2.Context-aware heterogeneous dynamics extraction ,
+which captures dynamics of different sensor types (Sec. 3.3).
+3.Heterogeneous interaction modelling , which models
+complex interactions between diverse sensors (Sec. 3.4).
+4.Load prediction , which predicts the bearing loads using
+the learned node representations (Sec. 3.5).
+In the following, we detail each component of HTGNN.
+3.2. Heterogeneous Temporal Graph Construction
+Heterogeneous Static Graph. Following (Shi, 2022), a Het-
+erogeneous Static Graph (HSG), denoted as G= (V,E), con-
+sists of a node set Vand an edge set E, where nodes and edges
+can be of different types. The graph is associated with a node-
+type mapping function ϕ:V → A and an edge-type mapping
+function ψ:E → R , withAandRrepresenting the sets of
+node and edge types, respectively, satisfying |A|+|R|>2.
+Heterogeneous Temporal Graph. Extending the concept of
+a Heterogeneous Static Graph (HSG), a Heterogeneous Tem-
+poral Graph (HTG) is defined as a sequence of HSGs over T
+time steps, GT={Gt1, . . . ,GtT}. Each graph Gt= (Vt,Et)
+3Proceedings of the 8th European Conference of the Prognostics and Health Management Society 2024 - ISBN – 978-1-936263-40-0
+Page 929
+------------------------------End of the page -----------------------------------
+VIRTUAL SENSOR FOR REAL-TIMEBEARING LOAD PREDICTION
+…………Temperature NodesGraph Embeddings
+𝐹!𝐹"Dynamics ExtractionGRU
+CNN3x Heterogenous Interaction Layers
+LinearVibration Nodes⋯⋯⋯
+⋯⊕
+⊕Rotational SpeedCNN
+Figure 1. Architecture of the proposed Heterogeneous Temporal Graph Neural Network (HTGNN) for Load Prediction.
+within this sequence represents the state of the graph at time t.
+The node and edge type mapping functions, ϕandψremain
+consistent across time steps. The HTG can then be presented
+in an aggregated form as:
+GT=/parenleftiggtT/uniondisplay
+t=t1Vt,tT/uniondisplay
+t=t1Et/parenrightigg
+, (6)
+combining nodes Vtand edges Etacross all time steps while
+preserving heterogeneity defined by ϕandψ.
+Bearing graph construction. To model the heterogeneous
+sensor signals from a sensor network of the bearing system,
+we construct an HTG. This graph consists of two types of
+nodes: temperature (T) with attributes XTtl:tand vibration
+(V) with attributes XVtl:t. Edge types represent relationships
+between node types: T-T, V-V , T-V , and V-T. We assume that
+these relationships are invariant over time. The HTG allows
+capturing the interactions and evolution of temperature and
+vibration signals within the bearing system. A visualization
+of the HTG is provided in Fig. 1.
+3.3. Context-aware Node Dynamics Extraction
+In complex systems, the behavior of individual nodes (sen-
+sors) is often influenced by the global operating context. In
+our bearing system, rotational speed can be considered a con-
+trol variable, where increases in rotational speed lead to higher
+vibration intensity and faster temperature rises. To capture
+these important influences, our HTGNN model leverages context-
+aware dynamics extraction for node, following the strategy
+proposed in (Zhao & Fink, 2023). We extract contextual in-
+formation from rotational speed and integrate it into the dy-
+namics modeling of other sensor types using tailored tech-
+niques.
+Rotational speed. To extract meaningful representations of
+operational state context from the rotational speed signal, whichcontains noise, we employ a 1D Convolutional Neural Net-
+work (1DCNN). We choose a 1DCNN due to its effectiveness
+in capturing patterns within time-series data. This process
+generates a hidden representation of dimensionality hw∈
+Rdw, which is used to augment the dynamics extraction from
+other sensor types. Our 1DCNN configuration adopts chan-
+nel sizes [2, 2, 1], kernel sizes [3, 5, 5], and employs the SiLU
+activation function:
+hw=SiLU/parenleftbig
+1DCNN (wtl:t)/parenrightbig
+, (7)
+Temperature. We model the temperature dynamics using a
+Gated Recurrent Unit (GRU) network. For each temperature
+node j, the GRU updates its cell state at each time step τ
+to capture the temporal dynamics within the sequence xTtl:t
+j.
+Importantly, we initialize the GRU’s hidden state with hw(ro-
+tational speed encoding from Eq. 7), allowing the operational
+state context to influence temperature dynamics:
+hTτ
+i=SiLU/parenleftbig
+GRU-Cell (xTτ
+i,hTτ−1
+i)/parenrightbig
+,∀τ∈[tl, t].(8)
+We use the final state hTt
+i∈RdT, representing the encoded
+dynamics of node iup to time tand incorporating the oper-
+ational state context, as the temperature node representation
+hTi∈RdT.
+Vibration. Similar to the rotational speed encoding, we use
+a 1DCNN to model the dynamics of vibration signals. This
+process learns the hidden representation hVt
+ifrom the vibra-
+tion sequence xVtw:t
+iof a vibration signal i:
+hVt
+i=SiLU/parenleftbig
+1DCNN (xVtl:t
+i)/parenrightbig
+. (9)
+Finally, we concatenate hVt
+i∈RdVwith hw∈Rdwto
+form the complete node representation hVi=/bracketleftbig
+hVt
+i∥hw/bracketrightbig
+∈
+RdV+dw. This incorporates both vibration dynamics and op-
+erational state.
+4Proceedings of the 8th European Conference of the Prognostics and Health Management Society 2024 - ISBN – 978-1-936263-40-0
+Page 930
+------------------------------End of the page -----------------------------------
+VIRTUAL SENSOR FOR REAL-TIMEBEARING LOAD PREDICTION
+3.4. Heterogeneous Interaction Modelling
+We model heterogeneous interactions between different sen-
+sor types to capture the influence of operating context-aware
+dynamics. The proposed HTGNN model addresses two types
+of interactions within the graph: interactions among the same
+type of nodes and interactions across different types. This in-
+teraction modeling applies to node dynamics previously ex-
+tracted in the node dynamics extraction section (temperature
+node from Eq. 8, vibration node from Eq. 9).
+Same-type interactions. For interactions among nodes of
+the same sensor type, we employ Graph Convolutional Net-
+works (GCNs) (Kipf & Welling, 2017). This allows us to
+refine node representations by aggregating information from
+neighboring nodes that share similar characteristics. Mes-
+sages passed from node jto node iof the same type with
+relation rs∈ R sare computed as follows:
+m(l,rs)
+j→i=1
+/radicalbigˆdi/radicalig
+ˆdjW(l)
+ϕ(j),rsh(l)
+j,∀rs∈ R s, ϕ(j) =ϕ(k),
+(10)
+where ˆdiandˆdjdenote normalized node degrees, and Rsis
+the set of edge types connecting nodes of the same type.
+Different-type interactions. To model the influence of one
+sensor type on another (e.g., the impact of temperature on
+vibration), we utilize Graph Attention Networks v2 (GATv2)
+(Brody et al., 2022). This mechanism dynamically computes
+attention-weighted messages, allowing the model to discern
+the varying importance of different neighbors. The attention
+coefficients α(l,rd)
+jkfor a target node ireceiving a message
+from node jwith relation rd∈ Rdare defined as:
+α(l,rd)
+jk=softmax j/parenleftig
+a(l)T
+rdLeakyReLU (W(l)
+rd·[h(l)
+i∥h(l)
+j])/parenrightig
+,
+(11)
+where rd∈ R drepresents the set of edge types connecting
+nodes of different types. Messages are then computed as:
+m(l,rd)
+j→i=α(l,rd)
+jkW(l)
+ϕ(j),rdh(l)
+j,∀rd∈ R d, ϕ(j)̸=ϕ(k),
+(12)
+Aggregation and update: After aggregating messages of
+both same-type and different-types, the node representations
+are updated as follows:
+h(l+1)
+ϕ(i)=SiLU
+/summationdisplay
+r∈Rs∪Rd/summationdisplay
+j∈Nr(i)m(l,r)
+j→i
+. (13)
+3.5. Load Prediction
+Having extracted the context-aware dynamics of each node,
+we now combine the heterogeneous node representations to
+learn the virtual sensor function f(XTtl:t,XVtl:t,WTtl:t) =
+Yt. We achieve this by flattening the final node representa-
+tions into a unified input vector for a Multilayer Perceptron(MLP). The MLP processes this aggregated information and
+outputs two values: the predicted axial and radial loads.
+To ensure the model’s accuracy under real-world conditions,
+the training objective is to minimize the L1 loss between the
+predicted bearing load ˆyiand the actual load yi. We choose
+L1 loss for its robustness to outliers. This is particularly im-
+portant in bearing systems, occasional measurement noise or
+transitional operating conditions might generate extreme data
+points. The loss is defined as L=1
+M/summationtextM
+i=1/vextendsingle/vextendsingleˆyi−yi/vextendsingle/vextendsingle, where
+Mis the number of training samples.
+4. C ASESTUDY
+Figure 2. Cross-sectional view of the bearing test rig indicat-
+ing sensor types and installation locations.
+The data used in this study was collected at the SKF Sven
+Wingquist Test Centre (SWTC) using a face-to-face test rig
+with two identical single-row tapered roller bearings (TRBs).
+The TRBs feature a rotating inner ring, an outer diameter
+of 2,000 mm, an inner diameter of 1,500 mm, and a width
+of 220 mm, each incorporating 50 rollers. This setup aims
+to assess load conditions under various operational scenar-
+ios. Fig. 2 illustrates the sensor positioning on both identical
+TRBs. Ten temperature sensors are positioned on each bear-
+ing (eight uniformly distributed on the outer ring (OR), two
+on the inner ring (IR)). Additionally, six vibration sensors on
+the outer ring measure both axial (AX) and radial (RA) vibra-
+tions, with sensors placed at the top and bottom of the bearing
+housing for the radial direction.
+Temperature is recorded at a 1 Hz sampling rate with a preci-
+sion of 0.05°C. Vibration data is resampled to 1 Hz through
+RMS aggregations. Axial and radial forces are measured and
+controlled by several load cells, with an aggregated load value
+in both directions used as a ground truth for this study (note
+that the radial load cells are not shown in the figure).
+4.1. Data Preprocessing
+To reduce noise and transient fluctuations in the temperature
+data, we apply a moving average filter with a 1-minute win-
+dow. We focus on the rate of temperature change because the
+bearing temperature responds gradually to changes in load
+and speed. We calculate this rate over 5-minute periods to
+5Proceedings of the 8th European Conference of the Prognostics and Health Management Society 2024 - ISBN – 978-1-936263-40-0
+Page 931
+------------------------------End of the page -----------------------------------
+VIRTUAL SENSOR FOR REAL-TIMEBEARING LOAD PREDICTION
+align with typical operational changes. This approach allows
+our model to identify the immediate impact of load changes
+on temperature, rather than the cumulative effects of histori-
+cal variations. After preprocessing, we split both temperature
+and vibration signals using a sliding window, with a length of
+30 seconds and a stride of 1 second.
+4.2. Train-Test Split
+2021
+1 2 3 4 5 6 7 8012345
+Fx (×1000) [kN]Fy (×50) [kN]
+train
+test
+01234
+Rot. (×10) [rpm]
+Figure 3. Train-test split of bearing load conditions for vibra-
+tion data analysis (55% training, 45% testing)
+We divided the dataset into training, validation, and testing
+sets. Approximately 55% of the data (924,230 samples across
+31 unique operating conditions) was used for training and
+validation, with a random 80/20 split. The remaining 45%
+(699,340 samples across 25 unique operating conditions) was
+reserved for testing. We included only cases that maintained
+stationary operation for at least 10 minutes and up to 2 hours.
+We ensure that each case (a unique combination of axial load
+Fx, radial load Fy, and rotational speed) maintained station-
+ary operation for at least 10 minutes and up to 2 hours. In
+total, the dataset comprised 56 unique operating conditions.
+To assess generalization, 12 conditions in the test set were un-
+seen from the training and validation data. Fig. 3 provides a
+detailed breakdown of the specific conditions included in the
+training and test sets.
+4.3. Heterogeneous Bearing Graph Construction
+2022240123765410
+11128
+9T ORT IRV AX V RA1011120
+37
+41011120
+37
+4101112(a)(b)(c)(d)(e)
+Figure 4. Heterogeneous graphs for bearing sensor network
+relationship modeling. (a) T-T (b) V-V (c) T-V (d) V-T (e)
+connectivity across two test rig bearings.
+We construct a heterogeneous graph with nodes represent-
+ing sensors (temperature (T) and vibration (V)). Temperature
+nodes are further classified into inner ring (T IR) or outer ring(T OR) nodes. V nodes, which are installed on the outer ring,
+are distinguished by their load direction: radial (V RA) or ax-
+ial (V AX). We model four types of relationships: T-T, V-V ,
+T-V , and V-T. Here, T-T and V-V represent homogeneous re-
+lationships, while V-T and T-V represent heterogeneous rela-
+tionships. Node positions reflect physical sensor placement.
+Fig. 4(a) and (b) illustrate the connectivity within a single
+bearing based on physical proximity. Additionally, IR nodes
+are connected due to relatively uniform temperatures across
+the inner ring. Given that the test rig consists of two bear-
+ings, we connect them based on proximity, as illustrated in
+Fig. 4(e) for V nodes. We assume symmetrical (undirected)
+relationships within the same sensor type and model hetero-
+geneous T-V and V-T relationships with directed edges, as
+demonstrated in Fig. 4(c) and (d).
+4.4. Experimental Setup
+Baseline. We employ a 1DCNN model as our baseline due
+to its established success in handling multivariate time series
+data. 1DCNNs are particularly well-suited for signal predic-
+tion tasks, making them a strong baseline. We adapt the de-
+sign from (Chao et al., 2022), tailoring the architecture to our
+specific dataset through a grid search to minimize the mean
+absolute error (MAE) on the validation set. The explored pa-
+rameter spaces included hidden channel dimension (20, 50,
+or 100), kernel size (3, 5, or 9), number of channels (20, 50,
+or 100), and number of layers (3, 4, or 5). The optimized
+model consists of four layers, each with 100 channels with
+100 hidden dimensions, a kernel size of 9, batch normaliza-
+tion, a dropout rate of 0.5 for regularization, and a SiLU acti-
+vation function (consistent with our proposed method). This
+configuration has a total of 209,403 parameters.
+HTGNN hyperparameter tuning. We similarly used grid
+search for HTGNN hyperparameter tuning. To reduce the
+search space, we maintained a consistent hidden size across
+all layers and the same graph embedding dimension for all
+GNN modules. The search space comprised: node embed-
+ding dimension (values of 10, 15, 20), number of GNN layers
+(2 or 3), GNN hidden dimension (40 or 80), graph head hid-
+den dimension (40 or 80), and number of graph head layers
+(2 or 3). The optimal HTGNN configuration consists of a
+node embedding dimension of 10, 3 GNN layers with a hid-
+den dimension of 80, and a graph head dimension of 40. The
+configuration has a total of 142,394 parameters.
+Training. We optimized the HTGNN and 1DCNN models
+using the AdamW optimizer with a learning rate of 1e-3.
+Training was continued for up to 50 epochs with early stop-
+ping at 30 epochs with patience of 10 steps. We used a batch
+size of 512 and minimized L1 loss (defined in Sec. 3.5). To
+ensure the robustness of our results, experiments were re-
+peated five times with different initializations, and the mean
+and standard deviation of the results were reported.
+6Proceedings of the 8th European Conference of the Prognostics and Health Management Society 2024 - ISBN – 978-1-936263-40-0
+Page 932
+------------------------------End of the page -----------------------------------
+VIRTUAL SENSOR FOR REAL-TIMEBEARING LOAD PREDICTION
+Table 1. Averaged model performance over cases and runs
+1DCNN HTGNN
+SeenMAE Fx(kN) 531.3 203.1
+MAE Fy(kN) 33.2 12.4
+MAPE Fx(%) 12.8 4.5
+MAPE Fy(%) 12.0 5.7
+UnseenMAE Fx(kN) 1765.5 1649.7
+MAE Fy(kN) 58.7 57.4
+MAPE Fx(%) 33.2 29.2
+MAPE Fy(%) 17.8 15.8
+5. R ESULTS
+We evaluate the model performance on Mean Absolute Error
+(MAE) and Mean Absolute Percentage Error (MAPE).
+Superior performance on seen conditions. Tab. 1 high-
+lights the HTGNN model’s superior performance advantage
+compared to traditional 1DCNN models in predicting seen
+conditions. Notably, this improvement is evident in both ax-
+ial (Fx) and radial (Fy) load predictions, with the HTGNN
+achieving approximately one-third the MAPE for Fx and half
+the MAPE for Fy compared to the 1DCNN. Importantly, the
+scenario considered here reflects real-world conditions. It is
+feasible for the sensor roller to collect load data across all typ-
+ical operating conditions before its battery depletes, allowing
+the HTGNN to serve as a reliable virtual sensor.
+HTGNN’s physical prior. The superiority of the HTGNN
+in unseen conditions highlights the advantages of explicitly
+modeling heterogeneous sensor relationships. The physical
+connectivity in the bearing system acts as an effective induc-
+tive bias for the model. We attribute the improved perfor-
+mance of the HTGNN to its ability to capture complex in-
+teractions between temperature and vibration measurements,
+which often exhibit interdependent behaviors in bearing sys-
+tems. The proposed architecture of the HTGNN is ideally
+suited to represent these heterogeneous relationships. In con-
+trast, 1DCNN’s homogeneous approach to processing vari-
+ables limits its ability to model such complex interdependen-
+cies, leading to higher prediction errors.
+Better generalizability. Fig. 6 presents the mean MAPE in
+FxandFyfor various bearing load conditions, with unseen
+conditions highlighted in gray. Although the HTGNN gen-
+erally outperforms the CNN in handling unseen conditions,
+as detailed in Tab. 1, there are instances depicted in Fig. 6
+where CNN shows competitive performance. This challenge
+in generalization can be partially attributed to the dynamics
+shown in Fig. 5, which illustrates the significant effects of
+rotational speed changes on both vibration intensity and the
+rate of temperature change. Additionally, the underrepresen-
+tation of certain rotational speeds in the training data may
+impede interpolation, impacting the generalization capabili-
+ties of both models. Interestingly, as depicted in Fig. 5, the
+1020T OR [°C]
+0.000.05V AX [g]
+0.000.05V RA [g]
+025Rot [rpm]
+500010000Fx [kN]
+15000 20000 25000 30000 35000 40000 45000
+Sample05001000Fy [kN]
+True 1DCNN HTGNNFigure 5. Examples of input signals and load prediction per-
+formance. Shaded areas indicate unseen conditions.
+HTGNN tends to generalize better for the commonly encoun-
+tered unseen rotational speed of 10 rpm than for the less fre-
+quently occurring speed of 20 rpm, across both axial and ra-
+dial loads. For details on the distribution of conditions in the
+training and testing sets, see Fig. 3.
+6. C ONCLUSION
+In this research, we propose HTGNN, a novel virtual sen-
+sor that accurately maps vibration and temperature signals
+under varying rotational speeds to axial and radial bearing
+load predictions. Our findings demonstrate that HTGNN out-
+performs 1DCNN models, particularly when trained on rep-
+resentative conditions. The success of HTGNN highlights
+the importance of incorporating physical priors and inductive
+biases: by modeling the connectivity of the bearing sensor
+network, HTGNN effectively captures the complex interac-
+tions between temperature and vibration. This superior per-
+formance suggests HTGNN’s potential as a reliable virtual
+sensor in real-world applications, replacing battery-powered
+load sensors after their lifespan. This could facilitate proac-
+tive maintenance, reducing unexpected breakdowns and op-
+timizing the lifespan of bearings. However, the models can-
+not generalize as effectively to unseen speed conditions. Fu-
+ture work should focus on investigating datasets that include
+a broader range of speed conditions in the training to deter-
+mine if the model can improve its generalization capabilities.
+Additionally, measuring the model’s performance using real
+load data measured from sensor rollers in real operations and
+not just from the test rig would be valuable.
+7Proceedings of the 8th European Conference of the Prognostics and Health Management Society 2024 - ISBN – 978-1-936263-40-0
+Page 933
+------------------------------End of the page -----------------------------------
+VIRTUAL SENSOR FOR REAL-TIMEBEARING LOAD PREDICTION
+0.00.51.0Fx MAPE1DCNN
+HTGNN
+(1, 4, 4)
+(1, 5, 4)
+(2, 2, 4)
+(2, 4, 1)
+(3, 3, 2)
+(3, 4, 0)
+(4, 3, 0)
+(4, 4, 0)
+(4, 4, 2)
+(4, 4, 4)
+(4, 20, 0)
+(4, 20, 2)
+(4, 20, 4)
+(5, 2, 2)
+(6, 2, 0)
+(6, 3, 1)
+(6, 3, 3)
+(6, 4, 1)
+(6, 20, 1)
+(6, 20, 3)
+(8, 3, 0)
+(8, 3, 4)
+(8, 4, 1)
+(8, 4, 3)
+(8, 20, 1)
+Category0.00.5Fy MAPE
+Figure 6. Mean test set performance averaged over 5 runs of CNN and HTGNN on bearing load conditions Fx(×1000) [kN],
+Fy(×50)[kN], and rotational speed ( ×10) [r/min]. Shaded areas indicate unseen conditions.
+REFERENCES
+Baggerohr, S. (2023). On the detection of rolling contact
+fatigue in large bearings using roller embedded sensors.
+InSurveillance, vibrations, shock and noise.
+Bilbao, J., Lourens, E.-M., Schulze, A., & Ziegler, L. (2022).
+Virtual sensing in an onshore wind turbine tower using
+a gaussian process latent force model. Data-Centric
+Engineering ,3, e35.
+Brody, S., Alon, U., & Yahav, E. (2022). How attentive are
+graph attention networks? In International conference
+on learning representations (iclr).
+Chao, M. A., Kulkarni, C., Goebel, K., & Fink, O. (2022).
+Fusing physics-based and deep learning models for
+prognostics. Reliability Engineering & System Safety ,
+217, 107961.
+Deng, A., & Hooi, B. (2021). Graph neural network-based
+anomaly detection in multivariate time series. In Pro-
+ceedings of the aaai conference on artificial intelli-
+gence (V ol. 35, pp. 4027–4035).
+Dimitrov, N., & G ¨oc ¸men, T. (2022). Virtual sensors for wind
+turbines with machine learning-based time series mod-
+els.Wind Energy ,25(9), 1626–1645.
+Gilmer, J., Schoenholz, S. S., Riley, P. F., Vinyals, O., &
+Dahl, G. E. (2017). Neural message passing for quan-
+tum chemistry. In International conference on machine
+learning (pp. 1263–1272).
+Harris, T. A., & Kotzalas, M. N. (2006). Essential concepts
+of bearing technology . CRC press.
+Hou, Y ., & Wang, X. (2021). Measurement of load distribu-
+tion in a cylindrical roller bearing with an instrumented
+housing: Finite element validation and experimental
+study. Tribology International ,155, 106785.
+Jin, M., Koh, H. Y ., Wen, Q., Zambon, D., Alippi, C., Webb,
+G. I., . . . Pan, S. (2023). A survey on graph neu-
+ral networks for time series: Forecasting, classifica-
+tion, imputation, and anomaly detection. arXiv preprint
+arXiv:2307.03759 .
+Kerst, S., Shyrokau, B., & Holweg, E. (2019). A model-based
+approach for the estimation of bearing forces and mo-
+ments using outer ring deformation. IEEE Transactions
+on Industrial Electronics ,67(1), 461–470.
+Kipf, T. N., & Welling, M. (2017). Semi-supervised clas-
+sification with graph convolutional networks. In 5thinternational conference on learning representations.
+Konopka, D., Steppeler, T., Ottermann, R., Pape, F., Dencker,
+F., Poll, G., & Wurz, M. (2023). Advancements in
+monitoring of tribological stress in bearings using thin-
+film strain gauges.
+Martin, D., K ¨uhl, N., & Satzger, G. (2021). Virtual sensors.
+Business & Information Systems Engineering ,63, 315–
+323.
+Morales, G. E., Engelen, P., & Van Nijen, G. (2019). Prop-
+agation of large spalls in rolling bearings. Tribology
+Online ,14(5), 254-266. doi: 10.2474/trol.14.254
+Niresi, K. F., Zhao, M., Bissig, H., Baumann, H., & Fink,
+O. (2023). Spatial-temporal graph attention fuser for
+calibration in iot air pollution monitoring systems. In
+2023 ieee sensors (pp. 01–04).
+Peng, D., Wang, H., Liu, Z., Zhang, W., Zuo, M. J., & Chen,
+J. (2020). Multibranch and multiscale cnn for fault
+diagnosis of wheelset bearings under strong noise and
+variable load condition. IEEE Transactions on Indus-
+trial Informatics ,16(7), 4949–4960.
+Shi, C. (2022). Heterogeneous graph neural networks. Graph
+Neural Networks: Foundations, Frontiers, and Appli-
+cations , 351–369.
+Song, Z., Hackl, C. M., Anand, A., Thommessen, A., Pet-
+zschmann, J., Kamel, O., . . . Hauptmann, S. (2023).
+Digital twins for the future power system: An overview
+and a future perspective. Sustainability ,15(6), 5259.
+Wang, G., Jia, Q.-S., Zhou, M., Bi, J., & Qiao, J. (2021).
+Soft-sensing of wastewater treatment process via deep
+belief network with event-triggered learning. Neuro-
+computing ,436, 103–113.
+Widner, R., & Littmann, W. (1976). Bearing damage anal-
+ysis. National Bureau of Standard special publica-
+tion(423), 1.
+Yang, X., Zheng, Y ., Zhang, Y ., Wong, D. S.-H., & Yang,
+W. (2022). Bearing remaining useful life prediction
+based on regression shapalet and graph neural network.
+IEEE Transactions on Instrumentation and Measure-
+ment ,71, 1–12.
+Zhao, M., & Fink, O. (2023). Dyedgegat: Dynamic edge via
+graph attention for early fault detection in iiot systems.
+arXiv preprint arXiv:2307.03761 .
+8Proceedings of the 8th European Conference of the Prognostics and Health Management Society 2024 - ISBN – 978-1-936263-40-0
+Page 934
+------------------------------End of the page -----------------------------------

@@ -1,0 +1,1339 @@
+energies
+Article
+Wind T urbine Fault Detection Using Highly Imbalanced Real
+SCADA Data
+Cristian Velandia-Cardenas1,†
+, Yolanda Vidal1,2,†
+and Francesc Pozo1,2,*,†
+/gid00030/gid00035/gid00032/gid00030/gid00038/gid00001/gid00033/gid00042/gid00045 /gid00001
+/gid00048/gid00043/gid00031/gid00028/gid00047/gid00032/gid00046
+Citation: Velandia-Cardenas, C.;
+Vidal, Y.; Pozo, F. Wind Turbine Fault
+Detection Using Highly Imbalanced
+Real SCADA Data. Energies 2021 ,14,
+1728. https://doi.org/10.3390/
+en14061728
+Academic Editor: Francesco
+Castellani
+Received: 4 March 2021
+Accepted: 16 March 2021
+Published: 20 March 2021
+Publisher’s Note: MDPI stays neutral
+with regard to jurisdictional claims in
+published maps and institutional afﬁl-
+iations.
+Copyright: © 2021 by the authors.
+Licensee MDPI, Basel, Switzerland.
+This article is an open access article
+distributed under the terms and
+conditions of the Creative Commons
+Attribution (CC BY) license (https://
+creativecommons.org/licenses/by/
+4.0/).1Control, Modeling, Identiﬁcation and Applications (CoDAlab), Department of Mathematics,
+Escola d’Enginyeria de Barcelona Est (EEBE), Campus Diagonal-Besòs (CDB),
+Universitat Politècnica de Catalunya (UPC), Eduard Maristany 16, 08019 Barcelona, Spain;
+cvelandia1@hotmail.com (C.V .-C.); yolanda.vidal@upc.edu (Y.V .)
+2Institute of Mathematics (IMTech), Universitat Politècnica de Catalunya (UPC), Pau Gargallo 14,
+08028 Barcelona, Spain
+*Correspondence: francesc.pozo@upc.edu
+† These authors contributed equally to this work.
+Abstract: Wind power is cleaner and less expensive compared to other alternative sources, and it
+has therefore become one of the most important energy sources worldwide. However, challenges
+related to the operation and maintenance of wind farms signiﬁcantly contribute to the increase in
+their overall costs, and, therefore, it is necessary to monitor the condition of each wind turbine
+on the farm and identify the different states of alarm. Common alarms are raised based on data
+acquired by a supervisory control and data acquisition (SCADA) system; however, this system
+generates a large number of false positive alerts, which must be handled to minimize inspection
+costs and perform preventive maintenance before actual critical or catastrophic failures occur. To
+this end, a fault detection methodology is proposed in this paper; in the proposed method, different
+data analysis and data processing techniques are applied to real SCADA data (imbalanced data)
+for improving the detection of alarms related to the temperature of the main gearbox of a wind
+turbine. An imbalanced dataset is a classiﬁcation data set that contains skewed class proportions
+(more observations from one class than the other) which can cause a potential bias if it is not handled
+with caution. Furthermore, the dataset is time dependent introducing an additional variable to deal
+with when processing and splitting the data. These methods are aimed to reduce false positives and
+false negatives, and to demonstrate the effectiveness of well-applied preprocessing techniques for
+improving the performance of different machine learning algorithms.
+Keywords: fault detection; machine learning; principal component analysis; SCADA; structural
+health monitoring; wind turbine; imbalanced data; support vector machines; knearest neighbors
+1. Introduction
+Wind power generation has become increasingly important in daily life. Its use has
+increased substantially because of the current environmental crisis and the efforts to mini-
+mize environmental damage. It has become one of the best alternative sources for the near
+future given its reliability and low vulnerability to the climate change [ 1]. Supranational
+governments such as the European Union have set ambitious goals to migrate from non-
+renewable to renewable energy in the next few years. In Spain, over 7000 MW of wind
+power capacity was installed between 2007 and 2016 [ 2], and it continued to increase until
+it reached 25,704 MW in 2019 [ 3]. Among renewable energy sources, the contribution of
+wind energy increased from 9.7% in 2007 to 23.7% in2016 [4]; however, it decreased to
+20.8% in July 2020 because of the increased utilization of other renewable sources. In Spain,
+renewable energy contributes to [ 5]44.7% of the total energy generation. The increased
+importance of wind power in the electricity market suggests that there is a need to ensure
+year-round production. Therefore, several studies have focused on wind turbine (WT)
+Energies 2021 ,14, 1728. https://doi.org/10.3390/en14061728 https://www.mdpi.com/journal/energies
+------------------------------End of the page -----------------------------------
+Energies 2021 ,14, 1728 2 of 26
+maintenance to ensure reliable performance regardless of weather and to minimize costs
+and gas emissions [ 6]. Currently, preventive maintenance is the most widely employed
+maintenance strategy. This strategy includes tasks such as replacement of parts after a
+predetermined utilization period, which incurs high costs because of the difﬁculty associ-
+ated with estimating the replacement time frame accurately. The estimated replacement
+time frame is affected by factors such as unforeseen external conditions that may lead
+to unexpected breakdown, which would create the need for corrective maintenance [ 7].
+Such factors further increase the economic and time costs of the maintenance process.
+To deal with these problems, different innovative methods have been proposed. Several
+methods involve improving processes inside the WTs, for example, the proposal of an
+automatic lubrication system for the WT bearings to contribute to the WT maintenance
+process while improving the WT reliability and performance by Florescu et al. [ 8]. Other
+methods such as the condition monitoring (CM) strategy for preventive maintenance have
+gained considerable research attention because it employs sensors and data analysis to
+optimize the preventive maintenance interval and/or draw predictions that ensure that
+maintenance is performed only when it is imperative [ 9]. This helps minimize part losses
+and the related costs involved with common predictive and corrective maintenance strate-
+gies. Consequently, companies are conducting research to develop such reliable methods
+to detect and/or predict failures associated with WT components [ 10]. Currently, speciﬁc-
+purpose based and expensive condition monitoring sensors are developed and used to
+perform preventive CM. The supervisory control and data acquisition (SCADA) data are
+collected from every industrial-sized WT for use as a dataset. However, it is not a common
+approach to employ SCADA data for fault diagnosis and CM. However, recently, it has
+gained interest owing to the possibility of using this data for fault diagnoses at almost no
+additional cost compared to other CM techniques that require the installation of expensive
+sensors. Sequeira et al. [ 11] demonstrated that several relationships exist between the
+variables of SCADA data (e.g., a correlation between the gearbox oil temperature and wind
+velocity, active power generation and wind velocity, and the gearbox oil temperature and
+active power generation) that can be used to detect and predict faults or optimize fault
+detection and maintenance processes. Furthermore, it is common practice to store only the
+average of the SCADA data to save storage space; the standard SCADA data for WTs are
+sampled at a rate of 1s, and they are averaged using a time window of 10min; this is called
+the slow-rate SCADA data [ 12]. This implies that each observation logged by the SCADA
+system corresponds to an average of the measurements conducted over the last 10 min [ 13].
+Among these relations, the oil temperature of the gearbox is a variable that is used in the
+state-of-the-art. This variable is used extensively because it can be used to assess gear wear
+and predict faults that result from it [ 14]. In this study, this variable is used because of its
+relation to the alarm conﬁgured in the SCADA system of a wind farm. These alarms cause
+problems for park maintenance personnel because it sometimes raises system alerts that
+are false alarms. Therefore, it is extremely important to monitor and detect the real state of
+an alarm.
+Fault diagnosis in WTs can be performed at two different levels: the WT level or the
+wind farm level. This study focuses on the WT level, wherein data analysis techniques are
+used to detect different types of faults and damage. These techniques include co-integration
+analysis for early fault detection and CM [ 15]; statistical modeling for fatigue load analysis
+of WT gearboxes [ 16]; and the development of indicators to detect equipment malfunctions
+by combining SCADA data, digital signals, and behavioral models [ 17]. Other studies
+have applied the Dempster–Shafer evidence theory for fault diagnosis using maintenance
+records and alarm data [ 18], kernel density estimation methods for generating criteria to
+assess the aging of WTs [ 19], early defect identiﬁcation using dynamical network markers,
+and correlation and cross-correlation analyses of SCADA data [ 20] to analyze the available
+data and exploit it. Furthermore, many other studies have used artiﬁcial intelligence (AI)
+techniques and machine learning (ML), which have become essential in fault detection
+and CM ﬁelds. These techniques allow training classiﬁcation and regression models based
+------------------------------End of the page -----------------------------------
+Energies 2021 ,14, 1728 3 of 26
+on different types of data that can be extracted from wind power generation process [ 21]
+and [ 22]. Among the many ML strategies, the use of artiﬁcial neural networks (ANNs) and
+deep learning strategies is a very popular approach. Their applications include early fault
+detection and optimization of maintenance management frameworks [ 23], fault analysis
+and anomaly detection of WT components [ 24], CM using spatiotemporal fused SCADA
+data by convolutional ANNs [ 25], deep learning strategies using supervised and non-
+supervised models [ 26], etc. Considering all these methods and a real dataset provided
+by the company SMARTIVE (https://smartive.eu/ (accessed on 18 March 2021), Sabadell,
+Barcelona, Spain), a fault detection methodology is proposed. Real SCADA data from
+an operational wind farm are a highly imbalanced dataset; understand an imbalanced
+data set, for a binary classiﬁcation problem, as a classiﬁcation data set with skewed class
+proportions [ 27]. When the data classiﬁed with a certain label (class) have more observa-
+tions than the other, this is usually called majority class and the remaining class, with less
+observations, is called a minority class. Thus, the proposed methodology deals with an
+extreme imbalanced data problem. Furthermore, as real data are employed, the problems
+of missing values and outliers are considered. This work includes a comparison between
+the imputation of missing data using different techniques.
+Data are ﬁrst preprocessed using principal component analysis (PCA) to exploit the
+relationships between SCADA variables, followed by processing using techniques to deal
+with data imbalance. PCA is widely used in the literature, but for different applications
+and objectives. For instance, and in the ﬁeld of wind turbines, PCA can be used as a visual-
+ization tool [ 28], to identify suitable features [ 29,30] or to perform a fault detection based on
+hypothesis testing [ 31,32]. This paper presents a comparative analysis between the results
+obtained using supervised ML methods such as k-nearest neighbor ( kNN) and support
+vector machine (SVM) algorithms fed with processed data using time-split and oversam-
+pling techniques for imbalanced datasets. The results obtained using one of the most recent
+ensemble methods—a combination of random undersampling and the standard boosting
+procedure AdaBoost (RUSBoost)—was used as the baseline. This comparative analysis con-
+tributes to the state-of-the-art preprocessing techniques while proposing different methods
+for preprocessing data enhances fault detection in WTs. Furthermore, it provides a different
+perspective of what can be achieved using a small amount of data to minimize false alarms
+(or false positives ( fp)) and undetected faults (or false negatives ( fn)), while increasing the
+detection rate of real alarms (or true positives ( tp)), minimizing costs, and contributing to
+the WT lifespan.
+The rest of this manuscript is organized as follows: Section 2 describes the dataset,
+and Section 3 presents the proposed fault detection methodology including the data
+preprocessing techniques used to deal with the imbalanced dataset, the description of
+the selected ML algorithms along with the performance measures, and the experimental
+framework deﬁned for the tests. Furthermore, Section 4 presents the results, which are
+then discussed in Section 5. Finally, Section 6 concludes this manuscript.
+2. Data Description
+Real data comprise two ﬁles: one contains a set of measurements recorded by the
+SCADA a system of one WT in a Spanish wind farm, and the other is an alarm log that
+registers the alarms raised during the same period.
+1. File 1: This ﬁle contains the monitoring data of the SCADA system corresponding to
+WT number 15of the farm, as measured between 1 January 2015 and 1 August 2015.
+The ﬁle comprises 29,489 rows and 20columns, where each recorded measurement
+corresponds to the mean value of all data monitored for 10min (slow rate SCADA
+data). The ﬁrst column contains the exact date and time of the measurement; the
+remaining columns contain the data of different monitored variables, which are listed
+in Table 1.
+------------------------------End of the page -----------------------------------
+Energies 2021 ,14, 1728 4 of 26
+2. File 2: This file is an alarm log that contains the time, date, description, and state of
+different alarms activated over the same period of file 1for the same WT. It comprises
+21rows and 5columns. The features that describe the alarm states are listed in Table 2.
+Table 1. Description of the variables measured by the SCADA system that comprises the WT monitoring data ﬁle.
+Index Variable Description Units Type
+0 date_time Date and time of the sample - timestamp
+1 power Generated real power kW Real
+2 bearing_temp Bearing temperature of the turbineC Real
+3 cos_phi Power factor - Real
+4 gen_1_speed Speed of the generator m/s Real
+5 gen_bearing_temp Bearing temperature of the generatorC Real
+6 grid_current Grid current A Real
+7 grid_fre Grid frequency Hz Real
+8 grid_v Grid voltage V Real
+9 int_fase_r R-Phase intensityaA Real
+10 int_fase_s S-Phase intensityaA Real
+11 int_fase_t T-Phase intensityaA Real
+12 reac_power_gen Generated reactive power kVAR Real
+13 rotor_speed Rotor speed m/s Real
+14 setpoint_power_act Power generation set point kW Real
+15 temp_oil_mult Oil temperature of the gearboxC Real
+16 temp_out_nacelle External temperature of the turbine nacelleC Real
+17 v_fase_r R-phase voltageaV Real
+18 v_fase_s S-phase voltageaV Real
+19 v_fase_t T-phase voltageaV Real
+20 wind Wind speed m/s Real
+aThe phases of a three-phase electric power system, commonly denoted as A, B, and C or R, S, and T, originate in a three-phase generator
+connected to the output shaft of a WT. The three-phase generator or synchronous generator comprises an inner rotating part called a rotor,
+which is surrounded by coils positioned on an outer stationary housing called a stator. When the rotor moves, the machine delivers three
+independent voltages with peaks equally spaced over time. Simultaneously, an electric current or intensity is induced. The electric power
+generated is transmitted to the grid of the farm, thereby providing three-phase electricity that is transmitted to the main grid, reduced to a
+lower voltage, and then transmitted to users [33].
+Table 2. Description of features that comprise the alarms report generated by the SCADA system.
+Variable Description Type
+date_time Date and time of the alarm timestamp
+model Model of the wind turbine (wind turbine number inside the park) String
+code_desc Description and code of the faultaString
+status Status of the alarm (ON, OFF) Bool
+alarm Alarm active or not (0,1) Bool
+aAlarm activation is related to the oil temperature of the middle bearing of the gearbox.
+Alarms listed in Table 2 are triggered by the oil temperature of the middle bearing
+of the gearbox. The two alarm codes are generated depending on the temperature level,
+which results in four different alerts, as listed in Table 3.
+Table 3. Description of the alarm codes present in the provided report ﬁle.
+Alarm Code Description
+TRA-137 Sobre-tmp 137 over-temperature
+TRA-135 Sobre-tmp 135 over-temperature
+TRA-137 Alta tmp 137 high temperature
+TRA-135 Alta tmp 135 high temperature
+The SCADA system reports when an alarm is activated or deactivated; fault diagnosis
+must be performed based on this information. In this study, all data between the ON
+------------------------------End of the page -----------------------------------
+Energies 2021 ,14, 1728 5 of 26
+and OFF alarm states are considered as faulty data, which leads to a binary classiﬁcation
+problem (0—healthy; 1—faulty).
+3. Fault Detection Methodology
+3.1. Data Analysis, Preprocessing and Labeling
+Real datasets such as those provided by the company have several missing values.
+In SCADA systems, this is often caused by communication issues such as network down-
+time, caching issues, and inconsistent power. Therefore, it is imperative to replace these
+values to perform all pertinent calculations. In this study, the missing values were replaced
+by the median of their corresponding features. This approach induces less noise and im-
+proves the data distribution compared with using the mean values. After data imputation,
+it is possible to create a basic visualization of the temperature variables of the dataset,
+as illustrated in Figure 1.
+00 . 511 . 522 . 53
+Sample 104050100150Mean Temperature (°C)Wind Turbine Components Temperature
+TBearing
+TGenBearing
+TOilM
+TOutN
+–50
+–100
+Figure 1. Temperature variables plot: TBearing denotes the WT main bearing temperature, TGenBearing
+corresponds to the temperature of the generator bearing, TOilM represents the oil temperature inside
+the gearbox, and TOutN represents the nacelle temperature.
+The complete period of faulty observations can be identiﬁed after comparing the date
+and time of each alarm log from the alarm report with the date and time of the monitoring
+data. Thus, all data between the ON and OFF states are considered faulty. This process
+adds a vector of labels to the dataset, wherein 1indicates that an observation is classiﬁed
+as faulty, and 0indicates a healthy observation. For visualization, and considering that the
+alarms are related to the gearbox temperature, faulty observations were plotted along with
+the oil temperature variables, as shown in Figures 2 and 3.
+------------------------------End of the page -----------------------------------
+Energies 2021 ,14, 1728 6 of 26
+Figure 2. Measured temperatures and associated discrete faults.
+2.88 2.882 2.884 2.886 2.888 2.89
+Sample 1040102030405060Mean Temperature (°C)Temperature Data With Unified Faults
+TBearing
+TGenBearing
+TOilM
+TOutN
+Faults
+Figure 3. Measured temperatures and associated merged faults.
+3.2. Data Modeling and Dimension Reduction by Principal Component Analysis
+After the initial stage of data integration that includes data imputation and labeling,
+PCA was used for both data transformation and data reduction. In the present framework,
+data transformation is understood as the application of a particular function to each element
+in the dataset to uncover hidden patterns. Data reduction is conducted to reduce data
+complexity and computational effort and time. The PCA transforms the dataset into a
+new set of uncorrelated variables called principal components (PCs) that are sorted in the
+descending order with respect to the retained variance given by the eigenvalues of the
+variance–covariance matrix [34].
+------------------------------End of the page -----------------------------------
+Energies 2021 ,14, 1728 7 of 26
+The algorithm of the proposed approach is described as follows. Consider the ini-
+tial dataset
+D= (dij)i=1,...,N
+j=1,..., p=x1 xj xp y(p+1)0
+BBBBBBBBB@1
+CCCCCCCCCAd1,1 d1,j d1,p d1,(p+1)
+..................
+di,1 di,j di,p di,(p+1)
+..................
+dN,1 dN,j dN,pdN,(p+1)
+X Y2MN(p+1)(R), (1)
+where i=1, . . . , Nand j=1, . . . , p.
+Matrix Dcomprises a matrix X2M Np(R), which contains Nobservations (or
+samples) described by pfeatures (or variables) called xj,j=1,. . .,p, and a vector Y2RN
+that contains Nknown labels of healthy (0) and faulty data (1).
+When the following set is deﬁned
+idx=fi2f1, . . . , Ngjdi,(p+1)=0g,
+data in matrix Din Equation (1) are split into healthy data ( H) and faulty data ( F)
+H= 
+dij
+i2idx
+j=1,..., p2M(Nh)p(R),
+F= 
+dij
+i2f1,...,Ngnidx
+j=1,..., p2M(Nf)p(R),
+where Nh=#idxand Nf=N #idxare the total number of healthy and faulty observa-
+tions, respectively.
+Then, healthy data are standardized using Z-score normalization. The standard
+deviation of each column is equal to 1, and its mean is equal to 0. This is calculated as
+˘hij=hij 1
+NhNh
+å
+i=1hij
+vuut 1
+Nh 1Nh
+å
+i=1 
+hij 1
+NhNh
+å
+i=1hij!2,i=1, . . . , Nh,j=1, . . . , p, (2)
+where hijrepresents the element in the ith row and the jth column of matrix H. The stan-
+dardized healthy data are now called ˘H. Then, the variance–covariance matrix of ˘His
+computed as
+cov(˘H) =1
+Nh 1˘H>˘H2M pp(R), (3)
+where Nhdenotes the number of observations (rows) in matrix ˘H.
+The PCA identiﬁes linear manifolds characterizing the data by diagonalizing the
+variance–covariance matrix cov (˘H) =PLP>, where the diagonal terms of Lare
+l1>l2>>lp.
+Analogously, the eigenvectors that form the columns of matrix Pare sorted in the
+same order. The matrix P2M pp(R)is called the PCA model of the dataset H, where
+------------------------------End of the page -----------------------------------
+Energies 2021 ,14, 1728 8 of 26
+each column of this matrix corresponds to a linear combination of the xjfeatures of the
+normalized healthy dataset ˘H.
+In the next step, the faulty data stored in Fare standardized using the mean and
+standard deviation of the corresponding column of healthy data
+˘fij=fij 1
+NhNh
+å
+i=1hij
+vuut 1
+Nh 1Nh
+å
+i=1 
+hij 1
+NhNh
+å
+i=1hij!2,i=1, . . . , Nf,j=1, . . . , p, (4)
+where fijdenotes the element in the ith row and jth column of matrix F.
+Finally, all data are transformed using the PCA model Pas
+Th=˘HP2M Nhp(R), (5)
+Tf=˘FP2M Nfp(R). (6)
+The transformed datasets Thand Tfare the projections of the normalized healthy ( ˘H)
+and faulty ( ˘F) datasets onto the vector space spanned by the PCs. This process is applied
+to the training and testing datasets of the ML algorithms.
+For a comprehensive study of these datasets and the effect of the PCA model, the pro-
+portion of variance explained (PVE) or explained variation is used. The PVE measures the
+proportion at which a mathematical model affects the dispersion of a dataset. The PCA
+is used to analyze the distribution of information among the PCs to select components
+that can be discarded. Several tools have been proposed to study the explained variations.
+For example, the scree plot is a graphical tool built by plotting the individual explained
+variances of each PC along with the cumulative PVE (CPVE) obtained by adding the PVE
+of each PC individually. The PVE associated with the jth principal component is
+PVE j=lj
+åp
+i=1li,j=1, . . . , p, (7)
+while the CPVE of the ﬁrst jPCs is
+CPVE j=l1++lj
+l1++lp=åj
+i=1li
+åp
+i=1li,j=1, . . . , p. (8)
+The scree plot of the PCA model is shown in Figure 4.
+Figure 4 shows the distribution of variance among the different PCs, which indicates
+where the most information is located. Therefore, the transformation using only `2N,` <
+pPCs induces a change because a reduced version of the PCA model is used as
+P`2M p`(R). (9)
+Dimensionality reduction is performed using the reduced PCA model deﬁned in
+Equation (9):
+Th,`=˘HP`2M Nh`(R), (10)
+Tf,`=˘FP`2M Nf`(R). (11)
+------------------------------End of the page -----------------------------------
+Energies 2021 ,14, 1728 9 of 26
+0 2 4 6 8 10 12 14 16 18 20
+Principal Component00.10.20.30.40.50.60.70.80.91Proportion of Variance ExplainedScree Plot
+PVE
+CPVE
+Figure 4. Principal components analysis scree plot.
+According to Figure 4, the ﬁrst `=6PCs are the most suitable for use as they account
+for over 95% of the cumulative variance.
+To observe the distribution of the faults and healthy data, the ﬁrst three PCs are
+plotted, as shown in Figure 5. Figure 5 shows the large difference between the number
+of the members of each class (healthy and faulty). This is a highly imbalanced dataset
+containing 29,459 healthy observations and only 29faults—a condition that can lead to a
+bias toward the healthy class when using the dataset to train an ML algorithm.
+Figure 5. Projection of normalized data into the vector space spanned by the ﬁrst three
+principal components.
+3.3. Techniques for Dealing with Imbalanced Data
+Two balancing techniques are proposed to deal with the highly imbalanced dataset:
+the ﬁrst is random oversampling, which is a simple and effective technique used to generate
+random synthetic data from the minority class of the dataset. This technique can outperform
+------------------------------End of the page -----------------------------------
+Energies 2021 ,14, 1728 10 of 26
+the undersampling technique [ 35] when used to enhance classiﬁcation processes [ 36].
+Furthermore, this technique can be combined with advanced preprocessing techniques [ 37]
+to obtain better results.
+The second technique is a data augmentation method based on data reshaping. Data
+augmentation works by increasing the number of available samples without increasing
+the size of the dataset. It is frequently used to enhance deep learning algorithms that
+use images [ 38,39]. The performance of these algorithms depends on the shape and
+distribution of the input data. Thus, different reshaping techniques have been developed
+to improve their effectiveness [ 40]. Studies have been performed on reshaping time-series
+data. For example, acoustic signals have been reshaped as a matrix by following the same
+principles used by deep learning algorithms with images [ 41], whereas multisensory time
+series data have been reshaped for tool wear prediction [ 42]. A data-reshaping technique
+for time series data was proposed based on these ideas. This technique is similar to the one
+used with acoustic signals, which encapsulates the time series by creating a new matrix for
+each time window to add more information to each observation without increasing the
+size of the dataset. Several time window shapes are proposed to determine their effect on
+each classiﬁcation algorithm, and the most appropriate one for SCADA data are selected.
+This technique can be used with the random oversampling technique if the data remain
+imbalanced after processing. These techniques are described in detail below.
+3.3.1. Random Oversampling
+The random oversampling technique is widely used to solve the imbalanced data
+problem because of its simplicity and effectiveness. It is a non-heuristic method that
+replicates the observations of determinate characteristics from the minority class to balance
+the dataset [ 43]. However, despite its simplicity, it must be used carefully because it can
+lead to overﬁtting of ML algorithms [44].
+The technique generates n 1synthetic observations from each observation of the
+minority class by adding random Gaussian noise. This produces a vector of n2Nob-
+servations. The natural number ncan be calculated using the ratio of the size of each
+class to balance them and obtain a 50/50proportion in the case of a binary classiﬁca-
+tion. Furthermore, it can be selected arbitrarily based on the requirements of the study.
+Equations (12) and (13) describe the oversampling approach as
+˜f1
+ij=˘fij,i=1, . . . , Nf,j=1, . . . , p, (12)
+˜fk
+ij=˘fij+c#k,i=1, . . . , Nf,j=1, . . . , p,k=2, . . . , n, (13)
+where #k,k=2,. . .,nrepresents the realization of the random variable E ! N(0, 1).
+As stated in Equations (12) and (13), a standard Gaussian random noise is added to each
+observation with a linear scale factor of c=0.035 . When introducing synthetic observations,
+if the dataset is time-dependent, such as SCADA data, the time-dependence must not be
+altered. The synthetic observations must be inserted immediately after they are generated
+by the original observation to avoid altering this time-dependence.
+In the initial test, n=1000 was used. This selection allows the generation of a vector
+with 29,000 synthetic faults, and it also includes the original faults, as described previously.
+Figure 6 shows the distribution of the transformed data with fault oversampling.
+------------------------------End of the page -----------------------------------
+Energies 2021 ,14, 1728 11 of 26
+Figure 6. Projection of normalized data into the vector space spanned by the ﬁrst three principal
+components and the oversampled faulty data.
+3.3.2. Data Reshaping
+In the initial dataset described in Equation (1), we have Nobservations (or samples)
+described by pfeatures (or variables). To enhance the quality of information provided by
+each sample, we propose data reshaping, which is a data processing technique that helps
+the classiﬁer extract as much information as possible from the studied event. The method
+comprises four steps, and it is illustrated in Figure 7 using the distribution of one of the
+variables of the dataset and its time-dependence.
+ Step 1. Each feature xj,j=1,. . .,pof the dataset described in Equation (1)is
+divided into small pieces of data called windows Wk,k=1,. . .,bN/Wszc, where
+bcrepresents the ﬂoor function. All windows must contain the same number of
+observations. The number of observations captured by each window is called the
+window size Wsz, which determines the amount of data captured. Therefore, it must
+be selected carefully; if a large amount of data are captured, then important patterns
+of the dataset may be removed when these are grouped over a single new sample.
+In contrast, if insufﬁcient data are captured, then the method will be ineffective
+because the new sample will not be sufﬁciently rich to enhance the process. To avoid
+these drawbacks, Wszwas carefully selected by considering the characteristics of
+the dataset such as sampling time, amount of data, and physical variable behavior.
+All data are collected such that, if the dataset is time-dependent, it will not mix any
+observations to maintain its time-dependence and avoid data leakage.
+ Step 2. All information inside the window Wk,k=1,. . .,bN/Wszc, of size Wszis
+captured and stored as a new observation. All windows that contain at least one
+faulty observation are relabeled as faulty.
+ Step 3. Each new observation is stacked to create a new feature matrix with dimen-
+sionsbN/WszcWsz.
+ Step 4. After reshaping the data, it can be split into training and testing sets to be
+standardized and used to train and test the models.
+------------------------------End of the page -----------------------------------
+Energies 2021 ,14, 1728 12 of 26
+1WW1W2WkWN/W
+234timexW1W2WN/W…W1W2WkWk+1WN/Wstacktraintestfaultsszsz
+Wszszj
+szWszxj
+Figure 7. Graphical description of the data reshaping technique.
+3.4. Machine Learning Classiﬁers
+The ML algorithms selected to detect faults in WTs are two classical methods: kNN
+and SVM. These two methods were compared with RUSBoost, which was designed to
+deal with the imbalanced data problem. It is known for its excellent performance. In the
+context of the present work, RUSBoost was used as the baseline to test the proposed data
+preprocessing techniques, and it was applied with the classical methods to deal with the
+imbalanced data problem.
+3.4.1. kNearest Neighbors ( kNN)
+kNN is one of the simplest ML algorithms [ 45]. Given a new data point to be classiﬁed,
+this algorithm ﬁnds the closest kdata points in the set, i.e., the so-called nearest neighbors.
+The new data point is then classiﬁed based on multiple votes of the neighbors (majority
+vote in the case of binary classiﬁcation). This means that the studied point is classiﬁed into
+the same class as the majority of its neighbors (see Figure 8a). The words nearest or closest
+imply the measurement of the distance between the studied sample and its neighbors;
+measuring this distance may lead to variations in this approach. The most common is the
+Euclidean distance, which is a special case of the Minkowski distance, i.e., the Minkowski
+distance of order 2 [46].
+3.4.2. Support Vector Machines (SVM)
+An SVM is a powerful ML algorithm that can perform linear and nonlinear classiﬁca-
+tion and regression, and it is well suited for complex, medium, or small datasets [ 47]. This
+method, which is also called the maximum margin classiﬁer, ﬁnds the widest gap between
+classes. The data points that exceed the limits of the margin near the separator are called
+support vectors as they hold up the separator (see Figure 8b). The kernel trick—a function
+called a kernel is used to transform the data into a higher dimension to make it more
+separable—is used to extrapolate this method to higher dimensions and more complex
+data. The SVM combines the advantages of the nonparametric and parametric models,
+which have the ﬂexibility to represent complex functions but are resistant to overﬁtting [ 46].
+------------------------------End of the page -----------------------------------
+Energies 2021 ,14, 1728 13 of 26
+x1x2dk=4k=9
+(a)
+x1x2support vectorssupportvectormaximum marginhyperplanemaximum margin (b)
+Figure 8. Graphical description of the kNN ( a) and SVM ( b) algorithms.
+3.4.3. Random under Sampling Boost (RUSBoost)
+RUSBoost belongs to the family of ensemble methods of ML, speciﬁcally those that use
+hypothesis boosting. The boosting refers to any ensemble method that combines several
+weak learners (other common ML algorithms) into a strong learner. The general idea
+of most boosting methods is to train predictors sequentially and iteratively to improve
+their predecessor [ 47]. This algorithm was speciﬁcally designed to work with imbalanced
+datasets using undersampling. This involves taking N, the number of members in the class
+with the least members in the training data, and taking only Nobservations of every other
+class with more members in it. That is, if there are Kclasses, then, for each weak learner in
+the ensemble, RUSBoost takes a subset of the data with Nobservations from each of the K
+classes [48].
+3.4.4. Performance Measures for Machine Learning Classiﬁers
+Several indicators have been developed to measure the performance of ML algorithms.
+These indicators are based on the capacity of the algorithm to classify the different objects
+presented to them. The metrics calculation process uses a block of the dataset to train
+the ML model (training data), and then the model is used to classify the remaining data
+(testing data). This process generates a set of predicted labels that are compared with the
+original data labels. The overall process is called supervised learning, and it can be used
+for binary classiﬁcation (two labels in the data) or multiclass classiﬁcation (more than two
+labels) [ 49]. The former is used in the present study. The comparison of real and predicted
+labels enables the creation of a confusion matrix, as shown in Table 4.
+In Table 4, tpdenotes the number of observations classiﬁed as positive, and fpdenotes
+the number of observations that are classiﬁed as positive but are truly negative. Similarly, tn
+represents the number of observations classiﬁed as negative, and fnrepresents the number
+of observations that are classiﬁed as negative but are truly positive. All confusion matrices
+in this study contain the information listed in Table 4 with a few additions for improved
+analysis. The performance measures can be calculated as shown in Equations (14)–(21).
+------------------------------End of the page -----------------------------------
+Energies 2021 ,14, 1728 14 of 26
+Table 4. Confusion matrix for binary classiﬁcation performance assessment.
+Predicted Class
+Negative Positive
+True classNegativeTrue negative
+(tn)aFalse positive
+(fp)a
+PositiveFalse negative
+(fn)aTrue positive
+(tp)a
+aAlong with the number of true negatives ( tn), a percentage is included that shows the negative predictive value
+(npv). Along with the number of false negatives ( fn), a percentage is included that represents the false omission
+rate ( for). The number of true positives is accompanied by a percentage that shows the positive predictive value
+(ppv). Finally, the number of false positives ( fp) is completed with the false discovery rate ( fdr) percentage.
+• Accuracy ( acc). Measures the number of correct predictions made by the model over
+the total number of observations.
+acc=tp+tn
+tp+fp+tn+fn. (14)
+• Precision or positive predictive value ( ppv). Measures the number of correctly clas-
+siﬁed positive class labels over the total number of positive-predicted labels, and it
+describes the proportion of correctly predicted positive observations.
+ppv =tp
+tp+fp. (15)
+• False discovery rate ( fdr). Measures the number of incorrectly classiﬁed positive class
+labels over the total number of positive predicted labels, describes the proportion
+of incorrectly predicted positive observations, and complements the information
+obtained by the precision.
+fdr=1 ppv. (16)
+• Negative predictive value ( npv). Measures the number of correctly classiﬁed negative-
+class labels over the total number of negative predicted labels, and it describes the
+proportion of correctly predicted negative observations.
+npv =tn
+tn+fn. (17)
+• False omission rate ( for). Measures the number of incorrectly classiﬁed negative-class
+labels over the total number of negative predicted labels, describes the proportion of
+incorrectly predicted negative observations, and it is complementary to the negative
+predictive value.
+for=1 npv. (18)
+• Sensitivity/Recall/True positive rate ( tpr). Describes the fraction of correctly classiﬁed
+positive observations.
+rec=tp
+tp+fn. (19)
+• F1 score ( F1).It is the harmonic mean between precision and recall. It is calculated using
+F1=2ppvrec
+ppv+rec. (20)
+• Speciﬁcity/False positive rate ( fpr). The harmonic mean between precision and recall.
+fpr=tn
+tn+fp. (21)
+------------------------------End of the page -----------------------------------
+Energies 2021 ,14, 1728 15 of 26
+3.5. Experimental Framework
+Two tests were conducted to select the best fault detection method. A ﬂowchart of
+the proposed approach and how it is applied is given in Figure 9. The tests are deﬁned
+as follows:
+SMARTIVE data
+SCADA data
+alarm logsmean (var) median (var) Labeling0 = no fault1 = faultCleaning and labelingFill NaNRUSBoostkNNSVMtuning hyperparameters / F1 score
+RESULTSTime splitReshapingStandardizePCATrain/Test
+Time splitTrain/TestStandardizePCA
+Figure 9. Flowchart of the proposed approach. SCADA data are ﬁrst cleaned and labeled and then processed using two
+strategies: time split and reshaping. After, rescaled and projected into the PCA model before the ML classiﬁers. ML
+classiﬁers are tuned using the F1Score to get the best possible results.
+• Test 1. The dataset was split at an observation labeled as faulty. That observation was
+strategically selected to ensure that the resulting subsets have sufﬁcient healthy and
+faulty information for the training and testing processes. Another reason to split the
+dataset this way is to maintain its time-dependence and eliminate the risk of data
+leakage. Therefore, this approach is called the time split . Afterwards, the data are
+standardized and modeled with the PCA method. The RUSBoost algorithm was fed
+with these data without any further processing to create a performance baseline. Then,
+the training and testing datasets used to feed the kNN and SVM algorithms were
+oversampled to create a balance using n=Nh 1orn=Nf 1, depending on which
+one is the minority class. This method is illustrated in Figure 10.
+• Test 2. The time series dataset was reshaped as detailed in Section 3.3.2. The new
+observations with faults were identiﬁed, and the observations were modeled using
+the PCA method. Then, the data were split using the method described in test 1
+(time split). The RUSBoost algorithm was fed with reshaped data without any further
+processing to obtain the performance baseline. The training and testing datasets used
+to feed the kNN and SVM algorithms were oversampled; the oversampling method
+became necessary as the data imbalance was worsened by reshaping. The balance is
+generated using n=Nh 1orn=Nf 1, depending on which is the minority class.
+For all tests, the ML algorithms were tuned by predicting the labels using the testing
+dataset. Using these labels, the performance metrics were calculated and stored at each
+iteration of the grid search algorithm. This algorithm sweeps over various previously
+deﬁned hyperparameters, and it selects the best one using the highest F1score obtained
+from all performed tests. The F1score was considered because it reduces false positives
+and false negatives by creating a trade-off between precision and recall; simultaneously, it
+improves the detection of true positives.
+------------------------------End of the page -----------------------------------
+Energies 2021 ,14, 1728 16 of 26
+faultstrain test
+128,79628,803
+28,88528,907
+29489split
+Figure 10. Graphical description of the time split method using the distribution of the used data set.
+The hyperparameters selected to tune each algorithm are
+• k-nearest neighbors. In this algorithm, the number of nearest neighbors swept is
+between 1 and 200, and the Euclidean distance is used.
+• SVM. The SVM is conﬁgured to function as a nonlinear separator using the radial
+basis function. It is tuned using the kernel scale g(commonly known as the gamma
+factor) and a box constraint C(also known as the Cfactor or weighting factor) for the
+misclassiﬁed data. To test soft and hard classiﬁcation boundaries, the hyperparameters
+were changed from small to large values. The number of PCs ( #PC) selected for each
+dataset was considered to tune the kernel scale. Furthermore, the kernel scale was
+computed as the weighted square root of the number of PCs of the dataset used.
+g=ap
+#PC,a2f1/6, 1/4, 1/2, 1, 2, 4, 6, 8, 10 g
+C2f1, 5, 10, 50, 100, 500, 1000 g
+• RUSBoost. The hyperparameters of this algorithm are the maximum splits of the tree
+MS, the number of learning cycles Lc, or iterations where the algorithm is going to
+run to select the best tree by majority voting. The learning rate Lrthat controls the
+shrinkage of the contribution of each new base model added to the series via gradient
+boosting is
+MS2f1, 2, 5, 10, 25, 50, 100, 250, 500, 1000 g
+Lc2f10, 25, 50, 100, 250, 500, 1000, 1500, 2000, 3000, 5000 g
+Lr=0.1
+4. Results
+Non-oversampled and oversampled datasets were split and transformed according to
+the tests described in the previous section. The resulting data distributions are summarized
+in Tables 5 and 6. In both tables, Obs denotes the number of observations.
+Table 5. Non-oversampled dataset characteristics after applying the splitting techniques per test.
+Test ApproachWindow
+Size
+(Hours)Window
+Size
+(Obs)PCsTraining
+Size
+(Obs)Training
+Faults
+(Obs)Validation
+Size
+(Obs)Validation
+Faults
+(Obs)
+1 Time Split     6 28,895 18 593 11
+2 Reshaping0.5 3 10 9632 8 197 4
+1 6 16 4816 5 98 2
+3 18 31 1601 2 37 2
+------------------------------End of the page -----------------------------------
+Energies 2021 ,14, 1728 17 of 26
+Table 6. Oversampled data set characteristics after applying the splitting techniques per test.
+Test ApproachWindow
+Size
+(Hours)Window
+Size
+(Obs)PCsTraining
+Size
+(Obs)Training
+Faults
+(Obs)Validation
+Size
+(Obs)Validation
+Faults
+(Obs)
+1 Time Split     6 57,731 28,854 1143 561
+2 Reshaping0.5 3 10 19,240 9616 381 188
+1 6 16 9616 4805 190 94
+3 18 31 3195 1696 67 32
+4.1. Test 1: Time Split
+4.1.1. kNN Results
+The optimal hyperparameters that yield the best possible classiﬁcation results using
+thekNN algorithm are k=3and k=43nearest neighbors for the non-oversampled and
+oversampled data, respectively. The confusion matrices for the aforementioned cases are
+shown in Figure 11.
+0582
+99%0
+0%
+18
+1%
+03
+100%
+1True Class
+Predicted Class0547
+100%35
+6%
+10
+0%
+0561
+94%
+1True Class
+Predicted Class
+Figure 11. kNN confusion matrix using non-oversampled ( left) and oversampled ( right ) data with
+the time split (test 1).
+Figure 11 demonstrates the effectiveness of the oversampling method technique when
+time-splitting the data to train the kNN model. Time-splitting enables the detection of all
+faults with only a 6% false discovery rate when oversampling.
+4.1.2. SVM Results
+The optimal hyperparameters that yield the best possible classiﬁcation results using
+the SVM algorithm are listed in Table 7.
+Table 7. Optimal hyperparameters for the SVM in test 1.
+Data Set Box Constraint Kernel Scale
+non-oversampled 50 0.40
+oversampled 1000 14.69
+Figure 12 shows the confusion matrices for the SVM algorithm, where the oversam-
+pling technique with time splitting is very effective. Furthermore, it allows the classiﬁcation
+of most faults with an fdrof8%and forof1%for the oversampled and non-oversampled
+cases, respectively. This implies that the kNN algorithm achieves a slightly better perfor-
+mance for this type of analysis.
+------------------------------End of the page -----------------------------------
+Energies 2021 ,14, 1728 18 of 26
+0582
+99%0
+0%
+15
+1%
+06
+100%
+1True Class
+Predicted Class0530
+100%52
+8%
+11
+0%
+0560
+92%
+1True Class
+Predicted Class
+Figure 12. SVM confusion matrix using non-oversampled ( left) and oversampled ( right ) data with
+the time split (test 1).
+4.1.3. RUSBoost Results
+Table 8 lists the optimal hyperparameters obtained for the RUSBoost algorithm.
+Table 8. Optimal hyperparameters for the RUSBoost in test 1.
+Dataset Maximum Splits Learning Cycles
+non-oversampled 5 1500
+Figure 13 shows the RUSBoost results with the optimal hyperparameters to be used
+as the baseline. Recall that this algorithm was speciﬁcally designed to handle highly
+imbalanced datasets. In this speciﬁc dataset, all faulty samples can be correctly classiﬁed,
+but with an fdrof78%. These results demonstrate the effectiveness of the oversampling
+technique compared with the undersampling method used by the RUSBoost algorithm for
+this type of dataset. Oversampling empowers the kNN method to perform better than the
+RUSBoost algorithm on the same initial dataset.
+0544
+100%38
+78%
+10
+0%
+011
+22%
+1True Class
+Predicted Class
+Figure 13. RUSBoost confusion matrix using the non-oversampled data set with the time split (test 1).
+4.1.4. Performance Charts
+The performance charts (Table 9) summarize the performance metrics calculated for
+each algorithm with the time-split data division. Recall that the hyperparameters of the
+algorithms were tuned by optimizing the F1score.
+Table 9. Performance metrics comparison for results obtained with the time split (test 1).
+Algorithm Data Set acc (%) ppv (%) rec(%) F1(%) fpr(%)
+kNNnon-oversampled 98.65 100.00 27.27 42.85 100.00
+oversampled 96.93 94.12 100.00 96.97 93.98
+SVMnon-oversampled 99.15 100.00 54.54 70.58 100.00
+oversampled 95.36 91.50 99.82 95.48 91.06
+RUSBoost non-oversampled 93.59 22.44 100.00 36.66 93.47
+------------------------------End of the page -----------------------------------
+Energies 2021 ,14, 1728 19 of 26
+Table 9 highlights the effect of the oversampling technique combined with the time
+split for the time-dependent data.
+RUSBoost achieved a sensitivity of 100% ; however, it achieved a precision of only
+22.44% . As expected, the non-oversampling strategies with kNN and SVM exhibited
+poor performance with low sensitivities of 27% and 54%, respectively; the oversampling
+strategies achieved high sensitivity and precision scores exceeding 91% in both cases.
+Table 10 lists the training and prediction times for a single sample using each algorithm
+on a laptop with 12GB RAM, and an i7 processor running on a Microsoft Windows home
+operating system, version 20H2. The table highlights another advantage of using the
+oversampling technique, i.e., the training and prediction times of the algorithms fed with
+oversampled data that are considerably lower than those of the RUSBoost method.
+Table 10. Computation time per algorithm while training and predicting one single sample using
+time split (test 1).
+Algorithm Data Set Training Time (s) Prediction Time (s)
+kNNnon-oversampled 9.7810 32.3110 3
+oversampled 1.1710 23.6110 3
+SVMnon-oversampled 5.9710 15.6010 4
+oversampled 1.98 1.7510 3
+RUSBoost non-oversampled 15.64 7.7810 1
+4.2. Test 2: Data Reshaping
+4.2.1. kNN Results
+The optimal hyperparameters that yield the best model using the kNN algorithm are
+listed in Table 11 for each time window considered.
+Table 11. Optimal hyperparameter for kNN in test 2.
+Window Size/Data Set Nonoversampled Oversampled
+30 min 1 90
+1 h 1 4
+3 h 1 17
+Figure 14 shows the confusion matrices obtained for the different reshaping window
+sizes considered.
+Version March 15, 2021 submitted to Energies 20 of 27
+Table 9: Optimal hyperparameter for kNN in test 2.
+Window size/ Data set nonoversampled oversampled
+30 min 1 90
+1 h 1 4
+3 h 1 17
+Figure 14 shows the confusion matrices obtained for the different reshaping window 407
+sizes considered. 408
+0193
+99%0
+0%
+12
+1%
+02
+100%
+1True Class
+Predicted Class093
+99%3
+75%
+11
+1%
+01
+25%
+1True Class
+Predicted Class035
+95%0
+0%
+12
+5%
+00
+0%
+1True Class
+Predicted Class
+0166
+99%27
+13%
+11
+1%
+0187
+87%
+1True Class
+Predicted Class091
+100%5
+5%
+10
+0%
+094
+95%
+1True Class
+Predicted Class034
+68%1
+6%
+116
+32%
+016
+94%
+1True Class
+Predicted Class
+Figure 14. kNN confusion matrices. Results without oversampling (top) and with oversampled data (bottom). Results with
+a time windows of 30 min (left), 1 h(center), and 3 h (right).
+The ﬁrst row of plots in Figure 14 are related to the nonoversampled data, where 409
+the imbalanced dataset clearly leads to poor sensitivity for all time windows (all or half 410
+of the faulty samples were not detected). Figure 14 (left) shows the results obtained by 411
+feeding the kNN algorithm with the reshaped modeled data with a time window of 30 412
+min with and without oversampling. Using the oversampling technique signiﬁcantly 413
+improved the performance. Figure 14 (center) shows the results obtained using a time 414
+window of 1h. In the nonoversampled case, the performance decreased with an fdrand 415
+forof75% and 1%, respectively, in contrast with the performance of the 30min window. 416
+The oversampled case obtained the best results; it reached an ppvof95% with an fdrof 417
+5%compared with the previously shown time window. Finally, Figure 14 (right) shows 418
+the results obtained with the 3h time window that were worse than the previous time 419
+reshapes. 420
+4.2.2. SVM Results 421
+The optimal hyperparameters that yield the best possible classiﬁcation results using 422
+the SVM algorithm are listed in Table 10. 423
+Figure 14. kNN confusion matrices. Results without oversampling ( top) and with oversampled data
+(bottom ); results with a time windows of 30 min ( left), 1 h ( center ), and 3 h ( right ).
+The ﬁrst row of plots in Figure 14 are related to the non-oversampled data, where the
+imbalanced dataset clearly leads to poor sensitivity for all time windows (all or half of the
+faulty samples were not detected). Figure 14 (left) shows the results obtained by feeding
+------------------------------End of the page -----------------------------------
+Energies 2021 ,14, 1728 20 of 26
+thekNN algorithm with the reshaped modeled data with a time window of 30min with
+and without oversampling. Using the oversampling technique signiﬁcantly improved the
+performance. Figure 14 (center) shows the results obtained using a time window of 1h.
+In the non-oversampled case, the performance decreased with an fdrand forof75% and
+1%, respectively, in contrast with the performance of the 30min window. The oversampled
+case obtained the best results; it reached an ppvof95% with an fdrof5%compared with
+the previously shown time window. Finally, Figure 14 (right) shows the results obtained
+with the 3 h time window, which were worse than the previous time reshapes.
+4.2.2. SVM Results
+The optimal hyperparameters that yield the best possible classiﬁcation results using
+the SVM algorithm are listed in Table 12.
+Table 12. Optimal hyperparameters for SVM in test 2.
+Nonoversampled Oversampled
+Window Size Box Constraint Kernel Scale Box Constraint Kernel Scale
+30 min 5 1.58 1 18.97
+1 h 50 8.00 1 8.00
+3 h 1 0.92 1 55.67
+Figure 15 shows the confusion matrices calculated using the predicted labels.
+Version March 15, 2021 submitted to Energies 21 of 27
+Table 10: Optimal hyperparameters for SVM in test 2.
+nonoversampled oversampled
+Window size Box constraint Kernel scale Box constraint Kernel scale
+30 min 5 1.58 1 18.97
+1 h 50 8.00 1 8.00
+3 h 1 0.92 1 55.67
+Figure 15 shows the confusion matrices calculated using the predicted labels. 424
+0193
+99%0
+0%
+12
+1%
+02
+100%
+1True Class
+Predicted Class096
+100%0
+0%
+10
+0%
+02
+100%
+1True Class
+Predicted Class035
+95%0
+0%
+12
+5%
+00
+0%
+1True Class
+Predicted Class
+0100
+100%93
+33%
+10
+0%
+0188
+67%
+1True Class
+Predicted Class086
+100%10
+10%
+10
+0%
+094
+90%
+1True Class
+Predicted Class031
+66%4
+20%
+116
+34%
+016
+80%
+1True Class
+Predicted Class
+Figure 15. SVM confusion matrices. Results without oversampling (top) and with oversampled data (bottom). Results with
+a time window of 6 h (left), 12 h (middle), and 24 h (right).
+Figure 15 (left) shows the results obtained by feeding the SVM algorithm with the 425
+reshaped modeled data with a time window of 30min. As expected, the oversampling 426
+dramatically improved the results. Figure 15 (center) shows the results obtained using 427
+a time window of 1h. It was observed that reshaping can enhance the classiﬁcation 428
+process using the SVM when trained with imbalanced data because it leads to the correct 429
+classiﬁcation of a pair of faulty samples among 98observations with nonoversampled 430
+data. Further, oversampled data achieve good performance, showing an fdrof only 10% 431
+and the perfect classiﬁcation of healthy data. Figure 15 (right) shows the results obtained 432
+using a time window of 3h. This is the same as that for the kNN; the worst results were 433
+obtained with this time window. 434
+4.2.3. RUSBoost Results 435
+The optimal hyperparameters that yield the best classiﬁer using the RUSBoost 436
+algorithm are listed in Table 11. 437
+Table 11: Optimal hyperparameter for RUSBoost in test 2.
+Window size Maximum splits Learning cycles
+30 min 1 5000
+1 h 1 1500
+3 h 5 25
+Figure 15. SVM confusion matrices. Results without oversampling ( top) and with oversampled data
+(bottom ); results with a time window of 6 h ( left), 12 h ( middle ), and 24 h ( right ).
+Figure 15 (left) shows the results obtained by feeding the SVM algorithm with the
+reshaped modeled data with a time window of 30min. As expected, the oversampling
+dramatically improved the results. Figure 15 (center) shows the results obtained using
+a time window of 1h. It was observed that reshaping can enhance the classiﬁcation
+process using the SVM when trained with imbalanced data because it leads to the correct
+classiﬁcation of a pair of faulty samples among 98observations with non-oversampled data.
+Furthermore, oversampled data achieve good performance, showing an fdrof only 10%
+and the perfect classiﬁcation of healthy data. Figure 15 (right) shows the results obtained
+using a time window of 3h. This is the same as that for the kNN; the worst results were
+obtained with this time window.
+4.2.3. RUSBoost Results
+The optimal hyperparameters that yield the best classiﬁer using the RUSBoost algo-
+rithm are listed in Table 13.
+------------------------------End of the page -----------------------------------
+Energies 2021 ,14, 1728 21 of 26
+Table 13. Optimal hyperparameter for RUSBoost in test 2.
+Window Size Maximum Splits Learning Cycles
+30 min 1 5000
+1 h 1 1500
+3 h 5 25
+Figure 16 shows the confusion matrices calculated using the predicted labels.
+0170
+100%23
+85%
+10
+0%
+04
+15%
+1True Class
+Predicted Class073
+100%23
+92%
+10
+0%
+02
+8%
+1True Class
+Predicted Class029
+100%6
+75%
+10
+0%
+02
+25%
+1True Class
+Predicted Class
+Figure 16. RUSBoost confusion matrix using data processed with a time window of 30 min ( left), 1 h ( center ),and 3 h ( right ).
+Figure 16 shows the results of feeding the RUSBoost algorithm with reshaped data
+using time windows of 30min (left), 1h (center), and 3h (right), respectively. In all cases,
+the RUSBoost algorithm achieved a high sensitivity ( 100% ) but with low precision; i.e., it
+generated a signiﬁcant number of false positives that produce fprof75% for the best case
+(3 h window) and 92% for the worst case (1 h window).
+4.2.4. Performance Charts
+Tables 14 and 15 show the performance and execution times of the algorithms fed
+with the reshaped and oversampled data.
+Table 14. Performance metrics comparison (test 2) when using time windows of 0.5, 1, and 3 h.
+Algorithm Windows Size Data Set acc(%) ppv (%) rec(%) F1(%) fpr(%)
+kNN0.5 h non-oversampled 98.98 100.00 50.00 66.66 100.00
+0.5 h oversampled 92.65 87.38 99.46 93.03 86.01
+SVM0.5 h non-oversampled 98.98 100.00 50.00 66.66 100.00
+0.5 h oversampled 75.59 66.90 100.00 80.17 51.81
+RUSBoost 0.5 h non-oversampled 88.32 14.81 100.00 25.80 88.08
+kNN1 h non-oversampled 95.92 25.00 50.00 33.33 96.87
+1 h oversampled 97.37 94.95 100.00 97.41 94.79
+SVM1 h non-oversampled 100.00 100.00 100.00 100.00 100.00
+1 h oversampled 94.73 90.38 100.00 94.94 89.58
+RUSBoost 1 h non-oversampled 76.53 8.00 100.00 14.81 76.04
+kNN3 h non-oversampled 94.59 0.00 0.00 0.00 100.00
+3 h oversampled 74.62 94.11 50.00 65.30 97.14
+SVM3 h non-oversampled 94.59 0.00 0.00 0.00 100.00
+3 h oversampled 70.14 80.00 50.00 61.53 88.57
+RUSBoost 3 h non-oversampled 83.78 25.00 100.00 40.00 82.85
+Table 14 summarizes the performance of the proposed algorithms. First, it shows
+that the performance of the 30min time window is acceptable for both kNN and SVM;
+however, it is poor for RUSBoost, where it achieves a precision of only 14.81% . The F1
+score always improves when using the oversampling technique for kNN and SVM. Second,
+the performance was further improved using the 1h time window compared with the
+30min window, which makes it the best candidate for this application. For the 1h time
+------------------------------End of the page -----------------------------------
+Energies 2021 ,14, 1728 22 of 26
+window, the performance of RUSBoost was unacceptable, with a precision of only 8%.
+Finally, even when oversampling the data, the 3h time window led to the poor performance
+of the SVM and RUSBoost algorithms. The kNN algorithm achieved a precision of 94.11%
+with oversampled data; however, it had a recall of 50%.
+In terms of execution time, as summarized in Table 15, the main disadvantage of
+the ensemble methods (e.g., RUSBoost algorithm) is the heavy computational burden;
+hence, they are slower than other algorithms (even when other methods use reshaped and
+oversampled data). The RUSBoost algorithm has a high degree of variability in terms of
+execution time. For example, with time windows of 30min, 1h, and 3h, the training times
+are 31.83 s, 7.69 s, and 1.18 10 1s, respectively.
+For the other algorithms, the execution times were consistent even when the number
+of features increased because of the use of the reshaping technique.
+Table 15. Computation time per algorithm (test 2) while training and predicting one single sample using processed data
+with time windows of 0.5, 1, and 3 h.
+Algorithm Windows Size Data Set Training Time (s) Prediction Time (s)
+kNN0.5 h non-oversampled 3.0410 26.3110 3
+0.5 h oversampled 6.5110 31.6810 3
+SVM0.5 h non-oversampled 2.0110 14.4110 4
+0.5 h oversampled 2.32 9.0510 4
+RUSBoost 0.5 h non-oversampled 31.83 2.24
+kNN1 h non-oversampled 2.6710 15.2110 2
+1 h oversampled 2.7910 25.0010 3
+SVM1 h non-oversampled 6.7210 24.5210 4
+1 h oversampled 3.3110 15.7110 4
+RUSBoost 1 h non-oversampled 7.68 5.7310 1
+kNN3 h non-oversampled 5.1710 15.8710 2
+3 h oversampled 7.3310 31.2710 3
+SVM3 h non-oversampled 3.3210 11.3710 2
+3 h oversampled 4.7510 25.4210 4
+RUSBoost 3 h non-oversampled 1.1810 19.9410 3
+5. Discussion
+All tests showed that the classiﬁcation process can be signiﬁcantly enhanced by
+properly preprocessing the data.
+In this study, the ﬁrst preprocessing technique was PCA, and it was used to gen-
+erate a normal (healthy) model to project the faulty data using the same model. This
+approach makes the faulty data more separable while signiﬁcantly reducing the amount
+of data required to obtain good performance classiﬁcation results. Furthermore, another
+advantage of PCA is that the training and prediction times are reduced because of the
+feature reduction.
+The second proposed preprocessing technique is random oversampling, which is
+proven to be a simple yet efﬁcient solution to deal with imbalanced data. With over-
+sampling, the resulting metrics improved signiﬁcantly, thereby enabling competition and
+surpassing the effectiveness of the baseline algorithm RUSBoost. Furthermore, oversam-
+pling on the highly imbalanced dataset presented in this study improved the training
+and prediction execution times with respect to the baseline. When combined with the
+time-split technique, oversampling signiﬁcantly improves the effectiveness of the models.
+Finally, the proposed data reshaping technique has a performance that is similar to that of
+a simple time-split because of a major drawback of the speciﬁc available dataset, i.e., faulty
+data were concentrated over a small time-frame at the end of the dataset. Thus, there are
+limitations to splitting the data between the training and testing sets, and reshaping by
+itself cannot balance the dataset. However, if fault observations are separated with longer
+time intervals, the reshaping can improve the imbalanced data problem. In addition, when
+------------------------------End of the page -----------------------------------
+Energies 2021 ,14, 1728 23 of 26
+using reshaping, training and prediction times increased because of the expanded set of
+features per sample. The tests performed identiﬁed the 1h time window as the best for
+this application.
+6. Conclusions
+Artiﬁcial intelligence is an exponentially growing ﬁeld that is of great importance
+in many ﬁelds of research. In the WT industry, it is a promising tool to optimize the
+maintenance process as it can enable the early prediction of faults which can help ensure
+energy production throughout the year. In this study, three data preprocessing strategies
+were tested to enhance the fault detection process when using a highly imbalanced dataset.
+These strategies are PCA for data modeling and reduction; a random oversampling tech-
+nique to deal with the imbalanced data problem; and the data reshaping technique for data
+augmentation to increase the amount of information per sample. A time split was used to
+avoid corrupting the time structure of the dataset (when the data are time-dependent) and
+to prevent data leakage when training the ML algorithms. The combination of these data
+preprocessing techniques leads to the excellent performance of classiﬁcation algorithms.
+The results surpassed those obtained with RUSBoost to deal with data imbalance. Fur-
+thermore, the results showed F1scores of at least 95%, thereby fulﬁlling one of the main
+objectives of the study. The random oversampling technique improved all results, and it
+can be tuned for a speciﬁc dataset using a variable scaling factor. Even when the reshaping
+technique performance was weaker than expected, it had a great potential. It enriched the
+information contained in each observation; for example, it enabled algorithms to classify a
+single faulty observation among a pool of healthy ones. Furthermore, it is important to
+note that the window size must be carefully selected depending on the nature of the data
+because it can cause a considerable difference in capturing data patterns or trends.
+The feasible practical application of the proposed methodology is noteworthy. First,
+the required SCADA data are available in all industrial sized wind turbines. Second,
+but directly related to the previous point, no extra equipment is needed to be installed, thus
+the methodology is cost-effective as it has a very low deployment cost. Third, the computa-
+tional complexity (computational time and required storage) to estimate new predictions is
+low and can be done on real-time at each wind turbine (on-site) or at the wind park data
+center. Finally, the stated strategy works under all regions of operation of the wind turbine
+(below the rated wind speed, and above the rated wind speed), thus the wind turbine is
+always under supervision.
+In the future work, the proposed techniques should be implemented using a larger
+dataset containing more error frames (distributed and separated between them in time)
+to be detected, which will allow a more comprehensive testing of the effectiveness of the
+reshaping technique.
+Author Contributions: All authors contributed equally to this work. All authors have read and
+agreed to the published version of the manuscript.
+Funding: This work was partially funded by the Spanish Agencia Estatal de Investigación (AEI)—
+Ministerio de Economía, Industria y Competitividad (MINECO), and the Fondo Europeo de Desar-
+rollo Regional (FEDER) through the research project DPI2017-82930-C2-1-R; and by the Generalitat
+de Catalunya through the research project 2017 SGR 388. We gratefully acknowledge the support of
+NVIDIA Corporation with the donation of the Titan Xp GPU used for this research.
+Institutional Review Board Statement: Not applicable.
+Informed Consent Statement: Not applicable.
+Data Availability Statement: The data required to reproduce these ﬁndings cannot be shared at this
+time as it is proprietary.
+Acknowledgments: The authors express their gratitude and appreciation to the Smartive company
+(http://smartive.eu/ (accessed on 18 March 2021)); this work would not have been possible without
+their support and wind farm data.
+------------------------------End of the page -----------------------------------
+Energies 2021 ,14, 1728 24 of 26
+Conﬂicts of Interest: The authors declare no conﬂict of interest.
+Abbreviations
+The following abbreviations are used in the manuscript:
+acc Accuracy
+CPVE Cumulative proportion of variance explained
+F1 F1score
+fdr False discovery rate
+fn False negative
+for False omission rate
+fp False positive
+fpr False positive rate
+kNN k-nearest neighbors
+npv Negative predictive value
+Obs Observations
+OS Operating system
+PC Principal component
+PCA Principal component analysis
+ppv Positive predictive value
+PVE Proportion of variance explained
+RUSBoost Random under sampling boost
+SCADA Supervisory control and data acquisition
+SVM Support vector machine
+tn True negative
+tp True positive
+tpr True positive rate
+WT Wind turbine
+References
+1. Wang, S.; Yang, H.; Pham, Q.B.; Khoi, D.N.; Nhi, P .T.T. An Ensemble Framework to Investigate Wind Energy Sustainability
+Considering Climate Change Impacts. Sustainability 2020 ,12, 876. [CrossRef]
+2. Rosales-Asensio, E.; Borge-Diez, D.; Blanes-Peiró, J.J.; Pérez-Hoyos, A.; Comenar-Santos, A. Review of wind energy technology
+and associated market and economic conditions in Spain. Renew. Sustain. Energy Rev. 2019 ,101, 415–427. [CrossRef]
+3. Wind Energy in Spain. Available online: https://www.aeeolica.org/en/about-wind-energy/wind-energy-in-spain/ (accessed
+on 1 February 2021).
+4. Rodríguez, X.A.; Regueiro, R.M.; Doldán, X.R. Analysis of productivity in the Spanish wind industry. Renew. Sustain. Energy Rev.
+2020 ,118, 109573. [CrossRef]
+5. Spain Hits 44.7% Renewables Share in 7-mo 2020. Available online: https://renewablesnow.com/news/spain-hits-447-
+renewables-share-in-7-mo-2020-708939/ (accessed on 3 February 2021).
+6. Shaﬁee, M.; Sørensen, J.D. Maintenance optimization and inspection planning of wind energy assets: Models, methods and
+strategies. Reliab. Eng. Syst. Saf. 2019 ,192, 105993. [CrossRef]
+7. Lin, J.; Pulido, J.; Asplund, M. Reliability analysis for preventive maintenance based on classical and Bayesian semi-parametric
+degradation approaches using locomotive wheel-sets as a case study. Reliab. Eng. Syst. Saf. 2015 ,134, 143–156. [CrossRef]
+8. Florescu, A.; Barabas, S.; Dobrescu, T. Research on Increasing the Performance of Wind Power Plants for Sustainable Development.
+Sustainability 2019 ,11, 1266. [CrossRef]
+9. Krishna, D.G. Preventive maintenance of wind turbines using Remote Instrument Monitoring System. In Proceedings of the 2012
+IEEE Fifth Power India Conference, Murthal, India, 19–22 December 2012; pp. 1–4.
+10. Mazidi, P .; Du, M.; Tjernberg, L.B.; Bobi, M.A.S. A performance and maintenance evaluation framework for wind turbines. In
+Proceedings of the 2016 International Conference on Probabilistic Methods Applied to Power Systems (PMAPS), Beijing, China,
+16–20 October 2016; pp. 1–8.
+11. Sequeira, C.; Pacheco, A.; Galego, P .; Gorbeña, E. Analysis of the efﬁciency of wind turbine gearboxes using the temperature
+variable. Renew. Energy 2019 ,135, 465–472. [CrossRef]
+12. Lebranchu, A.; Charbonnier, S.; Bérenguer, C.; Prévost, F. A combined mono- and multi-turbine approach for fault indicator
+synthesis and wind turbine monitoring using SCADA data. ISA Trans. 2019 ,87, 272–281. [CrossRef]
+13. Wang, K.S.; Sharma, V .S.; Zhang, Z.Y. SCADA data based condition monitoring of wind turbines. Adv. Manuf. 2014 ,2, 61–69.
+[CrossRef]
+------------------------------End of the page -----------------------------------
+Energies 2021 ,14, 1728 25 of 26
+14. Kusiak, A.; Verma, A. Analyzing bearing faults in wind turbines: A data-mining approach. Renew. Energy 2012 ,48, 110–116.
+[CrossRef]
+15. Dao, P .B.; Staszewski, W.J.; Barszcz, T.; Uhl, T. Condition monitoring and fault detection in wind turbines based on cointegration
+analysis of SCADA data. Renew. Energy 2018 ,116, 107–122. [CrossRef]
+16. Alvarez, E.J.; Ribaric, A.P . An improved-accuracy method for fatigue load analysis of wind turbine gearbox based on SCADA.
+Renew. Energy 2018 ,115, 391–399. [CrossRef]
+17. Rodríguez-López, M.A.; López-González, L.M.; López-Ochoa, L.M.; Las-Heras-Casas, J. Development of indicators for the
+detection of equipment malfunctions and degradation estimation based on digital signals (alarms and events) from operation
+SCADA. Renew. Energy 2016 ,99, 224–236. [CrossRef]
+18. Qiu, Y.; Feng, Y.; Inﬁeld, D. Fault diagnosis of wind turbine with SCADA alarms based multidimensional information processing
+method. Renew. Energy 2020 ,145, 1923–1931. [CrossRef]
+19. Dai, J.; Yang, W.; Cao, J.; Liu, D.; Long, X. Ageing assessment of a wind turbine over time by interpreting wind farm SCADA data.
+Renew. Energy 2018 ,116, 199–208. [CrossRef]
+20. Ruiming, F.; Minling, W.; Xinhua, G.; Rongyan, S.; Pengfei, S. Identifying early defects of wind turbine based on SCADA data
+and dynamical network marker. Renew. Energy 2020 ,154, 625–635. [CrossRef]
+21. Jha, S.K.; Bilalovic, J.; Jha, A.; Patel, N.; Zhang, H. Renewable energy: Present research and future scope of Artiﬁcial Intelligence.
+Renew. Sustain. Energy Rev. 2017 ,77, 297–317. [CrossRef]
+22. Pozo, F.; Vidal, Y.; Serrahima, J.M. On real-time fault detection in wind turbines: Sensor selection algorithm and detection time
+reduction analysis. Energies 2016 ,9, 520. [CrossRef]
+23. Bangalore, P .; Patriksson, M. Analysis of SCADA data for early fault detection, with application to the maintenance management
+of wind turbines. Renew. Energy 2018 ,115, 521–532. [CrossRef]
+24. Zhao, H.; Liu, H.; Hu, W.; Yan, X. Anomaly detection and fault analysis of wind turbine components based on deep learning
+network. Renew. Energy 2018 ,127, 825–834. [CrossRef]
+25. Kong, Z.; Tang, B.; Deng, L.; Liu, W.; Han, Y. Condition monitoring of wind turbines based on spatio-temporal fusion of SCADA
+data by convolutional neural networks and gated recurrent units. Renew. Energy 2020 ,146, 760–768. [CrossRef]
+26. Helbing, G.; Ritter, M. Deep Learning for fault detection in wind turbines. Renew. Sustain. Energy Rev. 2018 ,98, 189–198.
+[CrossRef]
+27. Imbalanced Data. Available online: https://developers.google.com/machine-learning/data-prep/construct/sampling-splitting/
+imbalanced-data (accessed on 11 March 2021).
+28. Castellani, F.; Garibaldi, L.; Daga, A.P .; Astolﬁ, D.; Natili, F. Diagnosis of faulty wind turbine bearings using tower vibration
+measurements. Energies 2020 ,13, 1474. [CrossRef]
+29. Wang, Y.; Ma, X.; Qian, P . Wind turbine fault detection and identiﬁcation through PCA-based optimal variable selection. IEEE
+Trans. Sustain. Energy 2018 ,9, 1627–1635. [CrossRef]
+30. Zhao, Y.; Li, D.; Dong, A.; Kang, D.; Lv, Q.; Shang, L. Fault prediction and diagnosis of wind turbine generators using SCADA
+data. Energies 2017 ,10, 1210. [CrossRef]
+31. Pozo, F.; Vidal, Y. Wind turbine fault detection through principal component analysis and statistical hypothesis testing. Energies
+2016 ,9, 3. [CrossRef]
+32. Pozo, F.; Vidal, Y.; Salgado, Ó. Wind turbine condition monitoring strategy through multiway PCA and multivariate inference.
+Energies 2018 ,11, 749. [CrossRef]
+33. Fleckestein, J.E. Three-Phase Electrical Power ; CRC Press: Boca Raton, FL, USA, 2016.
+34. Jolliffe, I.T. Principal Component Analysis ; Springer: Berlin/Heidelberg, Germany, 2002.
+35. Mohammed, R.; Rawashdeh, J.; Abdullah, M. Machine Learning with Oversampling and Undersampling Techniques: Overview
+Study and Experimental Results. In Proceedings of the 2020 11th International Conference on Information and Communication
+Systems (ICICS), Irbid, Jordan, 7–9 April 2020; pp. 243–248.
+36. Pang, Y.; Chen, Z.; Peng, L.; Ma, K.; Zhao, C.; Ji, K. A Signature-Based Assistant Random Oversampling Method for Malware
+Detection. In Proceedings of the 2019 18th IEEE International Conference On Trust, Security and Privacy in Computing and
+Communications/13th IEEE International Conference on Big Data Science and Engineering (TrustCom/BigDataSE), Rotorua,
+New Zealand, 5–8 August 2019; pp. 256–263.
+37. Ghazikhani, A.; Yazdi, H.S.; Monseﬁ, R. Class imbalance handling using wrapper-based random oversampling. In Proceedings
+of the 20th Iranian Conference on Electrical Engineering (ICEE2012), Tehran, Iran, 15–17 May 2012; pp. 611–616.
+38. Puruncajas, B.; Vidal, Y.; Tutivén, C. Vibration-Response-Only Structural Health Monitoring for Offshore Wind Turbine Jacket
+Foundations via Convolutional Neural Networks. Sensors 2020 ,20, 3429. [CrossRef] [PubMed]
+39. Ruiz, M.; Mujica, L.E.; Alferez, S.; Acho, L.; Tutiven, C.; Vidal, Y.; Rodellar, J.; Pozo, F. Wind turbine fault detection and
+classiﬁcation by means of image texture analysis. Mech. Syst. Signal Process. 2018 ,107, 149–167. [CrossRef]
+40. Ghosh, S.; Das, N.; Nasipuri, M. Reshaping inputs for convolutional neural network: Some common and uncommon methods.
+Pattern Recognit. 2019 ,93, 79–94. [CrossRef]
+41. Janssen, L.A.L.; Lopez Arteaga, I. Data processing and augmentation of acoustic array signals for fault detection with machine
+learning. J. Sound Vib. 2020 ,483, 115483. [CrossRef]
+------------------------------End of the page -----------------------------------
+Energies 2021 ,14, 1728 26 of 26
+42. Huang, Z.; Zhu, J.; Lei, J.; Li, X.; Tian, F. Tool Wear Predicting Based on Multisensory Raw Signals Fusion by Reshaped Time
+Series Convolutional Neural Network in Manufacturing. IEEE Access 2019 ,7, 178640–178651. [CrossRef]
+43. Fernandez, A.; Garcia, S.; Herrera, F.; Chawla, N.V . SMOTE for Learning from Imbalanced Data: Progress and Challenges,
+Marking the 15-year Anniversary. J. Artif. Intell. Res. 2018 ,61, 863–905. [CrossRef]
+44. Batista, G.E.A.P .A.; Prati, R.C.; Monard, M.C. A study of the behavior of several methods for balancing machine learning training
+data. ACM SIGKDD Explor. Newsl. 2004 ,6, 20–29. [CrossRef]
+45. Guido, S.; Muller, A. Introduction to Machine Learning with Python ; O’Reilly UK Ltd.: Farnham, UK, 2016.
+46. Russel, S.; Norvig, P . Artiﬁcial Intelligence: A Modern Approach , 3rd ed.; Prentice Hall: Upper Saddle River, NJ, USA, 2010.
+47. Géron, A. Hands-On Machine Learning with Scikit-Learn and TensorFlow: Concepts, Tools, and Techniques to Build Intelligent Systems ;
+O’Reilly Media: Sebastopol, CA, USA, 2017.
+48. Seiffert, C.; Khoshgoftaar, T.M.; Hulse, J.V .; Napolitano, A. RUSBoost: A Hybrid Approach to Alleviating Class Imbalance. IEEE
+Trans. Syst. Man Cybern. Part A Syst. Humans 2010 ,40, 185–197. [CrossRef]
+49. Sokolova, M.; Lapalme, G. A systematic analysis of performance measures for classiﬁcation tasks. Inf. Process. Manag. 2009 ,
+45, 427–437. [CrossRef]
+------------------------------End of the page -----------------------------------
