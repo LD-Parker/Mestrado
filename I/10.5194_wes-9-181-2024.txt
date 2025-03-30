@@ -1,0 +1,1563 @@
+Wind Energ. Sci., 9, 181–201, 2024
+https://doi.org/10.5194/wes-9-181-2024
+© Author(s) 2024. This work is distributed under
+the Creative Commons Attribution 4.0 License.
+Active trailing edge ﬂap system fault
+detection via machine learning
+Andrea Gamberini1,2and Imad Abdallah3
+1Siemens Gamesa Renewable Energy A/S, Brande, Denmark
+2Department of Wind and Energy Systems, DTU, Roskilde, Denmark
+3Chair of Structural Mechanics and Monitoring, ETH Zurich, Zurich, Switzerland
+Correspondence: Andrea Gamberini (andgam@dtu.dk)
+Received: 21 February 2023 – Discussion started: 11 May 2023
+Revised: 20 October 2023 – Accepted: 17 November 2023 – Published: 22 January 2024
+Abstract. Active trailing edge ﬂap (AFlap) systems have shown promising results in reducing wind tur-
+bine (WT) loads. The design of WTs relying on AFlap load reduction requires implementing systems to detect,
+monitor, and quantify any potential fault or performance degradation of the ﬂap system to avoid jeopardizing
+the wind turbine’s safety and performance. Currently, ﬂap fault detection or monitoring systems are yet to be
+developed. This paper presents two approaches based on machine learning to diagnose the health state of an
+AFlap system. Both approaches rely only on the sensors commonly available on commercial WTs, avoiding the
+need and the cost of additional measurement systems. The ﬁrst approach combines manual feature engineering
+with a random forest classiﬁer. The second approach relies on random convolutional kernels to create the fea-
+ture vectors. The study shows that the ﬁrst method is reliable in classifying all the investigated combinations
+of AFlap health states in the case of asymmetrical ﬂap faults not only when the WT operates in normal power
+production but also before startup. Instead, the second method can identify some of the AFlap health states for
+both asymmetrical and symmetrical faults when the WT is in normal power production. These results contribute
+to developing the systems for detecting and monitoring active ﬂap faults, which are paramount for the safe and
+reliable integration of active ﬂap technology in future wind turbine design.
+1 Introduction
+The pursuit of lower levelized cost of energy has driven
+a steady increase in the size of utility-scale wind tur-
+bines (WTs) over the past years, with a consequent increase
+in the load carried by the WT components. Among the new
+technologies studied to mitigate this load increase, actively
+controlled ﬂaps located at the blade trailing edge (AFlap)
+have shown promising results in reducing fatigue and ulti-
+mate loads and increasing annual energy production, see Bar-
+las et al. (2016) and Pettas et al. (2016). Despite the potential
+beneﬁts of AFlaps, this technology has yet to reach a suf-
+ﬁcient level of maturity for its implementation in commer-
+cial WTs. To the authors’ knowledge, only Siemens Gamesa
+Renewable Energy (SGRE) has publicly shared data of an
+AFlap system implemented on two different multi-megawattWTs: a 4.0 MW WT prototype and a 4.3 MW WT prototype,
+both installed in Høvsøre (Denmark); see Gomez Gonzalez
+et al. (2022).
+Every time a new component is included in a wind tur-
+bine’s design, the safe and reliable continuous wind turbine
+operation must be ensured for the whole turbine’s lifetime.
+To fulﬁll this requirement, additional components, systems,
+and controller strategies are needed to identify, quantify, and
+resolve any potential issue deriving from the fault of the new
+component without compromising the WT safety. Once the
+active ﬂap reaches an adequate level of maturity, the wind
+turbine design will rely on the load reduction provided by
+the active ﬂap. Therefore, any potential fault or performance
+degradation of the ﬂap system may jeopardize the safety and
+performance of the wind turbine if not adequately managed.
+Therefore, a system will be needed to identify, monitor, and
+Published by Copernicus Publications on behalf of the European Academy of Wind Energy e.V.
+------------------------------End of the page -----------------------------------
+182 A. Gamberini and I. Abdallah: Active trailing edge ﬂap system fault detection via machine learning
+manage active ﬂap faults or degradation. Until now, the fault
+diagnosis and condition monitoring of AFlap systems has not
+been investigated in detail, and to our knowledge, no litera-
+ture is available on this topic. Nevertheless, we can foresee
+different approaches for AFlap fault diagnosis and monitor-
+ing, following the standard methodologies currently applied
+in the wind energy sector, for which Hossain et al. (2018)
+and Gao and Liu (2021) provide comprehensive and updated
+overviews.
+As a ﬁrst approach, monitoring and diagnosis can rely on
+dedicated sensors located in speciﬁc mechanical elements,
+like a vibration sensor in a gearbox (Zappalá et al., 2014).
+For the AFlap system, position or pressure sensors could be
+located on the ﬂap surfaces or in their proximity to quan-
+tify the AFlap deﬂection or the AFlap impact on the blade
+aerodynamics. Due to the expected large blade area covered
+by the ﬂaps, this monitoring approach will require several
+sensors distributed along the outer third of the blade length.
+This system will likely be complex, expensive to deploy and
+maintain, sensitive to lighting, and affected by the reliability
+of the sensor operating in the harsh environment of a wind
+turbine rotating blade.
+The second approach is the model-based method that
+mainly relies on the analyses of the residual signals, signals
+deﬁned as the difference between the real system outputs and
+the output from a model of the system created by using, for
+example, Kalman ﬁlter, observers, or model-based machine
+learning techniques. On WTs, the model-based methods have
+been applied, for example, in the condition monitoring of
+main bearings (de Azevedo et al., 2016), sensors and ac-
+tuators (Cho et al., 2018), and generators (Gálvez-Carrillo
+and Kinnaert, 2011). As a drawback, the model-based meth-
+ods require a reasonably good model to guarantee the detec-
+tion of faults. The model generation could be challenging for
+AFlap fault detection mainly due to the high nonlinearity of
+the WT blade dynamic, the high uncertainty on the wind ﬁeld
+interacting with the WT rotor, and the limited number of sen-
+sor measurements available on a commercial WT. Improved
+wind ﬁeld estimations (e.g., from nacelle Lidar) or additional
+load or pressure sensors on the blade can facilitate the model
+generations and improve their accuracy at the price of an in-
+creased system complexity and cost.
+Finally, data-driven methods allow fault detection with-
+out needing a detailed system model but by several types
+of data and signal analyses. These analyses range from the
+simple detection of changes in mean values, variances, or
+trends to the more advanced machine learning (ML) method-
+ologies (Badihi et al., 2022). In particular, the study and ap-
+plication of ML methodologies to fault diagnosis and condi-
+tion monitoring has increased exponentially in recent years
+thanks to the technological and computational advances that
+have allowed us to quickly and efﬁciently analyze the large
+amount of data needed for the training of the ML models
+(García Márquez and Peinado Gonzalo, 2022). Overviews
+of the machine learning methods for wind turbine conditionmonitoring are provided by Stetco et al. (2019) and Malek-
+loo et al. (2022). ML techniques can be applied for the AFlap
+fault detection if a sufﬁcient amount of relevant data can be
+provided for the model training. Currently, the amount of
+AFlap ﬁeld data is limited – even more for AFlap faults. Nev-
+ertheless, aeroelastic simulations have been commonly used
+for WT design. Therefore, it is reasonable to assume that
+a sufﬁciently accurate aeroelastic model of a WT equipped
+with AFlap can be used to train an ML model for the AFlap
+fault detection. To test this assumption, in this paper we study
+if data-driven methods based on ML trained with aeroelastic
+simulation can adequately classify the AFlap fault states.
+1.1 Detecting AFlap health state
+The detection of the health state of the AFlap is a challeng-
+ing task. Figure 1a shows the mean blade root moment when
+the ﬂap is deactivated (AF_Off) or is active without perfor-
+mance degradation (AF_On) as a function of the wind speed.
+As expected, AFlaps have a relevant impact on the WT blade
+aerodynamic, visible in the two distinct lines of the mean
+moment binned as a function of the wind speed. However,
+the broad range of environmental conditions where the WT
+operates causes the moment to vary within a wide range of
+values, a range shown in the plot by the colored areas. These
+areas overlap signiﬁcantly, making it difﬁcult for a detection
+system to identify the actual AFlap health state. Figure 1b
+shows the time series of the blade root bending moment for
+the AFlap active and AFlap not active with the same 10 m s 1
+turbulent wind. The two lines have a similar highly oscillat-
+ing behavior with just a small shift due to the increased lift
+generated by the ﬂap activation.
+Furthermore, several faults of the AFlap system can oc-
+cur in the WT lifetime, which behavior and severity depend
+on the layout and scope of the AFlap system itself. Wear
+and tear can slowly degrade the performance of part of the
+AFlap system; ice or lightning can instead compromise the
+whole system’s functionality. As it is impossible to evaluate
+all the different combinations of faults, we selected a set of
+representative conditions we believe can cover a wide range
+of ﬂap faults. The selected cases cover partial and complete
+performance degradation happening only on one blade or on
+all three blades simultaneously. We focus on identifying the
+AFlap health state in static ﬂap actuation to keep the ap-
+proach as general as possible. This approach keeps the detec-
+tion system independent from any speciﬁc AFlap controller
+strategy, AFlap system design, or fault dynamics. The idea
+is to integrate this kind of detection system in an AFlap sta-
+tus check routine running for several minutes in which the
+performance of the stationary ﬂap is veriﬁed.
+Wind Energ. Sci., 9, 181–201, 2024 https://doi.org/10.5194/wes-9-181-2024
+------------------------------End of the page -----------------------------------
+A. Gamberini and I. Abdallah: Active trailing edge ﬂap system fault detection via machine learning 183
+Figure 1. (a)Mean value of the normalized blade root bending moment when the AFlap is deactivated (AF_Off) and activated without
+degradation (AF_On), binned as a function of the wind speed. (b)Example of time series of the normalized blade root bending moment
+when the AFlap is deactivated (AF_Off) and activated without degradation (AF_On) for a 10 m s 1turbulent wind.
+1.2 Research contribution
+This paper investigates whether a simple ML algorithm can
+assess the health of an active trailing edge ﬂap system from
+the data provided by the sensors commonly available on a
+commercial WT. The aim is to develop a system that does
+not require any additional sensor to be installed on the WTs,
+making it easy to implement without relevant additional costs
+for installation or maintenance. This task can be seen as a
+multivariate time-series classiﬁcation problem where the ML
+algorithm aims to estimate if the AFlap is properly operating
+or is affected by performance degradation. We follow two
+different approaches for computing the features from the sen-
+sors’ time-series data. In the ﬁrst approach, we select the fea-
+tures based on our knowledge of the impact of AFlaps on the
+different WTs signals. In the second approach, we use a brute
+force approach to explore possible unknown correlations be-
+tween AFlaps’ states and variations in the WTs signals. This
+approach relies on thousands of randomly generated con-
+volutional kernels that automatically compute features from
+all the available signals without requiring pre-knowledge of
+AFlaps. We select the simple but robust random forest classi-
+ﬁer for both feature calculation approaches. Aeroelastic sim-
+ulations are used to train and test the ML models. We use the
+aeroelastic model developed by Gamberini et al. (2022) of
+the 4.3 MW WT prototype owned by SGRE, where a 20 m
+AFlap was installed and tested on one blade of the 120 m
+diameter rotor.
+Section 2 describes the aeroelastic model, the environmen-
+tal conditions, and the ﬂap health states used in the aeroelas-
+tic simulations. In Sect. 3, we describe the ML methodolo-gies used in the study and the two approaches used for AFlap
+health detection. In Sects. 4 and 5, we show the obtained re-
+sults that we discuss in Sect. 6.
+2 Simulated experiments
+The training of the ML models is based on a pool of aeroe-
+lastic simulations reproducing the WT aeroelastic response
+for the combination of wind turbine operative conditions and
+ﬂap health states of interest.
+2.1 Aeroelastic simulations
+A set of aeroelastic simulations is computed for every com-
+bination of wind turbine operative conditions and ﬂap health
+state of interest. We computed all sets with the same WT
+aeroelastic model.
+We accounted for the inﬂuence of the variability in the
+environmental conditions on the wind turbine’s aeroelastic
+response by deﬁning the main environmental conditions as
+random variables of pre-imposed statistical properties.
+2.1.1 Environmental conditions
+Table 1 shows the environmental conditions modeled as ran-
+dom variables and their parameters, which are the following.
+–Mean wind speed . This follows a Weibull distribution
+with the annual average wind speed set to 10 m s 1and
+the shape parameter to 2. It is equivalent to IEC wind
+class 1.
+https://doi.org/10.5194/wes-9-181-2024 Wind Energ. Sci., 9, 181–201, 2024
+------------------------------End of the page -----------------------------------
+184 A. Gamberini and I. Abdallah: Active trailing edge ﬂap system fault detection via machine learning
+–Wind turbulence intensity . This follows the normal tur-
+bulence model described in the IEC 61400-1:2019 (IEC,
+2019) for turbulence class A where Iref is set to 0.16
+with a lognormal distribution. It is deﬁned as
+E[UjU]DIref(0:75UC3:8); (1)
+Var[UjU]D(1:4Iref)2: (2)
+–Wind shear exponent . The vertical wind proﬁle is mod-
+eled with a power law with exponent . As proposed
+by Dimitrov et al. (2015), the wind shear exponent is
+normally distributed and conditionally dependent on the
+mean wind speed Uas follows:
+ETjUUD0:088(ln(U) 1); (3)
+VarTjUUD1
+U2
+; (4)
+wherevalues are constrained within realistic limits.
+–Horizontal inﬂow angle .9follows a normal distribu-
+tion, is truncated within realistic limits, and is condi-
+tionally dependent on the mean wind speed Uas pro-
+posed by Duthé et al. (2021):
+ET9jUUDln(U) 3; (5)
+VarT9jUUD15
+U2
+: (6)
+–Vertical inﬂow angle and air density . Normally dis-
+tributed, they are truncated within reasonable limits,
+with prescribed values of mean and standard deviation.
+One example set of environmental conditions is sampled for
+the pre-startup cases, shown in Fig. 2, and the normal power
+production cases, shown in Fig. 3.
+2.1.2 Aeroelastic model and simulation setup
+BHawC is the aeroelastic engineering tool developed inter-
+nally by SGRE. It is based on the blade element momentum
+(Fisker Skjoldan, 2011) and models the AFlap’s aerodynamic
+and actuator system with a dedicated ﬂap module.
+SGRE provided the BHawC model of the prototype wind
+turbine (pWT) used for the aeroelastic simulations. It in-
+cludes the pWT’s structural and aerodynamic models and its
+controller. The AFlap model is also tuned to match the lift
+increase in the blade region covered by the ﬂap when acti-
+vated. In Gamberini et al. (2022), one of the authors showed
+that this model estimates the pWT operational parameters
+and blade loads with reasonable accuracy, and the AFlap
+activation increases up to C8 % the mean ﬂapwise bending
+moment at the blade root. All simulations have the same
+pWT BHawC model, with only changes in the environmen-
+tal conditions and the AFlap health state. The simulations areperformed with turbulence wind and are 10 min long with a
+0.01 s time step length.
+Two operative conditions are simulated: normal power
+production (NPP) and pre-startup (PS). In the latter cases,
+the wind turbine is in idling condition with the controller op-
+timizing the blade pitch angle to bring the rotor speed and
+generator torque to the startup conditions.
+For every operative condition, asymmetrical and symmet-
+rical AFlap fault cases are simulated. In the symmetrical ﬂap
+fault case (3B), the ﬂaps on the three blades have all the same
+state and performance. This means the three ﬂaps are mod-
+eled with the same aerodynamic polars and control signal. In
+the asymmetrical case (1B), the AFlap is active only on one
+blade. Even if this is not an expected conﬁguration for future
+wind turbines, this setup mirrors the pWT setup facilitating
+a future testing with the pWT measurements data. Further-
+more, the rotor imbalance due to the ﬂap activated on only
+one blade is still a good approximation of the imbalance due
+to a ﬂap on one blade being at a different state or performance
+than the ﬂaps on the other two blades.
+For every case, we simulated seven different AFlap health
+states.
+–Flap off (AF_Off) . AFlap is not active and is simulated
+with baseline aerodynamic polar and ﬂap control off.
+–Flap on (AF_On) . AFlap is active and is simulated with
+active ﬂap aerodynamic polar and ﬂap control on.
+–Flap off with fault (AF_Off_Fault) . AFlap is active even
+if the control commands it to be not active. This state
+can simulate the case when ice formed on the blades
+prevents the ﬂap from closing. It is simulated with active
+ﬂap aerodynamic polar and ﬂap control off.
+–Flap on with fault (AF_On_Fault) . AFlap is not active
+even if the control commands it to be active. This state
+can be caused by ice preventing the ﬂap from opening or
+the ﬂap actuator not working. It is simulated with base-
+line aerodynamic polar and ﬂap control on.
+–Flap on with degradation . AFlap is active but with de-
+graded performance. Reduced ﬂap deﬂections due to
+reduced ﬂap actuator operation, material aging, or ex-
+tremely low temperature can be associated with these
+cases. We simulated AFlap performance reduced to
+25 % (AF_On_25pc), 50 % (AF_On_50pc), and 75 %
+(AF_On_75pc) by using a corresponding aerodynamic
+polar linearly interpolated between the baseline polar
+and the active ﬂap one while the ﬂap control is on.
+In the simulations, the AFlap’s health state is kept constant as
+this study aims to identify the stationary AFlap health state
+and not the exact time of the change in state that a fault can
+trigger. Figure 4 shows an example of the normalized lift
+coefﬁcient of the ﬂap baseline (AF_Off, line with triangle);
+ﬂap active (AF_On, line with squares); and ﬂap active with
+Wind Energ. Sci., 9, 181–201, 2024 https://doi.org/10.5194/wes-9-181-2024
+------------------------------End of the page -----------------------------------
+A. Gamberini and I. Abdallah: Active trailing edge ﬂap system fault detection via machine learning 185
+Table 1. Parameters of the environmental conditions modeled as random variables.
+Value Unit Distribution Mean Variance Min Max
+Turbulence intensity % lognormal Eq. (1) Eq. (2) – –
+Wind shear exponent – normal Eq. (3) Eq. (4)  0:2 0.4
+Air density kg m 3normal 1.225 0.05 1.103 1.348
+Horizontal inﬂow anglenormal Eq. (5) Eq. (6)  6 6
+Vertical inﬂow anglenormal 3 3  2 8
+Figure 2. Example of environmental conditions for pre-startup simulations: mean wind speed U, wind turbulence intensity TI, wind shear
+exponent, horizontal inﬂow angle 9, vertical inﬂow angle 6, and air density .
+performance reduced to 25 % (AF_On_25pc, dashed line),
+50 % (AF_On_50pc, circles), and 75 % (AF_On_75pc, dot-
+ted line).
+For every AFlap health state computed in the NPP case,
+we make two simulation sets: a training and test (TaT) setof 1000 simulations and a validation (Val) set of 500 simula-
+tions. The TaT sets cover a wind speed range from 3.5 to
+25 m s 1and share the same sample set of environmental
+conditions. The Val sets cover the same wind speeds as the
+TaT sets but share a set of environmental conditions uncor-
+https://doi.org/10.5194/wes-9-181-2024 Wind Energ. Sci., 9, 181–201, 2024
+------------------------------End of the page -----------------------------------
+186 A. Gamberini and I. Abdallah: Active trailing edge ﬂap system fault detection via machine learning
+Figure 3. Example of environmental conditions for normal power production simulations: mean wind speed U, wind turbulence intensity TI,
+wind shear exponent , horizontal inﬂow angle 9, vertical inﬂow angle 6, and air density .
+related to the TaT set. The PS cases have a similar setup, but
+they cover wind speeds between 1 and 3.5 m s 1; TaT sets
+have 300 simulations and the Val sets 150. Environmental
+condition sets used for the PS simulations are also uncorre-
+lated to the NPP ones.
+As the input of the ML model, we selected only sig-
+nals commonly available in the modern commercial wind
+turbines. These signals are the pitch angle [], the rotor
+speed [rpm], the generator power [kW], ﬂapwise and edge-
+wise bending moments at the root of each of the three
+blades [kNm], and linear tower top accelerations [m s 2], to-
+gether with the ﬂap actuator control signal [logic].3 AFlap health state estimation with ML
+3.1 Introduction
+This paper investigates whether a simple ML algorithm can
+estimate the health state of an active trailing edge ﬂap from
+the data provided by the sensors commonly available on a
+commercial WT. We approached this task as a multivariate
+time-series classiﬁcation problem where the ML algorithm
+aims to estimate the AFlap health state. We followed two
+different approaches for computing the features from the sen-
+sors’ time-series data. The ﬁrst approach relies on the man-
+ual selection of the channels and their relevant statistics that,
+from the authors’ knowledge, are known to be impacted by
+the trailing edge ﬂap system. In contrast, the second approach
+Wind Energ. Sci., 9, 181–201, 2024 https://doi.org/10.5194/wes-9-181-2024
+------------------------------End of the page -----------------------------------
+A. Gamberini and I. Abdallah: Active trailing edge ﬂap system fault detection via machine learning 187
+Figure 4. Example of ﬂap normalized lift coefﬁcient of the
+baseline (AF_Off, line with triangle); ﬂap active (AF_On, line
+with squares); and ﬂap active with performance reduced to 25 %
+(AF_On_25pc, dashed line), 50 % (AF_On_50pc, circles), and
+75 % (AF_On_75pc, dotted line).
+relies on thousands of randomly generated convolutional ker-
+nels to generate the features from all the available signals.
+Based on the MiniRocket (MINImally RandOm Convolu-
+tional KErnel Transform) algorithm, this approach does not
+require pre-knowledge of the AFlap system’s impact on the
+WT signals. It explores possible unknown correlations be-
+tween the AFlaps states and the WT channels. As a classi-
+ﬁer method, we selected the simple but robust random forest
+classiﬁer for both feature calculation approaches. For the ap-
+proach based on the MiniRocket algorithm, we also used the
+ridge classiﬁer with cross-validation.
+3.1.1 Random forest
+A random forest classiﬁer (RF) is a supervised discriminative
+machine learning technique whose objective is to estimate
+P(YjX;), in whichYis the target,Xis the observable, and
+are the parameters. We assume a multi-class classiﬁcation
+problem where each observational sample is assigned to one
+and only one label, as opposed to the multi-label approach.
+The random forest classiﬁer is based on a collection of
+decision trees (also called classiﬁcation or prediction trees),
+a non-parametric supervised learning method designed for
+the classiﬁcation or regression of a discrete category from
+the data. In the machine learning sense, the goal is to create
+a classiﬁcation model (classiﬁcation tree) that predicts the
+value of a target variable (also known as label or class) by
+learning simple decision rules inferred from the data features
+(also known as attributes or predictors). From Fig. 5a, an in-
+ternal nodeNdenotes a test on an attribute, an edge Brepre-
+sents an outcome of the test, and the leaf nodes Lrepresent
+class labels or class distribution.
+A decision tree is a tree-structured classiﬁer built by start-
+ing with a single node that encompasses the entire data and
+recursively splits the data within a node, generally into two
+branches (some algorithms can perform “multiway” splits).The splitting is obtained by selecting the variable (dimen-
+sion) that best classiﬁes the samples according to a split crite-
+rion, i.e., the one that maximizes the information gain among
+the random subsample of dimensions obtained at every point.
+The splitting continues until a terminal leaf is created by
+meeting a stopping criterion, such as a minimum leaf size
+or a variance threshold. Each terminal leaf contains data that
+belongs to one or more classes. Within this leaf, a model is
+applied that provides a reasonably comprehensible predic-
+tion, especially in situations where many variables may exist
+that interact in a nonlinear manner, as is often the case with
+wind turbines (Carrasco Kind and Brunner, 2013). Several
+algorithms exist for training decision trees with variations
+on impurity, pruning, stopping criteria, how to treat missing
+variables, etc. A top-to-bottom construction of a decision tree
+begins with a set of objects. Each object has an assigned la-
+bel and a set of measured features. The dataset is split at each
+tree node into two subsets, left and right, so the two resulting
+subsets are more homogeneous than the set in their parent
+node. To do so, one must deﬁne a cost function that the al-
+gorithm will minimize. One can use the information entropy,
+the Gini impurity, or a classiﬁcation error for the cost func-
+tion. Formally, the splitting is done by choosing the attribute
+that maximizes the information gain, deﬁned in terms of the
+impurity degree index Idas shown in Fig. 5b.
+By deﬁnition, a random forest classiﬁer is a non-
+parametric classiﬁcation algorithm consisting of a collection
+of decision-tree-structured classiﬁers fh(x;2k),kD1 . . .g,
+where2kare independent identically distributed random
+vectors, and each tree casts a unit vote for the most popu-
+lar class at input x. The RF prediction consists of the ag-
+gregation of the decision tree results obtained by a majority
+vote. Furthermore, the fraction of the trees that vote for the
+predicted class serves as a measure of certainty of the result-
+ing prediction. Random forest improves prediction accuracy
+over single decision tree classiﬁers by injecting randomness
+that minimizes the correlation amongst the grown individ-
+ual decision trees h(x;2k) that operate as an ensemble. This
+is achieved by using bootstrap aggregating (a.k.a. bagging,
+sample with replacement of the training dataset) in tandem
+with random feature selection in the process of growing each
+decision tree in the ensemble (Breiman, 1996). This forces
+even more variation amongst the trees in the model (different
+conditions in their nodes and different overall structures) and
+ultimately results in lower correlation across trees and more
+diversiﬁcation.
+Some of the arguments in favor of using a random forest
+in this research include the following:
+–Random forests work well with both categorical and nu-
+merical data. No scaling or transformation of variables
+is usually necessary.
+–Random forests implicitly perform feature selection and
+generate uncorrelated decision trees. It does this by
+choosing a random set of features to build each deci-
+https://doi.org/10.5194/wes-9-181-2024 Wind Energ. Sci., 9, 181–201, 2024
+------------------------------End of the page -----------------------------------
+188 A. Gamberini and I. Abdallah: Active trailing edge ﬂap system fault detection via machine learning
+Figure 5. (a)Graphical representation of a forest of decision tree classiﬁers. (b)Impurity index Idfor a two-class example as a function of
+the probability of one of the classes f1using the information entropy, Gini impurity, and classiﬁcation error. In all cases, the impurity is at
+its maximum when the fraction of data within a node with class 1 is 0.5 and is zero when all data are in the same category.
+sion tree. This also makes it a great model when you
+have to work with a high number of features in the data.
+–Random forests are not inﬂuenced by outliers to a fair
+degree. It does this by binning the variables.
+–Random forests can handle linear and nonlinear rela-
+tionships well.
+–Random forests generally provide high accuracy and
+balance the bias-variance trade-off well. Since the
+model’s principle is to average the results across the
+multiple decision trees it builds, it averages the variance
+as well.
+–Random forests are fairly interpretable. They provide
+both feature importance and in certain instances the
+ability to trace branches to follow the decision-making
+process.
+3.1.2 MiniRocket
+Current methods for time-series classiﬁcation often concen-
+trate on singular aspects like shape, frequency, or variance.
+Convolutional kernels offer a uniﬁed approach capable of
+capturing multiple features that previously necessitated spe-
+cialized techniques. These kernels have proven effective in
+convolutional neural networks for time-series classiﬁcation
+like ResNet (Wang et al., 2017) and InceptionTime (Is-
+mail Fawaz et al., 2020).
+ROCKET (RandOm Convolutional KErnel Transform;
+Dempster et al., 2020) has demonstrated that achieving state-
+of-the-art classiﬁcation accuracy is possible by transform-
+ing time series using random convolutional kernels. Unlike
+the learned convolutional kernels in conventional neural net-
+works, Dempster et al. (2020) have shown that a combi-
+nation of numerous random convolutional kernels can ef-fectively capture relevant features for time-series classiﬁ-
+cation. Even though a single random convolutional kernel
+might only approximate a relevant feature in a given time
+series, convolutional kernels signiﬁcantly enhance the clas-
+siﬁcation accuracy when combined. ROCKET is an algo-
+rithm that generates a large number of convolution kernels
+(10 000 by default) with random length, weights, bias, di-
+lation, and padding of the time series provided as input.
+ROCKET extracts two features for each kernel: the maxi-
+mum value (an equivalent to the maximum global pooling)
+and the proportion of positive values (PPVs), indicating the
+proportion of the input matching a given pattern. The PPV
+is the most critical element of ROCKET for achieving the
+state-of-the-art accuracy.
+MiniRocket (MINImally RandOm Convolutional KErnel
+Transform) is a reformulated version of ROCKET (Demp-
+ster et al., 2021), 75 times faster while maintaining the same
+accuracy. MiniRocket minimizes the number of options for
+hyperparameters and computes only the PPV , generating half
+the number of features as ROCKET. In addition, it does not
+require normalization. The v0.3.4 version of the MiniRocket
+implementation in Oguiza (2022) has been used in this paper.
+3.1.3 Ridge classiﬁer with cross-validation
+This ridge classiﬁer uses the ridge regression to predict the
+class of a multiclass problem by solving the problem as
+a multi-output regression where the predicted class corre-
+sponds to the output with the highest value. Ridge regression,
+also known as Tikhonov regularization, solves a regression
+model by minimizing the following objective function:
+minwjjXw yjj2
+2Cjjwjj2
+2; (7)
+whereXis the training data, ythe target values, wthe
+ridge coefﬁcients to be minimized, and the regularization
+strength;controls the amount of shrinkage: the higher the
+Wind Energ. Sci., 9, 181–201, 2024 https://doi.org/10.5194/wes-9-181-2024
+------------------------------End of the page -----------------------------------
+A. Gamberini and I. Abdallah: Active trailing edge ﬂap system fault detection via machine learning 189
+value, the greater the amount of shrinkage, increasing the ro-
+bustness of the ridge coefﬁcients to collinearity. The addition
+of the cross-validation helps to identify the best set of ridge
+coefﬁcients, reducing the risk of overﬁtting.
+3.2 Manual feature selection (MFS) with random forest
+classiﬁer
+The main effect of the activation or deactivation of a trailing
+edge ﬂap on a WT is the change in local blade lift that con-
+sequently affects the blade’s aerodynamic loading. The im-
+pact on the blade loading depends signiﬁcantly on the WT
+operative conditions, as shown in Gomez Gonzalez et al.
+(2022). Furthermore, asymmetric activation of the ﬂaps on
+the three blades leads to a rotor bending moment imbalance
+that is often associated with tower top vibration. Based on
+this, we manually select a set of signals to generate the fea-
+tures to train an RF model. In addition, we consider only
+signals commonly available in all modern commercial wind
+turbines. The aim is the development of a method that can
+be implemented on commercial wind turbines without the
+need of installing additional hardware. Initially, we use sim-
+ple statistical properties of the signal time series as features.
+Afterward, we include the catch22 (CAnonical Time-series
+CHaracteristics) collection (Lubba et al., 2019) to expand the
+features pool.
+3.2.1 Signal and feature selection
+The selected WT signals are as follows:
+–ﬂap actuator control signal [logic] – control signal of
+the ﬂap activation state (on or off);
+–ﬂapwise and edgewise bending moments at the three
+blade roots [kN m 1] – main signals to detect the im-
+pact of the ﬂaps on the blade aerodynamic loading (load
+sensors placed at the blade root are commonly available
+in modern WTs);
+–pitch angle [],rotor speed [rpm], and generator power
+[kW] – main signals to estimate the WT’s operative con-
+dition to which the ﬂaps’ load impact is related (these
+signals are available in every WT controller);
+–fore–aft and side–side tower top accelerations [m s 2]
+– useful signals in detecting possible rotor imbalances
+(the WT safety systems commonly monitor these sig-
+nals to detect WT anomalies);
+–out-of-plane rotor bending moments [kN m 1] – signals
+computed from the blade root moments, pitch angle, and
+azimuth position through the Coleman transformation
+Bir (2008) equation (these moments help detect possible
+rotor imbalances).
+The initially selected features are the standard deviation,
+mean, maximum, minimum, range, and maximum absolutevalue of every signal. Afterward, we add the catch22 col-
+lection (Lubba et al., 2019) to expand the features pool to
+explore possible unknown correlations between the input
+signals. We choose the catch22 collection as it is a high-
+performing subset of 22 features selected over a pool of over
+7000 based on their classiﬁcation performance across a col-
+lection of 93 real-world time-series classiﬁcation problems.
+The catch22 v0.4 MATLAB tool is used for this paper. Fi-
+nally, we include the blade-to-blade difference between the
+mean and absolute maximum blade root bending moments
+to help detect possible ﬂap activation imbalances.
+The feature generation process computes circa 400 fea-
+tures for each aeroelastic simulation. To reduce complexity,
+we add two feature ﬁltering processes to the algorithm:
+–Manual selection of the desired feature subset in the al-
+gorithm pre-processing is the ﬁrst.
+–Automatic feature reduction based on out-of-bag per-
+muted predictor importance (oobPPI) value is the sec-
+ond. The oobPPI measures how inﬂuential a feature is
+in the model prediction by permuting the value of the
+feature and measuring the model error. The permutation
+of an inﬂuential feature should have a relevant effect on
+the model error; little to no effect should come from a
+permutation of a non-inﬂuential feature. If this ﬁlter is
+active, the oobPPI of each feature is evaluated after the
+RF model is trained. Features with an oobPPI value be-
+low the threshold speciﬁed by the user are removed, and
+the RF model is trained again with the remaining feature
+subset. The process is repeated until all the remaining
+features consistently have an oobPPI value above the
+threshold, simplifying the ﬁnal model by removing the
+features not inﬂuential on the classiﬁcation process.
+We decided to not include the wind speed sensor signal in the
+ML training. This sensor is generally located on the nacelle,
+behind the rotor, where the complexity of the 3D wind ﬂow
+can only be correctly estimated by high-ﬁdelity codes, like
+CFD. In this paper we use a mid-ﬁdelity aeroelastic model
+that is unable to estimate the wind speed on the nacelle with
+sufﬁcient accuracy. Therefore, training the ML model with
+a low-ﬁdelity nacelle wind speed would reduce the model
+accuracy and performance on a real WT. Furthermore, the
+ML model can still derive the wind speed data from the ro-
+tor speed, pitch angle, and generator power, which strongly
+correlate to the wind speed. Therefore, omitting the wind
+speed signal reduces model uncertainties without losing rele-
+vant data for the ML training. Instead, we use the mean wind
+speed for splitting the NPP into different wind speed regions
+for which a dedicated RF model is trained. Generally, a mod-
+ern WT operates differently below rated wind speed, where it
+is power or torque controlled, compared to above rated wind
+speed, where it is pitch controlled. Therefore, we expect RF
+models trained for each speciﬁc wind region to perform bet-
+https://doi.org/10.5194/wes-9-181-2024 Wind Energ. Sci., 9, 181–201, 2024
+------------------------------End of the page -----------------------------------
+190 A. Gamberini and I. Abdallah: Active trailing edge ﬂap system fault detection via machine learning
+Figure 6. Schematic structure of MFS algorithm.
+ter than a single RF model covering the whole wind speed
+range.
+3.2.2 Algorithm structure and setup
+The algorithm structure, shown in Fig. 6, has the following
+steps:
+1. calculation of the features for every simulation (usually
+it is done only once, after the aeroelastic simulation is
+computed);
+2. selection of the AFlap fault symmetry (1B or 3B) and
+WT operative condition (NPP or PS);
+3. selection of the AFlap health states to be used in the
+classiﬁcation;
+4. for every speciﬁed wind speed range,
+(a) manual selection of the desired feature subset
+(b) training of the RF model with the TaT set
+(c) if the “automatic feature reduction” is enabled, the
+following steps are repeat until all features have
+oobPPI above threshold:
+i. evaluation of the oobPPI of every features
+ii. removal of the features with oobPPI below
+threshold
+iii. training of a new RF model with the remaining
+features
+(d) validation of the trained RF model with the Val sets.
+In the algorithms, three MATLAB functions are used: tem-
+plateTree to create the decision tree template, ﬁtcensemble to
+train the RF model, and oobPermutedPredictorImportance to
+compute the oobPPI value for each feature.
+We use the setup proposed by Abdallah (2019) as the de-
+fault RF setup: number of trees of 100, learning rate of 0.25,
+maximum number of splits of 12, test rate of 30 %, and
+oobPPI threshold of 0.01.3.3 Automatic feature generation with random forest or
+ridge classiﬁer
+The automatic feature selection (AFS) approach relies on
+the same signals used for the manual feature selection ap-
+proach: pitch position, rotor speed, generator power, ﬂap-
+wise and edgewise bending moments at the root of each of
+the three blades, linear tower top accelerations, and the ﬂap
+actuator control signal. As described in Sect. 3.2, these sig-
+nals are relevant to detect the ﬂap impact on the WT and are
+provided with the standard sensors available on commercial
+WTs. Instead of generating a set of features for each sig-
+nal based on statistical properties, the AFS approach utilizes
+ML techniques developed for image processing to create fea-
+tures of the whole simulation. We implement two different
+algorithms for the classiﬁcation: a RF classiﬁer, similar to
+what we used for the MFS, and a ridge classiﬁer with cross-
+validation (ridge) suggested by Dempster et al. (2020) for
+application with MiniRocket.
+3.3.1 Feature generation with MiniRocket
+MiniRocket works by ﬁrst combining the time series of
+the relevant signals of a single simulation in a single ma-
+trix, aligning them as a function of time. Then it processes
+the resulting matrix like an image utilizing a kernel from
+which the proportion of positive values is computed. A set of
+10 000 kernels of random lengths, weights, bias, dilation, and
+padding are used, generating 10 000 features per simulation.
+This process is repeated for all the simulations. For consis-
+tency, the same kernel set must be used for all the simulations
+used in the RF models’ training, testing, and validation.
+3.3.2 Algorithm structure and setup
+The algorithm structure, shown in Fig. 7, has the following
+steps:
+1. calculation of the features with MiniRocket
+2. selection of the AFlap fault symmetry (1B or 3B) and
+WT operative condition (NPP or PS)
+3. selection of the AFlap health states to be used in the
+classiﬁcation
+4. selection of the classiﬁer: RF or ridge
+5. for every speciﬁed wind speed range,
+(a) training of the classiﬁcation model:
+i. training of one (or more) classiﬁcation model
+ii. if more than one classiﬁcation model is trained,
+select the model with higher F1 score
+(b) validation of the trained classiﬁcation model with
+the Val sets.
+Wind Energ. Sci., 9, 181–201, 2024 https://doi.org/10.5194/wes-9-181-2024
+------------------------------End of the page -----------------------------------
+A. Gamberini and I. Abdallah: Active trailing edge ﬂap system fault detection via machine learning 191
+Figure 7. Schematic structure of AFS algorithm.
+In the AFS method, we used the following sklearn Python
+codes (Pedregosa et al., 2011): StratiﬁedShufﬂeSplit to create
+multiple test and training subsets from the TaT sets; Random-
+ForestClassiﬁer to train, test, and validate the RF models;
+RidgeClassiﬁerCV to train, test, and validate the ridge clas-
+siﬁer models; f1_score to compute the F1 score; and Stan-
+dardScaler to standardize features by removing the mean and
+scaling to unit variance.
+Starting from the setup proposed by Abdallah (2019), we
+investigate the optimal RF setup for the different scenarios,
+obtaining as optimal values a test rate of 30 %, number of
+trees of 100, Shannon entropy as the criterion to measure the
+quality of a split, maximum depth of the tree of 5, minimum
+number of samples required to split an internal node of 5, and
+all features included.
+For the ridge setup, the regularization strength parameter
+was set to an evenly spaced vector in log space of 1000 values
+between 1 and 106and the cross-validation set to leave-one-
+out cross-validation that handles efﬁciently the case of the
+number of features higher than the number of samples.
+4 Manual feature selection results
+The potential of the MFS approach in detecting a ﬂap sys-
+tem’s fault is investigated for several AFlap fault scenarios.
+These scenarios cover different combinations of AFlap fault
+symmetries (1B or 3B), WT operative conditions (NPP or
+PS), the possible split in different wind speed ranges, and
+different initial feature selection (all or reduced). The initial
+feature option allows the reduction in the features used in
+training. We set the feature subset without the catch22 col-
+lection as the default reduced setup. Instead, the wind speed
+range option enables the training of a dedicated ML model
+for every speciﬁed wind speed range. The default ranges
+used in this paper are below rated (BR: wind speed between
+3.5 and 9.5 m s 1), around rated (Rt: wind speed between
+9.5 and 16.5 m s 1), and above rated (AR: wind speed be-
+tween 16.5 to 25 m s 1).
+Furthermore, we investigate three different fault detection
+levels.–Primary . The model is trained to detect only the four
+primary health states: ﬂap not active (AF_Off), active
+(AF_On), not active with fault (AF_Off_Fault), and ac-
+tive with fault (AF_On_Fault).
+–Degraded . The model is trained to detect if the ﬂap has
+degraded performance but without identifying the per-
+formance degradation level. The three health states of
+ﬂap with degraded performance are merged in a sin-
+gle state, called active with degradation (AF_On_Degr),
+that is included in the training with the four primary
+health states.
+–Detailed . The model is trained to identify the ﬂap
+performance reduced to 25 % (AF_On_25pc), 50 %
+(AF_On_50pc), and 75 % (AF_On_75pc) in addition to
+the primary health states.
+Table 2 collects the list of the MFS scenarios and shows their
+setup. Scenarios stated within parenthesis have a customized
+setup detailed described in the following chapters.
+The selection of the models’ performance metrics is
+strictly related to the requirements of the detection system. If
+one (or more) ﬂap fault is critical for the WT integrity, the de-
+tection of this fault would be prioritized over the other AFlap
+health states. In this case, a good metric would be the recall
+of the critical fault. For an opposite scenario, where it would
+be more critical to avoid false fault detections and keep the
+WT operating, the precision of the different faults should be
+considered. In this paper, we are not considering any particu-
+lar requirement for the fault detection system, and we aim to
+correctly detect all the different classes equally without prior-
+itizing any one speciﬁcally. Therefore, we select the F1 score,
+a trade-off between recall and precision that rewards the re-
+duction in both false positives and false negatives. In detail,
+we use the weighted F1 score: the average of the F1 score of
+each class weighted by the ratio of the number of samples of
+each class over the total sample number. This metric is con-
+sistent between balanced and unbalanced classiﬁcation tasks,
+allowing us to evaluate the few scenarios where the classes
+are not balanced.
+4.1 Detection of asymmetric fault
+Table 3 collects the performance of the RF models trained
+for the asymmetric fault scenarios described in Table 2. In
+addition to the weighted F1 score, the number of features
+obtained after the automatic feature reduction in the model
+training is shown. We use this number as an estimate of
+the model complexity: where more features are needed, it is
+more complex to implement and execute the model. In addi-
+tion, precision and recall values of the AFlap health states for
+some speciﬁc asymmetric fault scenario models are collected
+in Table 4.
+As the ﬁrst step, scenario 1BN_A1 trains a single RF
+model for all the wind speeds to detect the primary ﬂap health
+https://doi.org/10.5194/wes-9-181-2024 Wind Energ. Sci., 9, 181–201, 2024
+------------------------------End of the page -----------------------------------
+192 A. Gamberini and I. Abdallah: Active trailing edge ﬂap system fault detection via machine learning
+Table 2. Compact description of the setup of the AFlap fault scenarios.
+Fault scenario names for detection level Fault scenario setup
+Primary Degraded Detailed Features Wind WT Fault
+speed operation symmetry
+ranges
+1BN_A1 1BN_B1 1BN_C1 All
+No
+NPP
+Asymmetric (1B)(1BN_A1c)
+– 1BN_B1r – Reduced
+1BN_A2 1BN_B2 1BN_C2 All
+Yes (1BN_A2c)
+– 1BN_B2r 1BN_C2r Reduced
+– 1BP_B1 1BP_C1 All
+No PS1BP_A1r 1BP_B1r 1BP_C1r Reduced
+(1BP_A1rc)
+3BN_A01 – – All No
+NPP
+Symmetric (3B)3BN_A02 3BN_B2 3BN_C2 All Yes
+(3BN_A02c) (3BN_B2b) (3BN_C2b)
+– 3BN_B3 3BN_C3 All Yes
+3BP_A1 3BP_B1 3BP_C1 All No PS
+(3BN_A01c) (3BP_B1b) (3BP_C1b)
+states in normal power production, starting the training with
+all the available features. The trained model needs only three
+features (out of 400) to achieve an F1 score of 1, meaning
+it can perfectly classify the primary health states. To un-
+derstand how this trained model would perform with AFlap
+degradation (which will occur during the normal lifetime of
+the ﬂap, also as a partial fault), we evaluate it with all the de-
+graded AFlap health states classiﬁed as AF_On_Fault (sce-
+nario 1BN_A1c). Under this condition, the model F1 score
+decreases to 0.79 due to the misclassiﬁcation of the ﬂap
+fault (AF_On_Fault) as normal ﬂap operation (AF_On). This
+misclassiﬁcation is expressed numerically by a low value of
+AF_On recall (0.33) and AF_On_Fault precision (0.48). We
+obtain comparable results in scenario 1BN_A2, where the
+wind speeds are split into three different wind speed ranges,
+and an independent RF model is trained for each range. The
+models trained in this scenario detect well the primary health
+states (F1 score of 1) but cannot distinguish the degraded
+AFlap states (scenario 1BN_A2c).
+As the second step, we unify the degraded AFlap health
+states under a single category (AF_On_Degr). Scenario
+1BN_B1 trains a single RF model for all the wind speeds
+to detect the degraded fault health states in NPP. The trained
+model requires 17 features for an F1 score of 0.90 mainly due
+to the low recall (0.56) of the AF_On class. Removing the
+catch22 features to simplify the model (scenario 1BN_B1r)
+leads to a lower F1 score (0.82), poor AF_Off_Fault class
+recall (0.41), and poor AF_On class precision (0.37). Split-ting the training for the tree wind speed ranges (scenario
+1BN_B2) generates three high-performing models (F1 score
+higher than 0.95) even in the scenario where the catch22 fea-
+tures are removed (1BN_B2r).
+As the last step for the NPP case, we evaluate if a model
+could individually identify the degraded AFlap health states.
+Scenario 1BN_c1 trains a single RF model for all the wind
+speeds for a detailed detection level in NPP. The trained
+model requires 16 features for an F1 score of 0.70 and
+can almost not distinguish the AF_Off_Fault from the other
+classes. Splitting the training for the tree wind speed ranges
+(scenario 1BN_c2) dramatically improves the performance
+of the models with an F1 score of 0.91 BR, 0.95 Rt, and
+0.98 AR obtained with 14 features or less. In detail, the BR
+model is imprecise in classifying the AF_Off_Fault and has
+a low recall for AF_On. Removing the catch22 features leads
+to models with similar performance but fewer features (10 or
+less).
+After the NPP scenarios, we investigated if the AFlap
+health states can be correctly classiﬁed in pre-startup condi-
+tions where the WT is idling due to low wind speed. For the
+scenarios aiming at the primary ﬂap health states (1BP_A1r
+and 1BP_A1rc) in the PS condition, the performance follows
+the same pattern as the previous similar scenarios in NPP.
+When the AF_On_Degr class is included (scenario 1BP_B1),
+the trained model shows a high F1 score (0.94) with 20 fea-
+tures. A high F1 score of 0.95 is also achieved with only
+nine features starting from a reduced set of features (sce-
+Wind Energ. Sci., 9, 181–201, 2024 https://doi.org/10.5194/wes-9-181-2024
+------------------------------End of the page -----------------------------------
+A. Gamberini and I. Abdallah: Active trailing edge ﬂap system fault detection via machine learning 193
+Table 3. F1 score of the asymmetric ﬂap fault scenarios evaluated with MFS and AFS approaches. The number of features used for the MFS is also speciﬁed.
+Blade WT Wind speed Basic Degraded Detailed
+fault operation range Tm s 1U MFS MFS AFS MFS AFS
+Case name RF – No. Case name RF – No. RF Case name RF – No. RF
+F1 score features F1 score features F1 score F1 score features F1 score
+1BNPP 3.5–25.51BN_A11 (0.79) – 3 1BN_B1 0.90 – 17 0.67 1BN_C1 0.70 – 16 0.55(1BN_A1c)
+1BN_B1r 0.82 – 11
+NPP3.5–9.5 (BR)1BN_A2
+(1BN_A2c)1 (0.80) – 10
+1BN_B20.96 – 10 0.59
+1BN_C20.91 – 14 0.52
+9.5–16.5 (RT) 1 (0.82) – 5 0.98 – 9 0.78 0.95 – 14 0.73
+16.5–25.5 (AR) 1 (0.80) – 4 0.99 – 5 0.62 0.98 – 4 0.56
+3.5–9.5 (BR)
+1BN_B2r0.95 – 6
+1BN_C2r0.90 – 10
+9.5–16.5 (RT) 0.90 – 7 0.94 – 10
+16.5–25.5 (AR) 0.98 – 3 0.99 – 6
+PS 0–3.51BP_B1 0.94 – 20 0.45 1BP_C1 0.92 – 27 0.38
+1BP_A1r1 (0.80) – 5 1BP_B1r 0.95 – 9 1BP_C1r 0.93 – 14(1BP_A1rc)nario 1BP_B1r). Finally, when we analyze the detailed de-
+tection level (scenario 1BP_C1), the trained model achieves
+an F1 score of 0.92 with 27 features. Omitting the catch22
+features in training (scenario 1BP_C1r) brings an equivalent
+F1 score with only 14 features.
+4.2 Detection of symmetric fault
+Table 5 collects the performance of the RF models trained for
+the symmetric fault scenarios described in Table 2. Precision
+and recall values of the AFlap health states for some speciﬁc
+symmetric fault scenario models are collected in Table 6.
+Similar to the asymmetric faults’ cases, we start with a
+scenario (3BN_A1) that trains a single RF model for all the
+wind speeds to detect the primary health cases in NPP, using
+all the available features initially. The trained model achieves
+an F1 score of 0.75 with 32 features. When tested with the
+degraded ﬂap health states bundled together as AF_On_Fault
+(scenario 3BN_A1c), the F1 score decreased to 0.71 due to
+the misclassiﬁcation of the fault (AF_On_Fault) as normal
+ﬂap operation (AF_On). This misclassiﬁcation is expressed
+numerically by a low value of AF_On recall (0.33) and low
+precision (0.61) of both AF_Off_Fault and AF_On_Fault.
+We obtained comparable results in scenario 3BN_A2, where
+we trained an independent RF model for each of the three
+different wind speed ranges. The models trained in this sce-
+nario detect better than the previous scenario the primary ﬂap
+health states, especially for AR (F1 score of 0.92), but can-
+not correctly distinguish the degraded AFlap states (scenario
+1BN_A2c).
+As the second step, we include the degraded AFlap
+health states under a single category (AF_On_Degr). Sce-
+nario 3BN_B2 trains an independent RF model to detect the
+degraded ﬂap cases in NPP for each of the three different
+wind speed ranges. The trained model shows a low F1 score
+of 0.41 for BR, 0.51 at rated, and 0.64 for AR. To improve
+the performance of the models, we explore the RF model
+hyperparameter setup. One of the most successful results is
+scenario 3BN_B2b, where we increase the number of trees
+from 100 to 300 and the maximum number of slits from 12
+to 30. These changes lead to an increase in the F1 score by
+around 0.08, with the highest value achieved in the AR wind
+speed range with an F1 score of 0.72. This model still shows
+low recall for AF_On and AF_On_Fault ﬂap states and a
+low precision for AF_On_Degr. As a ﬁnal try to increase
+the models’ performance, we reduce the width of the wind
+speed ranges, obtaining BRa (3.5 to 6.5 m s 1), BRb (6.5 to
+9.5 m s 1), RTa (9.5 to 12.5 m s 1), RTb (12.5 to 15.5 m s 1),
+ARa (15.5 to 20.5 m s 1), and ARb (20.5 to 25.5 m s 1). This
+scenario (3BN_B3) leads to RF models with higher perfor-
+mance, but only ARa and ARb models have the F1 scores
+higher than 0.7 (0.75 and 0.83, respectively). Both RF mod-
+els have good precision except for the AF_On_Degr class but
+a low recall for AF_On, AF_On_Fault, and AF_On_Degr.
+https://doi.org/10.5194/wes-9-181-2024 Wind Energ. Sci., 9, 181–201, 2024
+------------------------------End of the page -----------------------------------
+194 A. Gamberini and I. Abdallah: Active trailing edge ﬂap system fault detection via machine learningTable 4. Precision and recall values of each AFlap health state of a selection of scenarios of asymmetric ﬂap fault evaluated with MFS and AFS approaches.
+Approach MFS AFS
+WT operation NPP PS NPP PS
+Scenarios 1BN_A1c 1BN_B1 1BN_B1r 1BN_C1 1BN_C2 1BP_B1r 1BP_C1 1BN_B1 1BN_C1 1BN_B2 1BP_B1
+Wind speed range All All All All BR AR All All All All RT All
+F1 score 0.79 0.90 0.82 0.70 0.91 0.98 0.95 0.93 0.67 0.55 0.78 0.45PrecisionAF_Off 1.00 1.00 0.98 0.97 1.00 1.00 0.95 0.98 0.81 0.80 0.99 0.66
+AF_Off_Fault 1.00 0.77 0.70 0.00 0.53 0.95 0.84 0.78 0.89 0.93 1.00 0.63
+AF_On 1.00 0.95 0.37 0.68 0.92 0.97 0.90 0.93 0.50 0.59 0.61 0.28
+AF_On_Fault 0.48 1.00 1.00 0.98 1.00 0.98 0.95 0.98 0.47 0.49 0.55 0.27
+AF_On_Degr – 0.81 0.87 – – – 0.98 0.96 0.73 – 0.90 0.62
+AF_On_25pc – – – 0.88 1.00 0.98 – – – 0.40 – –
+AF_On_50pc – – – 0.66 0.88 0.99 – 0.90 – 0.30 – –
+AF_On_75pc – – – 0.97 1.00 1.00 – 0.95 – 0.42 – –RecallAF_Off 1.00 1.00 1.00 1.00 1.00 1.00 1.00 0.97 0.90 0.95 1.00 0.59
+AF_Off_Fault 1.00 0.95 0.41 0.00 1.00 1.00 1.00 1.00 0.79 0.76 0.99 0.70
+AF_On 0.33 0.56 0.56 0.44 0.65 0.99 0.88 0.83 0.71 0.58 0.85 0.41
+AF_On_Fault 1.00 0.97 0.96 0.92 1.00 0.98 0.99 0.95 0.60 0.54 0.93 0.50
+AF_On_Degr – 0.98 0.99 – – – 0.90 – 0.56 – 0.57 0.35
+AF_On_25pc – – – 0.84 0.99 0.99 – 0.90 – 0.21 – –
+AF_On_50pc – – – 0.47 0.84 0.94 – 0.87 – 0.48 – –
+AF_On_75pc – – – 1.00 1.00 0.98 – 0.99 – 0.32 – –
+Wind Energ. Sci., 9, 181–201, 2024 https://doi.org/10.5194/wes-9-181-2024
+------------------------------End of the page -----------------------------------
+A. Gamberini and I. Abdallah: Active trailing edge ﬂap system fault detection via machine learning 195
+Table 5. F1 score of the symmetric ﬂap fault scenarios evaluated with MFS and AFS approaches. The number of features used for the MFS is also speciﬁed.
+Blade WT Wind speed Basic Degraded Detailed
+fault operation range Tm s 1U MFS MFS AFS MFS AFS
+Case name RF – No. Case name RF – No. RF Case name RF – No. RF
+F1 score features F1 score features F1 score F1 score features F1 score
+3BNPP 3.5–25.53BN_A10.75 (0.71) – 32(3BN_A1c)
+NPP3.5–9.5 (BR)3BN_A2
+(3BN_A2c)0.74 (0.69) – 273BN_B2
+(3BN_B2b)0.41 (0.49) – 20 (23) 0.533BN_C2
+(3BN_C2b)0.24 (0.35) – 21 (22) 0.49
+9.5–16.5 (RT) 0.85 (0.75) – 31 0.51 (0.63) – 18 (25) 0.61 0.30 (0.40) – 15 (16) 0.55
+16.5–25.5 (AR) 0.92 (0.81) – 15 0.64 (0.72) – 8 (9) 0.63 0.50 (0.61) – 7 (7) 0.58
+NPP3.5–6.5 (BRa)
+3BN_B30.61 – 7 0.49
+3BN_C30.48 – 7 0.43
+6.5–9.5 (BRb) 0.55 – 16 0.55 0.39 – 17 0.49
+9.5–12.5 (RTa) 0.67 – 20 0.55 0.48 – 15 0.49
+12.5–15.5 (RTb) 0.62 – 9 0.64 0.45 – 8 0.59
+15.5–20.5 (ARa) 0.75 – 8 0.67 0.58 – 9 0.60
+20.5–25.5 (ARb) 0.83 – 7 0.49 0.77 – 9 0.50
+PS 0–3.53BP_A10.80 (0.71) – 123BP_B1 0.55–110.503BP_C1 0.30-70.43(3BP_A1c) (3BP_B1b) (0.55) (22) (3BP_C1b) (0.38) (7)Finally, we investigate if an RF model could individually
+identify the detailed ﬂap health states, obtaining models with
+poor performance in the symmetric fault case during NPP.
+Scenario 3BN_C2 trains an independent RF model to detect
+the degraded fault cases in NPP for each of the three differ-
+ent wind speed ranges. The trained model has an F1 score
+below 0.50. Increasing the number of trees to 300 and the
+maximum number of slits to 30 (scenario 3BN_C2b) im-
+proves the F1 score of around 0.1. The precision and re-
+call values show that the models cannot correctly detect most
+AFlap health states. Adding the reduction in the size of the
+wind ranges (scenario 3BN_C3) does slightly improve the
+F1 score but with the best-performing model (ARb) reaching
+only an F1 score of 0.77. For the PS wind turbine operation,
+the scenario aiming at the degraded ﬂap health states (sce-
+nario 3BP_B1) trains a model with a low F1 score (0.55) but
+is unable to classify all the different AFlap health states cor-
+rectly. Increasing the number of trees and split (3BP_B1b)
+does not lead to better performance. Also, for the detailed de-
+tection level (scenario 3BP_C1), the trained model achieves a
+poor F1 score of 0.30 that is only marginally improved (0.38)
+by increasing the number of trees and split (3BP_C1b).
+5 Automatic feature selection results
+The AFS approach is investigated with most of the scenar-
+ios used for the MFS approach and collected in Table 2. An
+initial preliminary investigation shows that a model trained
+only to detect the primary ﬂap health states will most likely
+perform poorly when the AFlap starts to have degraded per-
+formance, similar to what we obtain in the MFS analysis.
+Since this performance degradation is likely to happen, there
+is a low interest in a model that cannot account for it properly,
+and the primary fault detection level is therefore omitted in
+the AFS analyses. Furthermore, the initial feature reduction
+does not apply to the AFS approach, and the scenarios with
+the reduced feature setup are not included. Regarding the RF
+hyperparameter setup, we ran an initial study using several
+randomly generated subsets of features to identify the values
+of the hyperparameters optimizing the F1 score. This study
+shows an optimal hyperparameter setup with the number of
+trees being 100 (an increase up to 300 does not improve the
+performance), the maximum depth of the tree being 5 (lower
+values tend to cause overﬁtting), the minimum number of
+samples required to split an internal node being 5, and Shan-
+non entropy as a criterion to measure the quality of a split.
+The ﬁnal model training is instead performed including all
+the features. This conﬁguration showed better performance
+compared to the random pick of a subset of features of the
+size of square root or log2of the total number of features.
+Having a number of features considerably higher than
+the number of samples, a condition not ideal for the RF
+method, we investigate if another classiﬁer can perform bet-
+ter than RF. We selected the ridge regression classiﬁer with
+https://doi.org/10.5194/wes-9-181-2024 Wind Energ. Sci., 9, 181–201, 2024
+------------------------------End of the page -----------------------------------
+196 A. Gamberini and I. Abdallah: Active trailing edge ﬂap system fault detection via machine learningTable 6. Precision and recall values of each AFlap health state of a selection of scenarios of symmetric ﬂap fault evaluated with MFS and AFS approaches.
+Approach MFS AFS
+WT operation NPP PS NPP PS
+Scenarios 3BN_A1c 3BN_B2b 3BN_B3 3BN_C2b 3BP_C3 3BP_B1 3BN_B2 3BN_B3 3BP_C3 3BP_B1
+Wind speed range All BR AR ARa ARb BR AR ARb All AR ARa ARa All
+F1 score 0.71 0.49 0.72 0.75 0.83 0.35 0.61 0.77 0.55 0.63 0.67 0.60 0.50PrecisionAF_Off 0.84 0.44 0.68 0.80 0.94 0.37 0.81 0.78 0.06 0.94 0.90 0.93 0.74
+AF_Off_Fault 0.61 0.58 0.77 0.74 0.94 0.39 0.44 0.78 0.15 0.95 0.98 0.98 0.78
+AF_On 0.71 0.71 0.82 0.80 0.89 0.50 0.71 0.78 0.15 0.40 0.40 0.54 0.29
+AF_On_Fault 0.62 0.73 0.94 0.84 1.00 0.15 0.41 0.78 0.10 0.42 0.53 0.53 0.35
+AF_On_Degr – 0.16 0.54 0.65 0.61 – – – 0.97 0.67 0.76 – 0.65
+AF_On_25pc – – – 0.09 0.49 0.78 – – – 0.38 –
+AF_On_50pc – – – 0.21 0.47 0.61 – – – 0.33 –
+AF_On_75pc – – – 0.63 0.78 0.83 – – – 0.29 –RecallAF_Off 0.69 0.94 0.97 1.00 1.00 0.63 0.97 0.93 1.00 0.95 0.98 0.98 0.79
+AF_Off_Fault 0.79 0.82 1.00 1.00 1.00 0.67 1.00 1.00 1.00 0.94 0.89 0.92 0.72
+AF_On 0.32 0.30 0.51 0.52 0.64 0.37 0.53 0.74 0.60 0.79 0.85 0.78 0.55
+AF_On_Fault 0.89 0.28 0.52 0.60 0.58 0.20 0.41 0.70 0.70 0.85 0.80 0.62 0.66
+AF_On_Degr – 0.58 0.78 0.77 0.91 – – – 0.45 0.22 0.35 – 0.26
+AF_On_25pc – – – 0.20 0.51 0.82 – – – 0.28 –
+AF_On_50pc – – – 0.20 0.40 0.58 – – – 0.31 –
+AF_On_75pc – – – 0.29 0.63 0.68 – – – 0.22 –
+Wind Energ. Sci., 9, 181–201, 2024 https://doi.org/10.5194/wes-9-181-2024
+------------------------------End of the page -----------------------------------
+A. Gamberini and I. Abdallah: Active trailing edge ﬂap system fault detection via machine learning 197
+cross-validation, a linear classiﬁer tested in the development
+of both ROCKET (Dempster et al., 2020) and MiniRocket
+(Dempster et al., 2021).
+5.1 Detection of asymmetric fault
+The performances of models trained with the RF classiﬁer
+for the asymmetric fault scenarios described in Table 2 are
+shown in Table 3, together with the results from the MFS
+approach. Table 4 collects precision and recall values of the
+AFlap health states for some speciﬁc asymmetric fault sce-
+narios of the RF models.
+In NPP, AFS RF shows low performance when trained
+to detect the degraded health states for all the wind speeds
+(scenario 1BN_B1) with an F1 score of 0.67. The model
+can correctly classify the AF_Off and AF_Off_Fault states
+but cannot classify the other AFlap health states, as indi-
+cated by the recall and precision values. When we train the
+classiﬁers for the detailed health states (scenario 1BN_C1),
+performance decreases with an F1 score of 0.55. Also, for
+this scenario, the models can adequately classify AF_Off
+and AF_Off_Fault states but fail with the other states. Per-
+formances slightly increase when we split the training into
+different wind speed ranges. AFS RF achieves the highest
+performance in evaluating the degraded health states (sce-
+nario 1BN_B2) around rated wind speed with an F1 score
+of 0.78. For the other wind speed ranges, the F1 score stays
+around 0.6. Comparable results are achieved for the detailed
+health states (scenario 1BN_C2), where AFS RF achieves a
+max F1 score of 0.73 at RT but not higher than 0.56 in the
+other wind speed ranges. Looking at the results in PS, the
+RF classiﬁer performs poorly in identifying degraded and de-
+tailed health states (scenario 1BP_B1 and 1BP_C1, respec-
+tively) with a max F1 score of 0.45.
+Figure 8 compares the F1 scores from AFS RF with the
+scores from AFS ridge. The ridge classiﬁer achieves results
+comparable to RF for degraded and detailed ﬂap health states
+in the 1B case. Also, the precision and recall values of the
+ridge models are close to the values of the RF models of the
+corresponding scenarios. For brevity, we have not included
+them in this paper.
+5.2 Detection of symmetric fault
+The performances of models trained with the RF classiﬁer
+for the symmetric fault scenarios described in Table 2 are
+shown in Table 5, together with the results from the MFS ap-
+proach. Precision and recall values of the AFlap health states
+for some speciﬁc asymmetric fault scenario models are col-
+lected in Table 6.
+In NPP, AFS RF shows low performance when trained to
+detect the degraded health states (scenario 3BN_B2) for dif-
+ferent wind speed ranges. The F1 score is between 0.53 at BR
+and 0.63 at AR. Similar to what was observed in the asym-
+metric fault, the models can detect most of the AF_Off andAF_Off_Fault states properly but cannot classify the other
+AFlap health states. Reducing the width of the wind speed
+ranges (scenario 3BN_B3) mainly reduces the performance,
+especially for low and high wind speeds, except at ARa,
+where the F1 score increases up to 0.67. Looking at the de-
+tailed health states for the three wind seed ranges (scenario
+3BN_C2), the F1 score rises from 0.49 at BR to 0.58 at AR.
+Similar to the degraded ﬂap health states, reducing the width
+of the wind speed ranges (scenario 3BN_C3) does reduce the
+performance, especially for low or high wind speeds. Like
+the previous scenarios, the models have high recall and pre-
+cision values for AF_Off and AF_Off_Fault states and low
+values for the other health states.
+Looking at the results in PS, AFS RF classiﬁers perform
+poorly in identifying degraded and detailed health states
+(scenario 1BP_B1 and 1BP_C1, respectively) with a max
+F1 score of 0.5. Also, the ability to correctly classify AF_Off
+and AF_Off_Fault states is consistently reduced with both
+recall and precision below 0.8.
+Similar to the asymmetrical case, the ridge classiﬁer
+achieves comparable results to RF for both degraded and de-
+tailed ﬂap health states in the 3B case. Figure 8 shows that
+AFS RF performs slightly better than the ridge classiﬁer for
+the detailed ﬂap health states.
+6 Discussion
+6.1 Manual feature selection with random forest
+The results described in Sect. 4.1 show that the manual fea-
+ture selection approach with a random forest classiﬁer can
+correctly classify the AFlap health states in the case of asym-
+metric ﬂap fault 1B. In normal power production, degraded
+and detailed health states are correctly classiﬁed, and the
+performance increases when splitting the training into three
+wind speed ranges. This result supports our initial hypothe-
+sis that as a WT operates differently at different wind speed
+ranges, models trained for speciﬁc wind ranges perform bet-
+ter than a single model trained for all wind speeds. Notably,
+less than 20 features are needed for the models, a small frac-
+tion of the around 400 provided at the beginning of the train-
+ing. This number can be further reduced to 10 or fewer by
+removing the catch22 features without signiﬁcantly reduc-
+ing the models’ performance. Even if few features are spe-
+ciﬁc to some scenarios, all scenarios share the blade-to-blade
+differences between the mean blade root bending moment
+(mainly of ﬂapwise bending moment), followed by the mean
+value of WT performance indicators like pitch angle, genera-
+tor power, rotor speed, or blade root bending moments. This
+sounds logical since an asymmetrical ﬂap fault among the
+different blades should result in a relevant difference in the
+blades’ loading. The blade-to-blade load difference channels
+should collect this load imbalance. Furthermore, the blade
+imbalance is a function of the WT operational working state
+that the models most probably identify with the WT perfor-
+https://doi.org/10.5194/wes-9-181-2024 Wind Energ. Sci., 9, 181–201, 2024
+------------------------------End of the page -----------------------------------
+198 A. Gamberini and I. Abdallah: Active trailing edge ﬂap system fault detection via machine learning
+Figure 8. (a)Comparison between the MFS RF F1 scores and the MFS RF F1 scores of the different degraded and detailed ﬂap health
+scenarios. (b)Comparison between the AFS RF F1 scores and the AFS ridge F1 scores of the different degraded and detailed ﬂap health
+scenarios.
+mance indicator features. Also, the models need fewer fea-
+tures at above rated wind speed, where generator power and
+rotor speed are almost constant, and the blade-to-blade load
+difference is most likely less impacted by them. Looking at
+the pre-startup operation, both degraded and detailed health
+states are correctly classiﬁed and the catch22 features can
+be omitted without reducing performance, as experienced in
+NPP. The models need more features than the NPP scenar-
+ios, still with blade-to-blade load difference as the key fea-
+ture followed by mean values of the blade loads. Generator
+power and rotor speed are no longer relevant, being almost
+null in the idling state.
+Regarding the primary health states detection, the models
+obtained with MFS show, on one side, high performance in
+identifying the four primary health states in both NPP and
+PS, but on the other side, they cannot account properly for
+the degradation of the AFlap performance. Since this degra-
+dation is likely to happen in the WT lifetime, we think these
+models can lead to some signiﬁcant misclassiﬁcation, and we
+do not recommend them for ﬁeld application.
+In the case of a symmetric ﬂap fault 3B, the MFS approach
+fails to correctly classify all the tested AFlap health states
+in both NPP and PS operation states. Increasing the model
+complexity or reducing the wind range width improves the
+performance negligibly, and the only case with an accept-
+able F1 score is the degraded health states at high wind
+speeds (ARb). Looking at the selected features helps to un-
+derstand the reasons for the misclassiﬁcation. The blade-to-
+blade features are no longer present, replaced by several fea-
+tures related to single-blade loading, tower top accelerations,
+and rotor speed. This result conﬁrms that the blade-to-blade
+loads no longer contain any ﬂap fault information in the sym-
+metric fault scenario, where the ﬂap fails symmetrically in
+all three blades. Therefore, the RF models try to estimate theAFlap health states from the features of other channels, like
+blade loads. The failure to obtain satisfactory performance
+means the channels used in training do not have sufﬁcient in-
+formation to identify the AFlap health states, and more sig-
+nals are needed to achieve it. A possible solution to properly
+detect and classify AFlap health states in the 3B condition is
+to transform it into an asymmetrical case. This transforma-
+tion can be achieved with a ﬂap check routine that activates
+the ﬂap one blade at a time, which is like a 1B condition
+where the RF models can accurately estimate the ﬂap health
+states.
+The reduced feature set of the MFS approach relies on sta-
+tistical data commonly available in the commercial wind tur-
+bine SCADA data. This approach greatly facilitates the ap-
+plication of this methodology to commercial wind turbines.
+To do so, the MFS model must be trained with simulations
+based on the target wind turbine aeroelastic model and even-
+tually ﬁne-tuned with transfer learning techniques using the
+wind turbine SCADA data. Instead, the MFS method with
+full feature requires calculating additional features generally
+not included in the standard SCADA data. For this method,
+a cost–beneﬁt evaluation should identify which features are
+relevant to be computed in addition to the standard SCADA
+data.
+6.2 Automatic feature selection with random forest and
+ridge classiﬁer
+The results described in Sect. 5 show that the automatic fea-
+ture selection approach with a random forest classiﬁer cannot
+correctly classify the AFlap health states for both asymmet-
+ric and symmetric ﬂap fault cases. The trained models do not
+reach an F1 score higher than 0.8 in 1B scenarios and higher
+than 0.7 in 3B scenarios. Figure 8 compares the F1 scores
+Wind Energ. Sci., 9, 181–201, 2024 https://doi.org/10.5194/wes-9-181-2024
+------------------------------End of the page -----------------------------------
+A. Gamberini and I. Abdallah: Active trailing edge ﬂap system fault detection via machine learning 199
+between MFS and AFS RF models, with the MFS models
+outperforming the AFS models in the 1B scenarios. In the
+3B scenarios, AFS RF models perform slightly better, espe-
+cially for the detailed ﬂap health states. As shown in Fig. 8,
+for the 1B scenarios, AFS ridge models perform similarly to
+the AFS RF models in 1B cases and slightly worse in the
+3B cases. The overall performances of the AFS models need
+to be further improved before the AFS models can be imple-
+mented in detecting all the AFlap health states. However, the
+AFS models performed better than the MFS models for two
+ﬂap health states. For the NPP operation state, the AFS mod-
+els can correctly identify the AF_Off and AF_OFF_Fault ﬂap
+health states from the other states with precision and recall
+above 0.9. This result suggests that the selected input chan-
+nels also carry the ﬂap state information for the NPP state.
+The AFS method has the potential to detect this informa-
+tion, even if partially, for the ﬂap state estimation. Further
+studies are needed to achieve acceptable precision and re-
+call for all the ﬂap health states. These studies should cover
+a comprehensive study on the impact of the different setup
+parameters on the model performance or explore other ML
+techniques like, for example, MultiRocket (MiniRocket evo-
+lution) or HYDRA.
+Regarding the implementation in the wind turbine con-
+troller, the AFS approach processes the whole 10 min signal
+data to generate the features. Therefore, it requires a dedi-
+cated feature generation algorithm that computes the features
+constantly. As a result, implementing the AFS requires more
+resources (both hardware and software) than the MFS.
+7 Conclusions
+The integration of active ﬂaps in the wind turbine design has
+the potential to reduce loads and enhance wind turbine per-
+formances. However, this integration requires implementing
+systems to detect, monitor, and quantify any potential fault or
+performance degradation of the ﬂap system to avoid jeopar-
+dizing the wind turbine’s safety and performance. This paper
+investigated two approaches to identify the health state of a
+WT’s active trailing edge ﬂaps. These approaches do not rely
+on speciﬁc sensors designated for AFlap’s health monitoring
+but only on sensors commonly available on all commercial
+wind turbines. Both approaches are based on multivariate
+time-series classiﬁcation methods. The ﬁrst method (MFS)
+uses manual feature engineering in combination with a ran-
+dom forest classiﬁer. The second method (AFS) creates the
+feature vectors from multivariate time-series data by pass-
+ing the inputs through multiple random convolutional kernels
+in combination with a random forest classiﬁer. We trained
+both methods to classify combinations of seven AFlap health
+states for a WT operating in normal power production and
+pre-startup. We analyzed asymmetrical ﬂap faults, with the
+ﬂap health states applied to only one blade, and symmetri-
+cal ﬂap faults, where the ﬂap health states were applied toall three blades. The study is based on a pool of aeroelas-
+tic simulations of a WT equipped with an active ﬂap. These
+simulations were performed with a broad set of environmen-
+tal conditions to account for the variability due to external
+weather conditions in the model’s training. To keep the ap-
+proach as general as possible, we focused on identifying the
+AFlap health state when the ﬂap is in stationary actuation
+positions. This approach keeps the detection system inde-
+pendent from any speciﬁc AFlap controller strategy, AFlap
+system design, or fault dynamics. The underlying idea is to
+integrate the monitoring system in an AFlap status check rou-
+tine running for several minutes where the performance of
+the stationary ﬂap is veriﬁed.
+In this paper, we showed that the MFS method could clas-
+sify the different combinations of AFlap health states in the
+case of asymmetrical ﬂap faults. The MFS method is reliable
+when the WT operates in normal power production and pre-
+startup, achieving an F1 score higher than 0.9. Essential fea-
+tures to achieve this result are the blade-to-blade differences
+in the mean blade root loads.
+Instead, the MFS method failed to classify the AFlap
+health states in the case of symmetrical ﬂap fault. This fail-
+ure is likely due to the channels used for the training not pro-
+viding sufﬁcient information about the ﬂap fault. To avoid
+adding other sensor signals to the model, we suggest trans-
+forming the symmetrical ﬂap fault detection into an asym-
+metrical one. For example, a ﬂap check routine can activate
+the ﬂap one blade at a time, generating a temporary asymmet-
+rical ﬂap activation that the MFS methodology can monitor.
+As the MFS approach with a reduced feature set relies only
+on 10 min statistical properties, we believe it can be directly
+implemented in an actual wind turbine. The model must be
+trained with simulations based on the target wind turbine
+aeroelastic model and eventually tuned with transfer learn-
+ing techniques using the wind turbine SCADA data. Instead,
+the MFS method with full feature requires calculating addi-
+tional features generally not included in the standard SCADA
+data. For this method, a cost–beneﬁt evaluation should be
+performed to identify which features are relevant to be com-
+puted in addition to the SCADA data.
+Furthermore, we showed that, in general, the AFS method
+fails to classify most AFlap health states in asymmetrical
+and symmetrical ﬂap faults. However, AFS can identify some
+speciﬁc ﬂap health states better than the MFS method for the
+symmetrical case. This result suggests that the selected input
+channels carry the ﬂap state information for the NPP state,
+but only the AFS method has the potential to detect them.
+We also evaluated a ridge classiﬁer in the AFS method, ob-
+taining a similar performance to the random forest classiﬁer
+with a consistently lower training time.
+Compared to the MFS approach, implementing the AFS
+method will require more resources as it needs additional
+preprocessing to generate the features. The methodologies
+described in this study contribute to developing the systems
+for detecting and monitoring active ﬂap faults, which are
+https://doi.org/10.5194/wes-9-181-2024 Wind Energ. Sci., 9, 181–201, 2024
+------------------------------End of the page -----------------------------------
+200 A. Gamberini and I. Abdallah: Active trailing edge ﬂap system fault detection via machine learning
+paramount for the safe and reliable integration of active ﬂap
+technology in future wind turbine design.
+As future developments, we suggest further exploring the
+AFS method by applying different and better performing
+convolutional techniques. Also, the AFS and MFS method-
+ology can be combined into a hybrid system to investigate
+if the combined system presents improved performances by
+leveraging the strengths of each method. It is also of extreme
+interest to validate the capability of the MFS method with
+data from an actual wind turbine, to which the models can be
+adapted via transfer learning techniques.
+Appendix A: List of symbols
+Flap states
+AF_On AFlap active without performance
+degradation
+AF_Off AFlap not activated
+AF_On_Fault AFlap not active due to fault
+AF_Off_Fault AFlap active due to fault
+AF_On_25pc AFlap active with performance reduced
+to 25 %
+AF_On_50pc AFlap active with performance reduced
+to 50 %
+AF_On_75pc AFlap active with performance reduced
+to 75 %
+AF_On_Degr Combination of all AFlap active with
+reduced performance
+Fault scenarios
+3B Symmetrical AFlap fault
+1B Asymmetrical AFlap fault
+NPP Normal power production
+PS Pre-startup
+BR Below rated: wind speed ranges
+between 3.5 and 9.5 m s 1
+Rt Around rated: wind speed ranges
+between 9.5 and 16.5 m s 1
+AR Above rated: wind speed ranges
+between 16.5 and 25 m s 1
+Other symbols
+AFlap Active trailing edge ﬂap
+WT Wind turbine
+pWT Prototype wind turbine
+ML Machine learning
+RF Random forest classiﬁer
+TaT Training and test set
+Val Validation set
+oobPPI Out-of-bag permuted predictor
+importance
+Data availability. The dataset was provided by SGRE. Due to con-
+ﬁdentiality agreements and the proprietary nature of the data, the
+dataset cannot be disclosed.Author contributions. AG and IA conceptualized and designed
+the study. AG designed the objectives, performed analysis, and
+wrote the original draft paper. AI supported the methodology and
+the analysis and reviewed and edited the whole paper.
+Competing interests. Andrea Gamberini is employed by
+Siemens Gamesa Renewable Energy, the company that is
+developing the ﬂap technology used as reference in the paper.
+Disclaimer. Publisher’s note: Copernicus Publications remains
+neutral with regard to jurisdictional claims made in the text, pub-
+lished maps, institutional afﬁliations, or any other geographical rep-
+resentation in this paper. While Copernicus Publications makes ev-
+ery effort to include appropriate place names, the ﬁnal responsibility
+lies with the authors.
+Acknowledgements. The authors thank Gregory Duthé and
+Eleni Chatzi for their support. The authors also thank Davide As-
+tolﬁ and an anonymous reviewer whose comments and suggestions
+helped improve and clarify this paper.
+Financial support. This research was partially funded by Dan-
+marks Innovationsfond, case no. 9065-00243B, PhD title: “Ad-
+vanced model development and validation of Wind Turbine Active
+Flap system” and by Otto Mønsteds Fond, application ﬁle number
+22-70-0210.
+Review statement. This paper was edited by Weifei Hu and re-
+viewed by Davide Astolﬁ and two anonymous referees.
+References
+Abdallah, Imad Chatzi, E.: Probabilistic fault diagnostics us-
+ing ensemble time-varying decision tree learning, Zenodo,
+https://doi.org/10.5281/zenodo.3474633, 2019.
+Badihi, H., Zhang, Y ., Jiang, B., Pillay, P., and Rakheja,
+S.: A Comprehensive Review on Signal-Based and Model-
+Based Condition Monitoring of Wind Turbines: Fault Di-
+agnosis and Lifetime Prognosis, Proc. IEEE, 110, 754–806,
+https://doi.org/10.1109/JPROC.2022.3171691, 2022.
+Barlas, T., Pettas, V ., Gertz, D., and Madsen, H. A.: Ex-
+treme load alleviation using industrial implementation of ac-
+tive trailing edge ﬂaps in a full design load basis, J.
+Phys.: Conf. Ser., 753, 17426596, https://doi.org/10.1088/1742-
+6596/753/4/042001, 2016.
+Bir, G.: Multi-blade coordinate transformation and its application to
+wind turbine analysis, in: 46th AIAA Aerospace Sciences Meet-
+ing and Exhibit, 7 January 2008–10 January 2008 Reno, Nevada,
+2008–1300, https://doi.org/10.2514/6.2008-1300, 2008.
+Breiman, L.: Bagging predictors, Mach. Learn., 24, 123–140, 1996.
+Carrasco Kind, M. and Brunner, R.: TPZ: Photometric redshift
+PDFs and ancillary information by using prediction trees and
+Wind Energ. Sci., 9, 181–201, 2024 https://doi.org/10.5194/wes-9-181-2024
+------------------------------End of the page -----------------------------------
+A. Gamberini and I. Abdallah: Active trailing edge ﬂap system fault detection via machine learning 201
+random forests, Mon. Notices Roy. Astron. Soc., 432, 1483–
+1501, 2013.
+Cho, S., Gao, Z., and Moan, T.: Model-based fault detection, fault
+isolation and fault-tolerant control of a blade pitch system in
+ﬂoating wind turbines, Renewa. Energy, 120, 306–321, 2018.
+de Azevedo, H. D. M., Araújo, A. M., and Bouchonneau, N.: A
+review of wind turbine bearing condition monitoring: State of
+the art and challenges, Renew. Sustain. Energ. Rev., 56, 368–379,
+2016.
+Dempster, A., Petitjean, F., and Webb, G. I.: ROCKET: exception-
+ally fast and accurate time series classiﬁcation using random con-
+volutional kernels, Data Min. Knowl. Discov., 34, 1454–1495,
+2020.
+Dempster, A., Schmidt, D. F., and Webb, G. I.: Minirocket:
+A very fast (almost) deterministic transform for time
+series classiﬁcation, in: Proceedings of the 27th ACM
+SIGKDD Conference on Knowledge Discovery & Data
+Mining, Virtual Event Singapore, August 2021, 248–257,
+https://doi.org/10.1145/3447548.3467231, 2021.
+Dimitrov, N., Natarajan, A., and Kelly, M.: Model of wind shear
+conditional on turbulence and its impact on wind turbine loads,
+Wind Energy, 18, 1917–1931, https://doi.org/10.1002/we.1797,
+2015.
+Duthé, G., Abdallah, I., Barber, S., and Chatzi, E.: Modeling
+and Monitoring Erosion of the Leading Edge of Wind Turbine
+Blades, Energies, 14, https://doi.org/10.3390/en14217262, 2021.
+Fisker Skjoldan, P.: Aeroelastic modal dynamics of wind tur-
+bines including anisotropic effects, Risø National Laboratory,
+ISBN 9788755038486, 2011.
+Gálvez-Carrillo, M. and Kinnaert, M.: Sensor fault detection
+and isolation in doubly-fed induction generators account-
+ing for parameter variations, Renew. Energy, 36, 1447–1457,
+https://doi.org/10.1016/j.renene.2010.10.021, 2011.
+Gamberini, A., Gomez Gonzalez, A., and Barlas, T.: Aeroelastic
+model validation of an Active Trailing Edge Flap System tested
+on a 4.3 MW wind turbine, J. Phys.: Conf. Ser., 2265, 032014,
+https://doi.org/10.1088/1742-6596/2265/3/032014, 2022.
+Gao, Z. and Liu, X.: An overview on fault diagnosis, progno-
+sis and resilient control for wind turbine systems, Processes, 9,
+https://doi.org/10.3390/pr9020300, 2021.
+García Márquez, F. P. and Peinado Gonzalo, A.: A Comprehensive
+Review of Artiﬁcial Intelligence and Wind Energy, Arch. Com-
+put. Meth. Eng., 29, 2935–2958, https://doi.org/10.1007/s11831-
+021-09678-4, 2022.Gomez Gonzalez, A., Enevoldsen, P. B., Madsen, H. A., and
+Barlas, A.: Test of an active ﬂap system on a 4.3 MW
+wind turbine, TORQUE 2022, https://doi.org/10.1088/1742-
+6596/2265/3/032016, 2022.
+Hossain, M. L., Abu-Siada, A., and Muyeen, S.: Meth-
+ods for advanced wind turbine condition monitoring and
+early diagnosis: A literature review, Energies, 11, 1309,
+https://doi.org/10.3390/en11051309, 2018.
+IEC: Standard IEC 61400-1: 2019, Wind Energy Generation Sys-
+tem – Part 1: Design Requirements, 2019.
+Ismail Fawaz, H., Lucas, B., Forestier, G., Pelletier, C., Schmidt,
+D. F., Weber, J., Webb, G. I., Idoumghar, L., Muller, P.-A., and
+Petitjean, F.: Inceptiontime: Finding alexnet for time series clas-
+siﬁcation, Data Min. Knowl. Discov., 34, 1936–1962, 2020.
+Lubba, C. H., Sethi, S. S., Knaute, P., Schultz, S. R., Fulcher,
+B. D., and Jones, N. S.: catch22: CAnonical Time-series
+CHaracteristics: Selected through highly comparative time-
+series analysis, Data Min. Knowl. Discov., 33, 1821–1852,
+https://doi.org/10.1007/s10618-019-00647-x, 2019.
+Malekloo, A., Ozer, E., AlHamaydeh, M., and Girolami, M.: Ma-
+chine learning and structural health monitoring overview with
+emerging technology and high-dimensional data source high-
+lights, Struct. Health Monit., 21, 1906–1955, 2022.
+Oguiza, I.: tsai – A state-of-the-art deep learning library for time
+series and sequential data, Github [code], https://github.com/
+timeseriesAI/tsai (last access: 19 April 2022), 2022.
+Pedregosa, F., Varoquaux, G., Gramfort, A., Michel, V ., Thirion,
+B., Grisel, O., Blondel, M., Prettenhofer, P., Weiss, R., Dubourg,
+V ., Vanderplas, J., Passos, A., Cournapeau, D., Brucher, M., Per-
+rot, M., and Duchesnay, E.: Scikit-learn: Machine Learning in
+Python, J. Mach. Learn. Res., 12, 2825–2830, 2011.
+Pettas, V ., Barlas, T., Gertz, D., and Madsen, H. A.: Power per-
+formance optimization and loads alleviation with active ﬂaps
+using individual ﬂap control, J. Phys.: Conf. Ser., 749,012010,
+https://doi.org/10.1088/1742-6596/749/1/012010, 2016.
+Stetco, A., Dinmohammadi, F., Zhao, X., Robu, V ., Flynn,
+D., Barnes, M., Keane, J., and Nenadic, G.: Ma-
+chine learning methods for wind turbine condition
+monitoring: A review, Renew. Energy, 133, 620–635,
+https://doi.org/10.1016/j.renene.2018.10.047, 2019.
+Wang, Z., Yan, W., and Oates, T.: Time series classiﬁcation
+from scratch with deep neural networks: A strong baseline,
+in: IEEE 2017 International joint conference on neural net-
+works (IJCNN), 14–19 May 2017, Anchorage, AK, USA, 1578–
+1585, https://doi.org/10.1109/IJCNN.2017.7966039, 2017.
+Zappalá, D., Tavner, P. J., Crabtree, C. J., and Sheng, S.: Side-band
+algorithm for automatic wind turbine gearbox fault detection and
+diagnosis, IET Renew. Power Generat., 8, 380–389, 2014.
+https://doi.org/10.5194/wes-9-181-2024 Wind Energ. Sci., 9, 181–201, 2024
+------------------------------End of the page -----------------------------------

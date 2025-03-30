@@ -1,0 +1,1004 @@
+Citation: Zhang, Y.; Zhang, Y.; Li, H.;
+Yan, L.; Wen, X.; Wang, H. Wind
+Turbine Blade Cracking Detection
+under Imbalanced Data Using a
+Novel Roundtrip Auto-Encoder
+Approach. Appl. Sci. 2023 ,13, 11628.
+https://doi.org/10.3390/
+app132111628
+Academic Editors: Long Wen,
+Zhuyun Chen, Haisong Huang
+and Jianan Wei
+Received: 12 September 2023
+Revised: 13 October 2023
+Accepted: 13 October 2023
+Published: 24 October 2023
+Copyright: © 2023 by the authors.
+Licensee MDPI, Basel, Switzerland.
+This article is an open access article
+distributed under the terms and
+conditions of the Creative Commons
+Attribution (CC BY) license (https://
+creativecommons.org/licenses/by/
+4.0/).
+applied  
+sciences 
+Article
+Wind T urbine Blade Cracking Detection under Imbalanced
+Data Using a Novel Roundtrip Auto-Encoder Approach
+Yuyan Zhang1
+, Yafeng Zhang1, Hao Li1,*, Lingdi Yan2, Xiaoyu Wen1
+and Haoqi Wang1
+1Henan Key Laboratory of Intelligent Manufacturing of Mechanical Equipment, Zhengzhou University of
+Light Industry, Zhengzhou 450003, China; 2020022@zzuli.edu.cn (Y.Z.); zhangyafeng1998@163.com (Y.Z.)
+2CITIC Heavy Industries Co., Ltd., Luoyang 471039, China
+*Correspondence: lh9666@hotmail.com
+Abstract: Imbalanced data cause low recognition of wind turbine blade cracking. Existing data-
+level augmentation methods, including sampling and generative strategies, may yield lots of high-
+conﬁdence but low-value samples, which fail to improve the detection of blade cracking. Therefore,
+this paper designs a novel RTAE (roundtrip auto-encoder) method. Based on the idea of the roundtrip
+approach, we design two generator networks and two discriminator networks to ensure the cycle
+mapping between cracking samples and latent variables. Further, by leveraging cycle consistency
+loss, generated samples ﬁt the distribution of historical cracking samples well. Thus, these generated
+samples effectively realize data augmentation and improve recognition of blade cracking. Addition-
+ally, we apply an auto-encoder method to reduce the dimension of historical samples and thus the
+complexity of the generator network and discriminator network. Through the analysis of real wind
+turbine blade cracking data, the recognition of cracking samples is improved by 19.8%, 23.8% and
+22.7% for precision, recall and F1-score.
+Keywords: blade cracking; imbalanced data; roundtrip; auto-encoder
+1. Introduction
+Due to the insufficient bending strength, tensile strength and other parameters of
+wind turbine blade material, as well as their overly large dynamic load, blade crack-
+ing is a common cause of failure, accounting for approximately 30% of all downtime
+accidents [ 1–3]. However, due to constantly changing speeds and transient impacts,
+modeling the failure mechanism of blade cracking proves very challenging. Further-
+more, since blades account for roughly 15–20% of total equipment costs, blade cracking
+can lead to potentially enormous maintenance expenses and safety hazards. Given its
+importance and costs, timely and accurate approaches to detecting blade cracking are
+attracting widespread research attention [4–6].
+Data-based detection approaches work independently of the dynamics and kinematics
+of physical systems, and are thus effective for blade cracking detection. However, data
+are generally imbalanced, with very few cracking samples in real scenarios, leading to
+detection approaches that support normal samples and rarely identify cracking samples
+in the early stage (theoretical analysis in Section 2.1). Aiming at such problems, current
+data-level solutions mainly include sampling and generative strategies.
+Sampling strategies, e.g., SMOTE (synthetic minority oversampling technique) and
+ADASYN (adaptive synthetic), utilize prior knowledge about the space distribution of
+collected cracking samples to synthesize new samples. Ge [ 7] adopted 29 sensor features as
+original input and used SMOTE to synthesize virtual cracking samples via linear interpola-
+tion between two random real cracking samples. Meanwhile, the density and concentration
+area are introduced to increase the conﬁdence of virtual cracking samples. Jiang [ 8] de-
+signed a synthetic and dependent wild-bootstrapped oversampling technique for wind
+Appl. Sci. 2023 ,13, 11628. https://doi.org/10.3390/app132111628 https://www.mdpi.com/journal/applsci
+------------------------------End of the page -----------------------------------
+Appl. Sci. 2023 ,13, 11628 2 of 14
+turbine fault diagnosis which is a modiﬁcation of SMOTE and mimics the temporal depen-
+dence of time-series data. In the data analysis part, two datasets collected from two wind
+farms of northeast and northwest China are used, with 70 attributes in total, including
+wind speed, x-axis nacelle vibration, yaw angle, etc. Cristian [ 9] dealt with imbalanced
+wind turbine data using the random oversampling technique, which directly removed
+some random normal samples to achieve amount balance. To verify the proposed method,
+19 real variables covering 19 different attributes were used, including generated power,
+R-phase voltage, wind speed, etc. Yi [ 10] designed a minority clustering SMOTE approach
+for wind turbine fault detection, which achieved different clusters of minority samples
+and solved the problem of the uneven distribution of fault samples. Chen [ 11] adopted
+ADASYN to alleviate the critical imbalance and convolutional LSTM-GRU to recognize
+blade icing status. The dataset for veriﬁcation was collected over 341.88 h with 26 sensor
+values, including wind speed, yaw position, vertical acceleration, etc.
+Generative strategies estimate the probability density of cracking samples and then
+sample new data points to supplement cracking samples. Chen [ 12] designed a deep
+convolutional generative adversarial network (GAN) to produce a threshold for a condition
+monitoring scheme of wind turbines. The employed signal was the frequency spectrum
+transformed by fast Fourier transform. Liu [ 13] used a generative adversarial network to
+transform normal data into rough fault data, and furthermore, a reﬁner developed using
+a GAN was adopted to make them much similar to real fault data. For veriﬁcation, the
+input data contained 28 variables, such as pitch angle, hub angle and generator torque.
+Liu [ 14] introduced sparse dictionary learning into an adversarial variational auto-encoder
+to generate virtual data and determine the posterior distribution from six sensor variables,
+including wind speed, active power, generator speed, three-phase current and voltage.
+Wang [ 15] designed a least-square GAN to determine the distribution of health data from
+15 selected sensor variables and realize the data augmentation. Yang [ 16] used wavelet
+packet transform to generate time–frequency data of wind turbines and a GAN to compen-
+sate for the imbalance level. Ogaili [ 17] published a wind turbine fault diagnosis dataset
+considering vibration under different wind speeds for fault diagnosis under both imbal-
+anced and balanced conditions. Jiang [ 18] took 28 sensor variables (e.g., yaw position, yaw
+speed) as input of a GAN to generate virtual blade icing samples. Zou [ 19] combined a
+convolution neural network and GAN to detect wind turbine blade surface damage using
+a small number of damage images.
+Although plenty of approaches have been developed, there are still two critical prob-
+lems that deserve in-depth research based on above studies. (1) Both sampling strategies
+and generative strategies easily produce virtual cracking samples with a high conﬁdence
+but low usage value. The reason for this is that sampling strategies more often pick samples
+in a dense area as a basis, leading to many synthesized samples lying in the middle area.
+Similarly, the generator in a GAN yields virtual cracking samples in the middle area (with
+high conﬁdence) to easily cheat the discriminator. However, virtual samples near the
+decision border rather than the middle area may be more helpful for supporting good
+classiﬁcation results. (2) Generative strategies focus on generating real, similar cracking
+samples but ignore the overall space distribution of real samples. Furthermore, if real
+samples are distributed over more than one cluster, with some clusters owning many data
+points, generative strategies may only produce samples for these clusters. However, these
+clusters with few data points may be more important for improving classiﬁcation accuracy.
+Aiming at the above key points, this work designs a novel blade-cracking detection
+solution. Considering the case that the amount of redundant features will bring a high
+number of weights to be optimized in GAN, we curtail the input dimension using an
+unsupervised auto-encoder. Further, a virtual cracking sample generative strategy-based
+roundtrip framework is designed to achieve bidirectional mapping between virtual and
+real samples. By inverse mapping, it catches the overall space distribution and avoids the
+generated virtual samples falling into a dense area. Through veriﬁcation on the benchmark
+dataset and real wind turbine blade cracking, the results show the effectiveness.
+------------------------------End of the page -----------------------------------
+Appl. Sci. 2023 ,13, 11628 3 of 14
+2. Motivation and Preliminary
+2.1. Motivation
+Wind turbine blade-cracking detection is typically a binary classiﬁcation problem.
+In order to explain the effects of imbalanced data, this section takes two common binary
+classiﬁcation methods for analysis, namely decision tree (C4.5) and support vector machine
+(SVM). For the former, a splitting node is selected according to the information gain ratio:
+Gain_ratio =åN
+i=1Di
+D
+ D+
+i
+Dilog2D+
+i
+Di D 
+i
+Dilog2D 
+i
+Di
+
+ D+
+Dlog2D+
+D D 
+Dlog2D+
+D
+s.t.D=D++D ,Di=D+
+i+D 
+i
+D+D ,D+
+iD 
+i(1)
+where Ddenotes the total sample amount; D+denotes the normal sample amount; D 
+denotes the blade cracking sample amount. Nis the total number of attribute values for a
+speciﬁc attribute. Didenotes the sample amount for i-th attribute value. D+
+iand D 
+iare
+the normal sample amount and cracking sample amount for i-th attribute value.
+Since
+lim
+x!0+xlog2(x)=lim
+x!0+xln(x)
+ln 2=1
+ln 2lim
+x!0+xln(x)
+=1
+ln 2lim
+x!0+ln(x)
+1/x=1
+ln 2lim
+x!0+1/x
+ 1/x2= 1
+ln 2lim
+x!0+x=0(2)
+Supposing there are very few cracking samples, we can infer that
+Gain_ratioåN
+i=1Di
+D
+D+
+i
+Dilog2
+D+
+i
+Di
+
+D+
+Dlog2
+D+
+D =åN
+i=1D+
+i
+D+log2
+D+
+i
+Di
+log2
+D+
+D (3)
+From Equation (3), it is clear that gain ratio is irrelevant with cracking samples. That
+is, building the decision tree only depends on normal samples, causing a high recognition
+uncertainty for cracking samples.
+For SVM, we take the linear separable case for explanation. If the data are balanced,
+the decision surface is obtained by minimizing Equation (4):
+argmin
+wLoss =kWk+CD
+å
+i=1xi,s.t.yi(Wxi+b)1 xi,xi0 (4)
+where Wdecides the position and direction of decision surface; Cis a penalty coefﬁcient;
+xiis a relaxation variable; fxi,yigdenotes i-th sample. If some cracking samples are
+removed and surface shifts distance d towards cracking samples, the variation in Loss is
+computed by Equation (5):
+DLoss =CD+
+å
+i=1(xi dsinq)+CD 
+å
+j=1 
+xj+dsinq  
+CD+
+å
+i=1xi+CD 
+å
+j=1xj!
+=Cdsin q(D  D+)<0(5)
+where qrepresents the angle between the x-axis and decision surface. Obviously, DLoss
+is less than zero, implying a better support for normal samples, but it may bring many
+misclassiﬁcations of these unseen cracking samples near the former decision surface.
+From the above analysis, the root cause for low recognition of cracking samples is
+the imbalanced sample amount. Current solutions mainly include two aspects, namely
+sampling strategies and generative strategies. However, there are still critical problems that
+deserve deep research. As illustrated in Figure 1a, sampling strategies (e.g., SMOTE and its
+------------------------------End of the page -----------------------------------
+Appl. Sci. 2023 ,13, 11628 4 of 14
+variants) may pick the basis sample from a middle or dense area, leading to synthesized
+samples lying far from border. As shown in Figure 1b,c, generative strategies (such as
+GAN) tend to generate highly conﬁdent samples for easily cheating the discriminator.
+However, samples on the border with low conﬁdence may be better for improving the
+decision surface. Additionally, in the case of several clusters (as Figure 1d), generative
+strategies may ignore cluster 1 because of less cracking samples, since it mainly ﬁts the
+probability distribution of cluster 2. Instead, cluster 1 may be more important for improving
+classiﬁcation accuracy.
+Appl. Sci. 2023 , 13, x FOR PEER REVIEW 4 of 14 
+ 
+From the above analysis, the root cause for low recognition of cracking samples is the 
+imbalanced sample amount. Current solutions mainly include two aspects, namely sam-
+pling strategies and generative strategies. Howe ver, there are still critical problems that 
+deserve deep research. As illustrated in Figu re 1a, sampling strategies (e.g., SMOTE and 
+its variants) may pick the basis sample from a middle or dense area, leading to synthesized 
+samples lying far from border. As shown in Figure 1b,c, generative strategies (such as 
+GAN) tend t o generate h ighly con ﬁdent samples for easily cheating the discriminator. 
+However, samples on the border with low con ﬁdence may be be tter for improving the 
+decision surface. Additionally, in the case of several clusters (as Figure 1d), generative 
+strategies may ignore cluster 1 because of less cracking samples, since it mainly ﬁts the 
+probability distribution of cluster 2. Instead,  cluster 1 may be more important for improv-
+ing classi ﬁcation accuracy. 
+Cracking Sample Normal sample Synthetic sample
+(a)
+Cluster 1
+Cluster 2
+(d)
+ (c)
+ (b)
+Low 
+Confidence
+High 
+Confidence
+ 
+Figure 1. Illustration of problem about samplin g strategy and generative strategy.  
+2.2. Preliminary 
+Roundtrip 
+Roundtrip is a method based on cycle GAN and its framework is shown in Figure 2 
+[20]. It contains four parts: genera tor network G and H, discriminators D X and D Z. Z is a 
+latent variable drawn from normal distribution; X denotes historical samples; 𝒁෩ and 𝑿෩ 
+denote generated latent variable s and generated virtual samples.  H transforms latent var-
+iables to virtual samples and G transforms historical samples to latent variables. Both of them are nonlinear transforms. D
+X is employed to discriminate real and virtual samples. 
+Likewise, discriminator D Z discriminates real and virtual latent variables. D X and D Z de-
+termines their authenticity (real 0, fake 1). By minimizing the following six objective func-
+tions, G, H, D X, and D Z achieve the optimal con ﬁguration. 
+ 
+Figure 2. Overall framework of roundtrip. 
+Figure 1. Illustration of problem about sampling strategy and generative strategy.
+2.2. Preliminary
+Roundtrip
+Roundtrip is a method based on cycle GAN and its framework is shown in Figure 2 [ 20].
+It contains four parts: generator network G and H, discriminators D Xand D Z.Zis a latent
+variable drawn from normal distribution; Xdenotes historical samples;
+Zand
+Xdenote
+generated latent variables and generated virtual samples. H transforms latent variables to
+virtual samples and G transforms historical samples to latent variables. Both of them are
+nonlinear transforms. D Xis employed to discriminate real and virtual samples. Likewise,
+discriminator D Zdiscriminates real and virtual latent variables. D Xand D Zdetermines
+their authenticity (real 0, fake 1). By minimizing the following six objective functions, G, H,
+DX, and D Zachieve the optimal conﬁguration.
+
+Z=H(X) (6)
+
+X=G(Z) (7)
+8
+>>>>>>>>>>>>>>>><
+>>>>>>>>>>>>>>>>:min
+DXL1=EXP(X)h
+D2
+X(X)i
++EZP(Z)
+(1 DX(
+X))2
+min
+DZL2=EXP(X)
+(1 DZ(
+Z))2
++EZP(Z)h
+D2
+Z(Z)i
+min
+GL3=EZP(Z)
+D2
+X(
+X)
+min
+HL4=EXP(X)
+D2
+z(
+Z)
+min
+G,HL5=EZP(Z)kZ H(G(Z))k2
+2
+min
+G,HL6=EXP(X)kX G(H(X))k2
+2(8)
+where L1andL2aim to obtain well-performed discriminators; L3andL4supervise G and
+Hto generate high-quality data, namely
+Zand
+X;L5andL6measure the cycle consistency.
+It is noted that when L3and L4decrease, the generated data will move away from the
+------------------------------End of the page -----------------------------------
+Appl. Sci. 2023 ,13, 11628 5 of 14
+decision boundary and stay in high-density areas, which will produce data with high
+conﬁdence but of low quality.
+Appl. Sci. 2023 , 13, x FOR PEER REVIEW 4 of 14 
+ 
+From the above analysis, the root cause for low recognition of cracking samples is the 
+imbalanced sample amount. Current solutions mainly include two aspects, namely sam-
+pling strategies and generative strategies. Howe ver, there are still critical problems that 
+deserve deep research. As illustrated in Figu re 1a, sampling strategies (e.g., SMOTE and 
+its variants) may pick the basis sample from a middle or dense area, leading to synthesized 
+samples lying far from border. As shown in Figure 1b,c, generative strategies (such as 
+GAN) tend t o generate h ighly con ﬁdent samples for easily cheating the discriminator. 
+However, samples on the border with low con ﬁdence may be be tter for improving the 
+decision surface. Additionally, in the case of several clusters (as Figure 1d), generative 
+strategies may ignore cluster 1 because of less cracking samples, since it mainly ﬁts the 
+probability distribution of cluster 2. Instead,  cluster 1 may be more important for improv-
+ing classi ﬁcation accuracy. 
+Cracking Sample Normal sample Synthetic sample
+(a)
+Cluster 1
+Cluster 2
+(d)
+ (c)
+ (b)
+Low 
+Confidence
+High 
+Confidence
+ 
+Figure 1. Illustration of problem about samplin g strategy and generative strategy.  
+2.2. Preliminary 
+Roundtrip 
+Roundtrip is a method based on cycle GAN and its framework is shown in Figure 2 
+[20]. It contains four parts: genera tor network G and H, discriminators D X and D Z. Z is a 
+latent variable drawn from normal distribution; X denotes historical samples; 𝒁෩ and 𝑿෩ 
+denote generated latent variable s and generated virtual samples.  H transforms latent var-
+iables to virtual samples and G transforms historical samples to latent variables. Both of them are nonlinear transforms. D
+X is employed to discriminate real and virtual samples. 
+Likewise, discriminator D Z discriminates real and virtual latent variables. D X and D Z de-
+termines their authenticity (real 0, fake 1). By minimizing the following six objective func-
+tions, G, H, D X, and D Z achieve the optimal con ﬁguration. 
+ 
+Figure 2. Overall framework of roundtrip. 
+Figure 2. Overall framework of roundtrip.
+3. RTAE Method
+3.1. Intrinsic Feature Extracted by Auto-Encoder
+The collected wind turbine blade cracking data are usually high dimensional
+(75-dimension in the case study). Directly inputting such data into roundtrip will bring big
+H and G networks, that is, a large number of hidden layers and hidden neurons. Generally,
+it is difﬁcult to design such effective networks and conﬁgure them. Therefore, reducing the
+dimensionality before inputting into roundtrip is urgently necessary.
+Auto-encoder (AE) is an outstanding dimension reduction method and effective for
+nonlinear problems [ 21]. It consists of an encoder and a decoder. The encoder encodes input
+into a feature representation and decoder reconstructs the input. Given the observations
+Y2Rn, the encoder computes low dimensional representation by
+
+Y=f(WEY+bE) (9)
+where f()is activation function; WE2Rmnis an encoder matrix and bE2Ris a bias; n
+is the dimension of original sample. Decoder reconstructs it by:
+Y=f(WD
+Y+bD) (10)
+where WD2Rnmis a decoder matrix; bD2Ris a bias; mis the low dimension. AE learns
+these matrixes and biases by
+arg min
+q1
+2KK
+å
+i=1k
+Yi Yik2
+2,q=fWE,bE,WD,bDg,i=1, 2, . . . , K (11)
+where Kdenotes the sample amount.
+3.2. Implementation of Roundtrip Density Estimation
+For roundtrip, H, G, D Xand D Zare the key components. Based on the dataset used in
+the data analysis part (each sample contains 75 attributes), we designed these four models as
+listed in Table 1. As shown, all of these four models contain ﬁve layers, with an alternating
+fully connected layer and batch normalization.
+------------------------------End of the page -----------------------------------
+Appl. Sci. 2023 ,13, 11628 6 of 14
+Table 1. Details of H, G, D Xand D Z.
+Part Layer Type Input Dimension ( IP) Output Dimension ( OP)
+HFully Connected Layer Determined by AE 32
+Batch Normalization 32 32
+Fully Connected Layer 32 64
+Batch Normalization 64 64
+Fully Connected Layer 64 Dimension of Latent Variable
+GFully Connected Layer Dimension of Latent Variable 64
+Batch Normalization 64 64
+Fully Connected Layer 64 32
+Batch Normalization 32 32
+Fully Connected Layer 32 Determined by AE
+DXFully Connected Layer Determined by AE 32
+Batch Normalization 32 32
+Fully Connected Layer 32 16
+Batch Normalization 16 16
+Fully Connected Layer 16 2
+DZFully Connected Layer Dimension of Latent Variable 20
+Batch Normalization 20 20
+Fully Connected Layer 20 10
+Batch Normalization 10 10
+Fully Connected Layer 10 2
+For the fully connected layer, the computation formula is as follows:
+Xout=WX in+b (12)
+where Xin2RIPdenotes input for the current layer; Xout2ROPdenotes output of the
+current layer; W2ROPIPrepresents a transformation matrix; bis a bias; IPandOPare
+shown in Table 1.
+For batch normalization, the computation formula is:
+m 1
+mK
+å
+i=1Xij
+s2 1
+KK
+å
+i=1 
+Xij m2
+
+Xij Xij mp
+s2+e
+ˆXij g
+Xij+b(13)
+where Xdenotes the input batch; Xijdenotes the jth dimension of ith sample; mdenotes
+the average value of jth dimension over all the samples in a batch; s2denotes the variance
+for the jth dimension; eis a small value avoiding denominator to be zero; gandbare scale
+and translation factors. ˆXijis the output of batch normalization for the jth dimension.
+3.3. Alternating Gradient Descent-Based Training Process
+To train H, G, D Xand D Z, we adopt an alternating gradient descent method. First, for
+DXand D Z, we train them by the following formula:
+qDX=qDX lr¶L1
+¶qDX(14)
+qDZ=qDZ lr¶L2
+¶qDZ(15)
+where qDXandqDZare, respectively, the parameters from the network in Table 1. Speciﬁ-
+cally, they are the weights and bias from (12); lris the learning rate; L1andL2are the loss
+function in Equation (8).
+------------------------------End of the page -----------------------------------
+Appl. Sci. 2023 ,13, 11628 7 of 14
+Second, to optimize G and H synchronously, we rewrite the loss function in
+Equation (8) as:
+min
+G,HL=L3+L4+a(L5+L6) (16)
+where Lis the overall loss function; ais a pre-speciﬁed coefﬁcient. Finally, the weights and
+bias in G and H are updated by the following equation:
+qG,H=qG,H lr¶L
+¶qG,H(17)
+3.4. Overall Framework
+The overall framework of the proposed RTAE method is shown in Figure 3. The
+speciﬁc steps are:
+(1) Obtain normal and cracking samples;
+(2) Input both cracking and normal samples into auto-encoder for dimension reduction;
+(3) Input low-dimensional representation cracking samples into roundtrip for data
+augmentation;
+(4) Generate cracking samples and fuse them with these original samples (after dimen-
+sion reduction);
+(5) Implement classiﬁcation result analysis.
+Appl. Sci. 2023 , 13, x FOR PEER REVIEW 7 of 14 
+ 
+where 𝜽ୈ೉ and 𝜽ୈೋ are, respectively, the parameters from the network in Table 1. Spe-
+ciﬁcally, they are the weig hts and bias from (12); 𝑙𝑟 is the learning rate; 𝐿ଵ and 𝐿ଶ are 
+the loss function in Equation (8). 
+Second, to optimize G and H synchronously, we rewrite the loss function in Equation 
+(8) as: 
+𝑚𝑖𝑛
+ୋ,ୌ𝐿=𝐿 ଷ+𝐿 ସ+𝛼 ( 𝐿 ହ+𝐿 ଺) (16)
+where 𝐿 is the overall loss function; 𝛼 is a pre-speci ﬁed coeﬃcient. Finally, the weights 
+and bias in G and H are updated by the following equation: 
+𝜽ୋ,ୌ=𝜽 ୋ,ୌ−𝑙 𝑟𝜕𝐿
+𝜕𝜽 ୋ,ୌ (17)
+3.4. Overall Framework 
+The overall framework of the proposed RTAE method is shown in Figure 3. The spe-
+ciﬁc steps are: 
+(1) Obtain normal and cracking samples; 
+(2) Input both cracking and normal samples into auto-encoder for dimension reduction; 
+(3) Input low-dimensional representation cracking samples into roundtrip for data aug-
+mentation; 
+(4) Generate cracking samples and fuse them with these original samples (after dimen-
+sion reduction); 
+(5) Implement classi ﬁcation result analysis. 
+ 
+Figure 3. Overall framework of RTAE. 
+The detailed steps are listed in Table 2. It  is noted that we can compare the results 
+‘before data augmentation’ and ‘after data augmentation’ to verify the e ﬀectiveness of 
+RTAE. 
+  
+Figure 3. Overall framework of RTAE.
+The detailed steps are listed in Table 2. It is noted that we can compare the re-
+sults ‘before data augmentation’ and ‘after data augmentation’ to verify the effectiveness
+of RTAE.
+Table 2. Detailed steps of RTAE method.
+Input: Original Samples Y=fY1,. . .,YKgContain Both Normal and Cracking Samples
+Step1:Minimize argmin
+q1
+2KåK
+i=1k
+Yi Yik2
+2to obtainfWE,bEg
+Step2: According to
+Y=f(WEY+bE), compute low-dimensional representation.
+Step3: For cracking and normal samples, we name them as
+Yminand
+Ymaj, respectively.
+Step4:Replace Xin Figure 2 by
+Ymin.Zis set as the same dimension as X. Each dimension
+ofZis a random variable drawn from normal distribution with mean value 0.5,
+standard deviation 0.05.
+------------------------------End of the page -----------------------------------
+Appl. Sci. 2023 ,13, 11628 8 of 14
+Table 2. Cont.
+Input: Original Samples Y=fY1,. . .,YKgContain Both Normal and Cracking Samples
+Step5: Train H, G, D Xand D Zby (14), (15) and (17).
+Step6: Compute
+X=G(H(X)).
+Step7: Implement 5-fold cross-validation and compute the average validation result.
+Step8:Take the result only on
+Ymin,
+Ymaj
+as ‘before data augmentation’. For each fold
+train process, adding
+Xto the train set and take the result as ‘after data
+augmentation’.
+4. Engineering Applications
+4.1. Description of Blading Cracking Dataset
+The datasets used for analysis were collected from the CCF Big Data & Computing
+Intelligence Contest (https://www.datafountain.cn/competitions/302/datasets (accessed
+on 28 June 2018)). These data were collected by supervisory control and data acquisition
+system under running status. Samples are collected every 10 min, with each sample
+containing 75 attributes, such as blade angle, over-speed sensor value, x-axis vibration,
+inverter power voltage, etc. Details can be found in Table 3. There are in total 48,340 samples
+collected during approximately one year with a majority of normal samples. To verify
+the effectiveness under a different imbalance ratio, we constructed 10 datasets as listed
+in Table 4. We randomly selected 2000 normal samples and varying number of cracking
+samples. The sign ‘#’ in Table 4 denotes the sample amount. The imbalance ratio varies
+from 20:1 to 2:1.
+Table 3. Detailed attributes of the used data.
+No. Attribute No. Attribute No. Attribute
+1 Hub speed 26 Inverter inlet temperature 51Variable motor 1 Power
+estimation
+2 Hub angle 27 Converter outlet temperature 52Variable motor 2 Power
+estimation
+3 Blade 1 angle 28 Inverter inlet pressure 53Variable motor 3 Power
+estimation
+4 Blade 2 angle 29 Converter outlet pressure 54 Current status of the blade
+5 Blade 3 angle 30 Generator power limiting value 55 Current hub status value
+6 Variable pitch motor1 Current 31 Reactive power set value 56 Yaw status value
+7 Variable pitch motor2 Current 32 Rated hub speed 57 Yaw requirement value
+8 Variable pitch motor3 Current 33Ambient temperature of the wind
+tower58 Blade 1 Battery box temperature
+9Detection value of the overspeed
+sensor34 Generator stator temperature 1 59 Blade 2 Battery box temperature
+10 Average of 5 s yaw against wind 35 Generator stator temperature 2 60 Blade 3 Battery box temperature
+11 Vibration value in x direction 36 Generator stator temperature 3 61Blade 1 Variable motor
+temperature
+12 Vibration value in y direction 37 Generator stator temperature 4 62Blade 2 Variable motor
+temperature
+13 Hydraulic brake pressure 38 Generator stator temperature 5 63Blade 3 Variable motor
+temperature
+14 Cabin weather station wind speed 39 Generator stator temperature 6 64 Blade 1 Inverter box temperature
+15 Absolute wind direction 40 Generator air temperature 1 65 Blade 2 Inverter box temperature
+16 Atmospheric pressure 41 Generator air temperature 2 66 Blade 3 Inverter box temperature
+17 Reactive power control status 42 Main bearing temperature 1 67 Blade 1 Super-capacitor voltage
+18 Inverter power grid side current 43 Main bearing temperature 2 68 Blade 2 Super-capacitor voltage
+------------------------------End of the page -----------------------------------
+Appl. Sci. 2023 ,13, 11628 9 of 14
+Table 3. Cont.
+No. Attribute No. Attribute No. Attribute
+19 Inverter power grid side voltage 44 Hub temperature 69 Blade 3 Super-capacitor voltage
+20Active power of inverter power
+grid side45 Hub control cabinet temperature 70 Drive 1 Thyristor temperature
+21 Inverter grid side reactive power 46 Cabin temperature 71 Drive 2 Thyristor temperature
+22 Inverter generator side power 47 Control cabinet temperature 72 Drive 3 Thyristor temperature
+23 Generator operating frequency 48 Inverter INU temperature 73 Drive 1 Output torque
+24 Generator current 49 Inverter ISU temperature 74 Drive 2 Output torque
+25 Generator torque 50 Inverter INU RMIO temperature 75 Drive 3 Output torque
+Table 4. Details of 10 datasets.
+No. Dataset # Normal # Cracking Imbalance Ratio
+1 Wind_5 2000 100 20:1
+2 Wind_10 2000 200 10:1
+3 Wind_15 2000 300 6.67:1
+4 Wind_20 2000 400 5:1
+5 Wind_25 2000 500 4:1
+6 Wind_30 2000 600 3.33:1
+7 Wind_35 2000 700 2.86:1
+8 Wind_40 2000 800 2.5:1
+9 Wind_45 2000 900 2.22:1
+10 Wind_50 2000 1000 2:1
+Figure 4 shows two normal samples as well as two cracking samples. For each status,
+these two samples are collected from two different time points. Obviously, it is difﬁcult to
+distinguish blade status with only one or just a few attributes, since samples from different
+time points present different value distributions. From such results, we can infer that
+samples from the same class distribute over more than one cluster. Applying SMOTE or
+GAN to enhance the cracking sample amount may fail.
+Appl. Sci. 2023 , 13, x FOR PEER REVIEW 9 of 14 
+ 
+17 Reactive power control status 42 Main bearing temperature 1 67 Blade 1 Super-capacitor voltage 
+18 Inverter power grid side current 43 Main bearin g temperature 2 68 Blade 2 Super-capacitor voltage 
+19 Inverter power grid side voltage 44 Hub temperature 69 Blade 3 Super-capacitor voltage 
+20 Active power of inverter power grid 
+side 45 Hub control cabinet temperature 70 Drive 1 Thyristor temperature 
+21 Inverter grid side reactive power 46 Cabi n temperature 71 Drive 2 Thyristor temperature 
+22 Inverter generator side power 47 Control cabi net temperature 72 Drive 3 Thyristor temperature 
+23 Generator operating frequency 48 Inverter INU temperature 73 Drive 1 Output torque 
+24 Generator current 49 Inverter ISU temperature 74 Drive 2 Output torque 
+25 Generator torque 50 Inverter INU RMIO temperature 75 Drive 3 Output torque 
+Table 4. Details of 10 datasets. 
+No. Dataset # Normal # Cracking Imbalance Ratio 
+1 Wind_5 2000 100 20:1 
+2 Wind_10 2000 200 10:1 
+3 Wind_15 2000 300 6.67:1 4 Wind_20 2000 400 5:1 
+5 Wind_25 2000 500 4:1 
+6 Wind_30 2000 600 3.33:1 7 Wind_35 2000 700 2.86:1 
+8 Wind_40 2000 800 2.5:1 
+9 Wind_45 2000 900 2.22:1 
+10 Wind_50 2000 1000 2:1 
+Figure 4 shows two normal samples as well as two cracking samples. For each status, 
+these two samples are collected from two di ﬀerent time points. Obviously, it is di ﬃcult to 
+distinguish blade status with only one or just a few a ttributes, since samples from di ﬀerent 
+time points present di ﬀerent value distributions. From such results, we can infer that sam-
+ples from the same class distribute over mo re than one cluster. Applying SMOTE or GAN 
+to enhance the cracking sample amount may fail. 
+  
+  
+Figure 4. Normal sample ( ﬁrst row ) and cracking sample ( second row ). 
+4.2. Sample Balanced by RTAE 
+Due to di ﬀerent units, the a ttribute ranges vary signi ﬁcantly. Normalization is used 
+to scale the range of each a ttribute to [0, 1]. The normalization method is presented below: 
+𝐴ሚ=𝐴−𝐴௠௜௡
+𝐴௠௔௫ −𝐴௠௜௡ (18)
+Figure 4. Normal sample ( ﬁrst row ) and cracking sample ( second row ).
+4.2. Sample Balanced by RTAE
+Due to different units, the attribute ranges vary signiﬁcantly. Normalization is used to
+scale the range of each attribute to [0, 1]. The normalization method is presented below:
+
+A=A Amin
+Amax Amin(18)
+------------------------------End of the page -----------------------------------
+Appl. Sci. 2023 ,13, 11628 10 of 14
+where
+Ais the normalized attribute value; Aminand Amaxare, respectively, the minimum
+and maximum values among all the samples.
+Auto-encoder is adopted to extract intrinsic features and reduce the dimension.
+Wind_50 dataset is used to train an AE model, with its structure [75, 20, 10]. The en-
+coder include two hidden layers, with twenty units for the ﬁrst layer and ten units for
+the second layer. Sigmoid is taken as the activation function. For the decoder, it has the
+inverse structure, namely, as shown in [10, 20, 75]. Figure 5 shows four samples and their
+reconstructed results. Obviously, the reconstructed data approximate original samples,
+implying the intrinsic feature can adequately represent the key information.
+Appl. Sci. 2023 , 13, x FOR PEER REVIEW 10 of 14 
+ 
+where 𝐴ሚ  is the normalized a ttribute value; 𝐴௠௜௡  and 𝐴௠௔௫  are, respectively, the mini-
+mum and maximum values among all the samples. 
+Auto-encoder is adopted to extract intrin sic features and reduce the dimension. 
+Wind_50 dataset is used to train an AE model, with its structure [75, 20, 10]. The encoder 
+include two hidden layers, with twenty units for the ﬁrst layer and ten units for the second 
+layer. Sigmoid is taken as the activation func tion. For the decoder, it has the inverse struc-
+ture, namely, as shown in [10, 20, 75]. Figure 5 shows four samples and their reconstructed 
+results. Obviously, the reconstructed data approximate original samples, implying the in-trinsic feature can adequately represent the key information. 
+  
+  
+Figure 5. Four original samples and their reconstructed result. 
+Roundtrip is employed to generate virtual cr acking samples. Table 5 lists detailed hy-
+per-parameter settings. These parameters are det ermined by trial and error. To observe the 
+results of roundtrip, loss values during 5000 iterations are shown in Figure 6. L 1 and L 2 in 
+Equation (8) are relevant to the generator, th us they are added together. Both the losses of 
+the generator and discriminator go down very fast and converge after 2000 iterations. In the 
+last 100 iterations (see the inset window), both of them fluctuate to a small extent. When the red line goes down, blue line will go up, impl ying adversarial learning. To observe gener-
+ated data, TSNE [22] is adopted to map the intr insic features into two-dimension space. The 
+results are shown in Figure 7. The generated da ta well fit the original data distribution and 
+many samples lie on the bor der, which is helpful for impr oving classification accuracy. 
+ 
+Figure 6. Loss value change during the iteration. 
+Figure 5. Four original samples and their reconstructed result.
+Roundtrip is employed to generate virtual cracking samples. Table 5 lists detailed
+hyper-parameter settings. These parameters are determined by trial and error. To observe
+the results of roundtrip, loss values during 5000 iterations are shown in Figure 6. L 1and L 2
+in Equation (8) are relevant to the generator, thus they are added together. Both the losses
+of the generator and discriminator go down very fast and converge after 2000 iterations. In
+the last 100 iterations (see the inset window), both of them ﬂuctuate to a small extent. When
+the red line goes down, blue line will go up, implying adversarial learning. To observe
+generated data, TSNE [ 22] is adopted to map the intrinsic features into two-dimension space.
+The results are shown in Figure 7. The generated data well ﬁt the original data distribution
+and many samples lie on the border, which is helpful for improving classiﬁcation accuracy.
+Table 5. Details of hyper-parameter values.
+Hyper Parameter Symbol Value
+Factor in (13) # 0.001
+Scale factor in (13) g 1
+Translation factor in (13) b 0
+Learning rate in (14), (15) and (17) lr 0.0002
+Weight in (16)  10
+Iteration Number - 5000
+4.3. Effectiveness of Data Augmentation
+Table 6 lists the comparisons between, with and without data augmentation. Decision
+tree is adopted to classify normal and cracking samples [ 23]. Three metrics are adopted
+to evaluate the performance, namely precision, recall and F1-score. Detailed metric com-
+putations can be found in the literature [ 24]. For normal samples, the three metrics with
+data augmentation are slightly lower than or equal to those without data augmentation.
+However, for cracking samples, these metrics are higher. For instance, ‘Wind_350achieves
+------------------------------End of the page -----------------------------------
+Appl. Sci. 2023 ,13, 11628 11 of 14
+precision (0.73), recall (0.76) and F1-score (0.75) with data augmentation, which are slightly
+lower than that without data augmentation (precision: 0.74, recall: 0.78, F1-score: 0.76). The
+recall value improves from 0.22 to 0.26 and F1-score increases from 0.23 to 0.25, implying
+the effectiveness of data augmentation. With the data augmentation approach, the aver-
+age value of the cracking samples are 0.133, 0.135 and 0.135, meaning 19.8%, 23.8% and
+22.7% improvement on these three metrics.
+Appl. Sci. 2023 , 13, x FOR PEER REVIEW 10 of 14 
+ 
+where 𝐴ሚ  is the normalized a ttribute value; 𝐴௠௜௡  and 𝐴௠௔௫  are, respectively, the mini-
+mum and maximum values among all the samples. 
+Auto-encoder is adopted to extract intrin sic features and reduce the dimension. 
+Wind_50 dataset is used to train an AE model, with its structure [75, 20, 10]. The encoder 
+include two hidden layers, with twenty units for the ﬁrst layer and ten units for the second 
+layer. Sigmoid is taken as the activation func tion. For the decoder, it has the inverse struc-
+ture, namely, as shown in [10, 20, 75]. Figure 5 shows four samples and their reconstructed 
+results. Obviously, the reconstructed data approximate original samples, implying the in-trinsic feature can adequately represent the key information. 
+  
+  
+Figure 5. Four original samples and their reconstructed result. 
+Roundtrip is employed to generate virtual cr acking samples. Table 5 lists detailed hy-
+per-parameter settings. These parameters are det ermined by trial and error. To observe the 
+results of roundtrip, loss values during 5000 iterations are shown in Figure 6. L 1 and L 2 in 
+Equation (8) are relevant to the generator, th us they are added together. Both the losses of 
+the generator and discriminator go down very fast and converge after 2000 iterations. In the 
+last 100 iterations (see the inset window), both of them fluctuate to a small extent. When the red line goes down, blue line will go up, impl ying adversarial learning. To observe gener-
+ated data, TSNE [22] is adopted to map the intr insic features into two-dimension space. The 
+results are shown in Figure 7. The generated da ta well fit the original data distribution and 
+many samples lie on the bor der, which is helpful for impr oving classification accuracy. 
+ 
+Figure 6. Loss value change during the iteration. 
+Figure 6. Loss value change during the iteration.
+Appl. Sci. 2023 , 13, x FOR PEER REVIEW 11 of 14 
+ 
+ 
+Figure 7. Four original samples and their reconstructed results. 
+Table 5. Details of hyper-parameter values. 
+Hyper Paramete r Symbol Value 
+Factor in (13) 𝜀 0.001 
+Scale factor in (13) 𝛾 1 
+Translation factor in (13) 𝛽 0 
+Learning rate in (14), (15) and (17) lr 0.0002 
+Weight in (16) α 10 
+Iteration Number - 5000 
+4.3. Eﬀectiveness of Data Augmentation 
+Table 6 lists the comparisons between, with and without data augmentation. Decision 
+tree is adopted to classify normal and cracki ng samples [23]. Three metrics are adopted to 
+evaluate the performance, na mely precision, recall and F1-score. Detailed metric compu-
+tations can be found in the literature [24]. For normal samples, the three metrics with data augmentation are slightly lower than or equal to those without data augmentation. How-
+ever, for cracking samples, these metrics are higher. For instance, ‘Wind_35 ′ achieves pre-
+cision (0.73), recall (0.76) and F1-score (0.75) with data augmentation, which are slightly 
+lower than that without data augmentation (p recision: 0.74, recall: 0.78, F1-score: 0.76). 
+The recall value improves from 0.22 to 0.26 and F1-score increases from 0.23 to 0.25, im-
+plying the e ﬀectiveness of data augmentation. With the data augmentation approach, the 
+average value of the cracking samples are 0. 133, 0.135 and 0.135, meaning 19.8%, 23.8% 
+and 22.7% improvement on these three metrics. 
+Table 6. Comparison between, with and without data augmentation. 
+Dataset Without Data Augmentation With Data Augmentation 
+Precision Recall F1-Score Precision Recall F1-Score 
+Wind_5 Normal 0.95 0.97 0.96 0.95 0.96 0.96 
+Cracking 0 0 0 0.02 0.02 0.02 
+Wind_10 Normal 0.90 0.93 0.91 0.90 0.91 0.91 
+Cracking 0 0 0 0.02 0.02 0.02 
+Wind_15 Normal 0.86 0.89 0.87 0.85 0.85 0.85 
+Figure 7. Four original samples and their reconstructed results.
+We draw the results with data augmentation in histograms, as shown in Figure 8. For
+normal samples, these three metrics draw down. This is because too few cracking samples
+will be overwhelmed and nearly all these samples are classiﬁed into normal samples.
+Therefore, from Wind_5 to Wind_35, the recall value is bigger than precision (note that
+the F1-score is determined by the former two metrics). With an increase in the amount of
+cracking samples, some normal samples are misclassiﬁed into cracking samples, causing a
+small recall value. For cracking samples, with the imbalance ratio alleviating, all the three
+metrics increase. It can be concluded that RTAE is effective for improving the recognition
+of wind blade cracking samples.
+------------------------------End of the page -----------------------------------
+Appl. Sci. 2023 ,13, 11628 12 of 14
+Table 6. Comparison between, with and without data augmentation.
+DatasetWithout Data Augmentation With Data Augmentation
+Precision Recall F1-Score Precision Recall F1-Score
+Wind_5Normal 0.95 0.97 0.96 0.95 0.96 0.96
+Cracking 0 0 0 0.02 0.02 0.02
+Wind_10Normal 0.90 0.93 0.91 0.90 0.91 0.91
+Cracking 0 0 0 0.02 0.02 0.02
+Wind_15Normal 0.86 0.89 0.87 0.85 0.85 0.85
+Cracking 0 0 0 0.02 0.02 0.02
+Wind_20Normal 0.81 0.85 0.83 0.81 0.85 0.83
+Cracking 0 0 0 0.04 0.03 0.04
+Wind_25Normal 0.77 0.83 0.80 0.77 0.82 0.79
+Cracking 0 0 0 0.05 0.04 0.05
+Wind_30Normal 0.79 0.81 0.78 0.76 0.77 0.76
+Cracking 0.21 0.17 0.19 0.18 0.17 0.18
+Wind_35Normal 0.74 0.78 0.76 0.73 0.76 0.75
+Cracking 0.25 0.22 0.23 0.24 0.26 0.25
+Wind_40Normal 0.69 0.69 0.69 0.71 0.71 0.71
+Cracking 0.21 0.21 0.21 0.27 0.26 0.26
+Wind_45Normal 0.66 0.62 0.64 0.66 0.64 0.65
+Cracking 0.25 0.29 0.27 0.26 0.28 0.27
+Wind_50Normal 0.59 0.58 0.58 0.61 0.59 0.60
+Cracking 0.19 0.20 0.20 0.23 0.25 0.24
+Average Cracking 0.111 0.109 0.11 0.133 0.135 0.135
+Appl. Sci. 2023 , 13, x FOR PEER REVIEW 12 of 14 
+ 
+Cracking 0 0 0 0.02 0.02 0.02 
+Wind_20 Normal 0.81 0.85 0.83 0.81 0.85 0.83 
+Cracking 0 0 0 0.04 0.03 0.04 
+Wind_25 Normal 0.77 0.83 0.80 0.77 0.82 0.79 
+Cracking 0 0 0 0.05 0.04 0.05 
+Wind_30 Normal 0.79 0.81 0.78 0.76 0.77 0.76 
+Cracking 0.21 0.17 0. 19 0.18 0.17 0.18 
+Wind_35 Normal 0.74 0.78 0.76 0.73 0.76 0.75 
+Cracking 0.25 0.22 0. 23 0.24 0.26 0.25 
+Wind_40 Normal 0.69 0.69 0.69 0.71 0.71 0.71 
+Cracking 0.21 0.21 0. 21 0.27 0.26 0.26 
+Wind_45 Normal 0.66 0.62 0.64 0.66 0.64 0.65 
+Cracking 0.25 0.29 0. 27 0.26 0.28 0.27 
+Wind_50 Normal 0.59 0.58 0.58 0.61 0.59 0.60 
+Cracking 0.19 0.20 0. 20 0.23 0.25 0.24 
+Average Cracking 0.111 0.109  0.11 0.133 0.135 0.135 
+We draw the results with data augmentation in histograms, as shown in Figure 8. For 
+normal samples, these three metrics draw down . This is because too few cracking samples 
+will be overwhelmed and nearly all these samples are classi ﬁed into normal samples. 
+Therefore, from Wind_5 to Wind_35, the recall  value is bigger than precision (note that 
+the F1-score is determined by the former two metrics). With an increase in the amount of 
+cracking samples, some normal samples are misclassi ﬁed into cracking samples, causing 
+a small recall value. For cracking samples, with the imbalance ratio alleviating, all the 
+three metrics increase. It can be concluded that RTAE is e ﬀective for improving the recog-
+nition of wind blade cracking samples. 
+  
+(a) ( b) 
+Figure 8. Result with data augmentation. ( a) Normal Sample. ( b) Cracking Sample. 
+4.4. Comparison with Other Imbalance Learning Methods 
+TRAE is compared to other two representative methods, GAN and SMOTE. Like-
+wise, three metrics are used to evaluate the performance. For SMOTE, the number of the 
+neighbor is set as 3, which is a commonly used value. For GAN, generator network and 
+discriminator network are set as the same stru cture as in the literature [25]. The compari-
+sons are listed in Table 7. RTAE outperforms GAN and SMOTE under all the 10 datasets. 
+In particular, for Wind_35, Wind_40 and Wind_45, RTAE is far be tter than GAN and 
+SMOTE. The main reason is that GAN focuses on ‘real’ or ‘fake’, which generates samples with high con ﬁdence, but low usage for improving the recognition of cracking samples. 
+SMOTE cannot handle multi clusters. Therefore, we use a small neighbor number (i.e., 3) 
+Figure 8. Result with data augmentation. ( a) Normal Sample. ( b) Cracking Sample.
+4.4. Comparison with Other Imbalance Learning Methods
+TRAE is compared to other two representative methods, GAN and SMOTE. Likewise,
+three metrics are used to evaluate the performance. For SMOTE, the number of the neighbor
+is set as 3, which is a commonly used value. For GAN, generator network and discriminator
+network are set as the same structure as in the literature [ 25]. The comparisons are listed
+in Table 7. RTAE outperforms GAN and SMOTE under all the 10 datasets. In particular,
+for Wind_35, Wind_40 and Wind_45, RTAE is far better than GAN and SMOTE. The
+main reason is that GAN focuses on ‘real’ or ‘fake’, which generates samples with high
+conﬁdence, but low usage for improving the recognition of cracking samples. SMOTE
+cannot handle multi clusters. Therefore, we use a small neighbor number (i.e., 3) to alleviate
+such a situation. However, such a small value may make it pick the basis sample from the
+middle or a dense area, leading to many synthesized samples lying far from border.
+------------------------------End of the page -----------------------------------
+Appl. Sci. 2023 ,13, 11628 13 of 14
+Table 7. Comparison with GAN and SOMTE.
+DatasetRTAE GAN SMOTE
+Precision Recall F1 Precision Recall F1 Precision Recall F1
+Wind_5 Cracking 0.02 0.02 0.02 0 0 0 0 0 0
+Wind_10 Cracking 0.02 0.02 0.02 0 0 0 0 0 0
+Wind_15 Cracking 0.02 0.02 0.02 0 0 0 0 0 0
+Wind_20 Cracking 0.04 0.03 0.04 0 0 0 0 0 0
+Wind_25 Cracking 0.05 0.04 0.05 0 0 0 0 0 0
+Wind_30 Cracking 0.18 0.17 0.18 0.16 0.17 0.16 0.15 0.17 0.16
+Wind_35 Cracking 0.24 0.26 0.25 0.22 0.22 0.22 0.22 0.22 0.22
+Wind_40 Cracking 0.27 0.26 0.26 0.21 0.22 0.21 0.21 0.21 0.21
+Wind_45 Cracking 0.26 0.28 0.27 0.24 0.27 0.25 0.23 0.25 0.24
+Wind_50 Cracking 0.23 0.25 0.24 0.18 0.19 0.18 0.19 0.19 0.19
+5. Conclusions and Future Work
+Aiming at wind turbine blade cracking recognition under imbalanced data, this pa-
+per designs a novel roundtrip auto-encoder method. Two generator networks and two
+discriminator networks are designed to ensure the generated samples well ﬁt the dis-
+tribution of historical cracking samples. Auto-encoder method is applied to reduce the
+dimension of historical samples and thus the complexity of generator and discriminator.
+From the reconstructed results, it is concluded that auto-encoder is effective for extracting
+low-dimensional intrinsic features. From the results under different imbalance levels, the
+detection performance shows signiﬁcant improvement with the RTAE method. When
+the imbalance level is above 4:1, all the cracking samples cannot be identiﬁed without
+data augmentation, which shows the importance of considering the imbalance problem in
+real application.
+Analysis of the real wind turbine blade cracking data is carried out, the recognition of
+cracking samples improves by 19.8%, 23.8% and 22.7% on precision, recall and F1-score. The
+cracking detection under imbalanced data and the comparisons show that: (1) compared to
+the popular data-level methods, RTAE is superior under the inﬂuence of highly imbalanced
+data; (2) through integrating auto-encoder and roundtrip model, the framework provides a
+possibility for solving imbalance problem with high dimension data.
+As is known, a wind turbine blade contains many types of cracks in real industrial
+applications. Currently, subject to roundtrip, RTAE can only deal with the binary-class
+imbalanced data problems. Multi-class cracking problems are more complex as they may
+contain more than one minority classes. In the future work, we will extend the application
+of RTAE and apply it to multi-class problem. Meanwhile, we will explore more effective
+roundtrip structures and apply them to high-dimensional time-series data.
+Author Contributions: Conceptualization, Y.Z. (Yuyan Zhang); methodology, Y.Z. (Yafeng Zhang);
+software, L.Y.; vali-dation, Y.Z. (Yuyan Zhang) and Y.Z. (Yafeng Zhang); formal analysis, Y.Z. (Yuyan
+Zhang) and H.W.; investigation, Y.Z. (Yuyan Zhang) and H.W.; resources, H.L.; data curation, H.L.;
+writ-ing—original draft preparation, Y.Z. (Yuyan Zhang); writing—review and editing, Y.Z. (Yafeng
+Zhang); visualization, X.W.; supervision, H.L.; project administration, X.W.; funding acquisition, Y.Z.
+(Yuyan Zhang). All authors have read and agreed to the published version of the manuscript.
+Funding: This research was funded by the National Natural Science Foundation of China (52105536);
+the Guangdong Basic and Applied Basic Research Fund (2022A1515140066); the Henan Provincial
+Key R&D and Promotion Special Project (Science and Technology Research) (232102221009).
+Data Availability Statement: Data are contained within the article. The data presented in this study
+are available in Section 4.1.
+Conﬂicts of Interest: Author Lingdi Yan was employed by the company CITIC Heavy Industries Co.,
+Ltd. The remaining authors declare that the research was conducted in the absence of any commercial
+or ﬁnancial relationships that could be construed as a potential conﬂict of interest.
+------------------------------End of the page -----------------------------------
+Appl. Sci. 2023 ,13, 11628 14 of 14
+References
+1. Din, I.U.; Hao, P .; Franz, G.; Panier, S. Elastoplastic CDM model based on Puck’s theory for the prediction of mechanical behavior
+of Fiber Reinforced Polymer (FRP) composites. Compos. Struct. 2018 ,201, 291–302. [CrossRef]
+2. Din, I.U.; Panier, S.; Hao, P .; Franz, G.; Bijwe, J.; Hui, L. Finite element modeling of indentation and adhesive wear in sliding of
+carbon ﬁber reinforced thermoplastic polymer against metallic counterpart. Tribol. Int. 2019 ,135, 200–212. [CrossRef]
+3. Cao, Z.; Li, S.; Li, C.; Li, P .; Ko, T.J. Formation mechanism and detection and evaluation methods as well as repair technology
+of crack damage in ﬁber-reinforced composite wind turbine blade: A review. Int. J. Adv. Manuf. Technol. 2022 ,120, 5649–5672.
+[CrossRef]
+4. Lu, Q.; Ye, W.; Yin, L. ResDenIncepNet-CBAM with principal component analysis for wind turbine blade cracking fault prediction
+with only short time scale SCADA data. Measurement 2023 ,212, 112696. [CrossRef]
+5. Katsaprakakis, D.A.; Papadakis, N.; Ntintakis, I. A comprehensive analysis of wind turbine blade damage. Energies 2021 ,14, 5974.
+[CrossRef]
+6. Reddy, A.; Indragandhi, V .; Ravi, L.; Subramaniyaswamy, V . Detection of Cracks and damage in wind turbine blades using
+artiﬁcial intelligence-based image analytics. Measurement 2019 ,147, 106823. [CrossRef]
+7. Ge, Y.; Yue, D.; Chen, L. Prediction of wind turbine blades icing based on MBK-SMOTE and random forest in imbalanced
+data set. In Proceedings of the 2017 IEEE Conference on Energy Internet and Energy System Integration (EI2), Beijing, China,
+26–28 November 2017.
+8. Jiang, N.; Li, N. A wind turbine frequent principal fault detection and localization approach with imbalanced data using an
+improved synthetic oversampling technique. Int. J. Electr. Power Energy Syst. 2021 ,126, 106595. [CrossRef]
+9. Velandia-Cardenas, C.; Vidal, Y.; Pozo, F. Wind turbine fault detection using highly imbalanced real SCADA data. Energies 2021 ,
+14, 1728. [CrossRef]
+10. Yi, H.; Jiang, Q.; Yan, X.; Wang, B. Imbalanced classiﬁcation based on minority clustering synthetic minority oversampling
+technique with wind turbine fault detection application. IEEE Trans. Ind. Inform. 2020 ,17, 5867–5875. [CrossRef]
+11. Chen, W.; Zhou, H.; Cheng, L.; Xia, M. Wind Turbine Blade Icing Diagnosis Using Convolutional LSTM-GRU With Improved
+African Vultures Optimization. IEEE Open J. Instrum. Meas. 2022 ,1, 1–9. [CrossRef]
+12. Chen, P .; Li, Y.; Wang, K.; Zuo, M.J.; Heyns, P .S.; Baggeröhr, S. A threshold self-setting condition monitoring scheme for
+wind turbine generator bearings based on deep convolutional generative adversarial networks. Measurement 2021 ,167, 108234.
+[CrossRef]
+13. Liu, J.; Qu, F.; Hong, X.; Zhang, H. A small-sample wind turbine fault detection method with synthetic fault data using generative
+adversarial nets. IEEE Trans. Ind. Inform. 2018 ,15, 3877–3888. [CrossRef]
+14. Liu, X.; Teng, W.; Wu, S.; Wu, X.; Liu, Y.; Ma, Z. Sparse dictionary learning based adversarial variational auto-encoders for fault
+identiﬁcation of wind turbines. Measurement 2021 ,183, 109810. [CrossRef]
+15. Wang, A.; Qian, Z.; Pei, Y.; Jing, B. A de-ambiguous condition monitoring scheme for wind turbines using least squares generative
+adversarial networks. Renew. Energy 2022 ,185, 267–279. [CrossRef]
+16. Yang, S.; Zhou, Y.; Chen, X.; Deng, C.; Li, C. Fault diagnosis of wind turbines with generative adversarial network-based
+oversampling method. Meas. Sci. Technol. 2023 ,34, 044004. [CrossRef]
+17. Ogaili AA, F.; Jaber, A.A.; Hamzah, M.N. Wind turbine blades fault diagnosis based on vibration dataset analysis. Data Brief 2023 ,
+49, 109414. [CrossRef] [PubMed]
+18. Jiang, W.; Jin, J. Intelligent icing detection model of wind turbine blades based on scada data. arXiv 2021 , arXiv:2101.07914.
+19. Zou, L.; Cheng, H. Research on wind turbine blade surface damage identiﬁcation based on improved convolution neural network.
+Appl. Sci. 2022 ,12, 9338. [CrossRef]
+20. Liu, Q.; Xu, J.; Jiang, R.; Wong, W.H. Density estimation using deep generative neural networks. Proc. Natl. Acad. Sci. USA 2021 ,
+118, e2101344118. [CrossRef]
+21. Zhang, Y.; Li, X.; Gao, L.; Chen, W.; Li, P . Ensemble deep contractive auto-encoders for intelligent fault diagnosis of machines
+under noisy environment. Knowl.-Based Syst. 2020 ,196, 105764. [CrossRef]
+22. Anowar, F.; Sadaoui, S.; Selim, B. Conceptual and empirical comparison of dimensionality reduction algorithms (pca, kpca, lda,
+mds, svd, lle, isomap, le, ica, t-sne). Comput. Sci. Rev. 2021 ,40, 100378. [CrossRef]
+23. Kherif, O.; Benmahamed, Y.; Teguar, M.; Boubakeur, A.; Ghoneim, S.S.M. Accuracy improvement of power transformer faults
+diagnostic using KNN classiﬁer with decision tree principle. IEEE Access 2021 ,9, 81693–81701. [CrossRef]
+24. Zhang, Y.; Li, X.; Gao, L.; Wang, L.; Wen, L. Imbalanced data fault diagnosis of rotating machinery using synthetic oversampling
+and feature learning. J. Manuf. Syst. 2018 ,48, 34–50. [CrossRef]
+25. Zhang, Y.; Zhang, Y.; Sun, C.; Wang, H.; Wen, X.; Qiao, D.; Yan, X.; Li, H. Identiﬁcation method of cracking state of wind turbine
+blade based on GAN under imbalanced samples. Comput. Integr. Manuf. Syst. 2023 ,29, 532–543.
+Disclaimer/Publisher’s Note: The statements, opinions and data contained in all publications are solely those of the individual
+author(s) and contributor(s) and not of MDPI and/or the editor(s). MDPI and/or the editor(s) disclaim responsibility for any injury to
+people or property resulting from any ideas, methods, instructions or products referred to in the content.
+------------------------------End of the page -----------------------------------
