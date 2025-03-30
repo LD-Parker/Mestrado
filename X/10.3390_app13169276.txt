@@ -1,0 +1,706 @@
+Citation: Zhang, Y.; Huang, R.; Li, Z.
+Fault Detection Method for Wind
+Turbine Generators Based on
+Attention-Based Modeling. Appl. Sci.
+2023 ,13, 9276. https://doi.org/
+10.3390/app13169276
+Academic Editors: Piotr Pawłowski,
+Ryszard Szwaba, Małgorzata A.
+´Smiałek and Janusz Telega
+Received: 18 July 2023
+Revised: 4 August 2023
+Accepted: 11 August 2023
+Published: 15 August 2023
+Copyright: © 2023 by the authors.
+Licensee MDPI, Basel, Switzerland.
+This article is an open access article
+distributed under the terms and
+conditions of the Creative Commons
+Attribution (CC BY) license (https://
+creativecommons.org/licenses/by/
+4.0/).
+applied  
+sciences 
+Article
+Fault Detection Method for Wind T urbine Generators Based on
+Attention-Based Modeling
+Yu Zhang, Runcai Huang * and Zhiwei Li
+School of Electronic and Electrical Engineering, Shanghai University of Engineering and Technology,
+Shanghai 201620, China; lisaa1997@163.com (Y.Z.)
+*Correspondence: hrc@sues.edu.cn
+Abstract: Aiming at the problem that existing wind turbine gearbox fault prediction models often ﬁnd
+it difﬁcult to distinguish the importance of different data frames and are easily interfered with by non-
+important and irrelevant signals, thus causing a reduction in fault diagnosis accuracy, a wind turbine
+gearbox fault prediction model based on the attention-weighted long short-term memory network
+(AW-LSTM) is proposed. Speciﬁcally, the gearbox vibration signal is decomposed by empirical modal
+decomposition (EMD), to contain seven different frequency components and one residual component.
+The decomposed signal is passed through a four-layer LSTM network, to extract the fault features.
+The attention mechanism is introduced, to reweight the hidden states, in order to strengthen the
+attention to the important features. The proposed method captures the intrinsic long-term temporal
+correlation of timing gearbox signals through a long short-term memory network, and resorts to
+recursive attentional weighting, to efﬁciently distinguish the contribution of different frames and
+to exclude the inﬂuence of irrelevant or interfering data on the model. The results show that the
+proposed AW-LSTM wind turbine gearbox fault prediction model has an inference time of 36 s on
+two publicly available wind turbine fault detection datasets, with a root mean square error of 1.384,
+an average absolute error of 0.983, and an average absolute percentage error of 9.638, and that the
+AW-LSTM prediction model is able to efﬁciently extract the characteristics of wind turbine gearbox
+faults, with a shorter inference time and better fault prediction.
+Keywords: fault prediction; gearbox; wind turbine; vibration signal
+1. Introduction
+Due to the advantages of it being clean, efﬁcient, easy to deploy, and cost-effective,
+wind energy has become one of the primary technologies for energy generation in most
+countries around the world [ 1]. However, with the increase in installed capacity, the daily
+maintenance, defect detection, and fault prevention of wind turbines have become more
+urgent and important. Due to factors such as remote deployment locations, high altitude,
+and severe climate change [ 2,3], the daily maintenance and fault detection of wind turbines
+is often more challenging than other traditional power generation technologies. Among
+the complex structures of wind turbines, the gearbox is often one of the components with
+the highest failure rates. Moreover, the gearbox is usually installed at the top of a tower,
+60 to 70 m or even higher, and the internal space of the wind turbine is very narrow. Once a
+fault occurs, maintenance is difﬁcult to perform. These unfavorable factors pose challenges
+and difﬁculties to gearbox fault detection and also become a huge obstacle to wind turbine
+fault prevention [4,5].
+The main faults in gear operation include gear wear and aging, tooth surface adhesion
+and abrasion, tooth surface contact fatigue, and tooth breakage. Among the common
+components of gearbox failures, abnormal bearing status often accounts for a large pro-
+portion. Therefore, gearbox fault diagnosis is mainly aimed at bearing fault diagnosis
+and prevention. In the early days, the processing and analysis of bearing signals were
+Appl. Sci. 2023 ,13, 9276. https://doi.org/10.3390/app13169276 https://www.mdpi.com/journal/applsci
+------------------------------End of the page -----------------------------------
+Appl. Sci. 2023 ,13, 9276 2 of 13
+mainly achieved through the classical fast Fourier transform (FFT) [ 6,7]. However, FFT
+has shortcomings, such as low component resolution, spectral distortion, and non-smooth
+peak signals. To solve the shortcomings of the FFT method, researchers have proposed
+methods such as maximum entropy estimation [ 8], autoregressive spectrum analysis [ 9],
+and wavelet analysis [ 10]. Although these methods have improved the fault detection rate
+of FFT, when gear faults occur the observed vibration signals are often non-stationary and
+contain signiﬁcant noise interference. The robustness of these methods is often low, making
+it difﬁcult to apply them in the complex deployment environment of wind turbines.
+Recently, with the high parallelism, associative memory, efﬁcient representation, and
+high fault tolerance of deep learning technology, gear fault diagnosis methods based on
+deep learning have emerged. The goal is to efﬁciently decouple and model the interrelated,
+high-dimensional, and noisy signal features, to identify the operating state of the gearbox
+from complex bearing status signals, and to achieve high-precision fault identiﬁcation
+and prediction. In [ 11] the gearbox signal was ﬁrst transformed into a time-frequency
+spectrogram using wavelet transform, and then a fault health classiﬁcation model based on
+a convolution neural network (CNN) was proposed. Meanwhile, [ 12] designed a Bayesian
+state classiﬁer based on CNNs and applied it to planetary gearbox fault detection. Ref. [ 13]
+collected a large-scale gearbox bearing wear signal dataset and proposed a neural fuzzy
+prediction model based on Mamdani compositional inference. Although neural networks
+have strong feature extraction and signal analysis capabilities, gear signals are actually
+typical non-stationary and time-varying time series data, and CNNs often perform well
+on data types with signiﬁcant spatial structures, such as images and videos, but cannot
+effectively model the time correlation of gear signal data [ 14]. Ref. [ 15] studied a deep
+model based on empirical mode decomposition (EMD) and recurrent neural networks
+(RNNs) and applied it to the state monitoring and fault diagnosis of wind turbine bearings,
+achieving some performance improvement. From a theoretical analysis, the effectiveness
+of this method is mainly due to the fact that for gearbox bearing signals, each signal
+component in the time and frequency domains often has its own advantages for the related
+tasks, and EMD can effectively decompose an unknown time series signal according
+to its inherent hierarchy, without human intervention, allowing RNNs to preserve the
+hierarchical signals that are helpful for fault diagnosis [ 16,17]. In [ 18] a novel method
+was proposed that included ResDenIncepNet-CBAM with principal component analysis
+(PCA). PCA was utilized to reduce data dimensionality before extracting the wind turbine
+features. In [ 19] Uppal et al. used genetic-algorithm-based ensemble learning for anomaly
+detection of wind turbines using SCADA data. The proposed ensemble method consisted
+of XGBoost, a random forest, and an extra tree model. XGBoost was used as a meta-
+model. A genetic algorithm was used for the selection of optimal features. In [ 20] a
+novel fault prediction method based on the pair copula model was proposed. First, the
+conditional mutual information method was introduced, to screen out useful variables from
+a number of variables. Then, aiming at the limitation that the conventional copula model
+can only deal with two-dimensional variables, the pair copula model was introduced.
+In [21] a back propagation (BP) neural network was used to train the system, taking
+into account the volatility and uncertainty of wind turbine parameters, and a regression
+prediction model with a support vector regression (SVR) algorithm was also used for
+training. In [ 22–24] a combined principal component analysis (PCA) and convolutional
+neural network (CNN) was employed as the fault detection method through the optimal
+vibration measurements. In [25] through the residuals between gearbox oil temperature
+predicted by the proposed model and monitored by the SCADA, whether the gearbox
+faults existed could be diagnosed. In [ 26] a pre-training algorithm was proposed that could
+shorten the overall training time, especially for training multiple models simultaneously.
+However, for time series bearing signals, not every moment’s state is effective for fault
+detection. In other words, in the process of neural network modeling, those moments that
+have a positive effect on fault prediction should be adaptively assigned greater weight.
+Conversely, noise, interference, and task-irrelevant signals should be assigned smaller
+------------------------------End of the page -----------------------------------
+Appl. Sci. 2023 ,13, 9276 3 of 13
+weights. This is obviously not achievable by RNN networks, so this method often performs
+poorly in practical applications.
+To solve the above problems, this paper proposes a gearbox fault prediction method
+based on a soft attention mechanism and long short-term memory (LSTM) for wind turbines.
+For convenience, the proposed method is named “Attention Weight-LSTM” (AW-LSTM).
+Speciﬁcally, AW-LSTM ﬁrst designs a time–frequency decomposition algorithm based on
+EMD, and hierarchically decomposes the non-stationary and nonlinear bearing signal data
+into corresponding intrinsic mode functions (IMFs) according to its inherent pattern hierar-
+chy, obtaining different local feature signals of the original signal at different timescales.
+Secondly, an LSTM network adaptively extracts the temporal modes contained in the de-
+composed signal. However, for adjacent frames, LSTM can only linearly input the previous
+hidden state and cell state to the next cell unit, without distinguishing the importance of
+different time points for current signal modeling. For bearing signals, the contribution of
+different time points to the current frame is often different. However, the standard LSTM
+network can only treat all data frames equally, without explicitly modeling the differences
+in contribution between different frames for signal analysis. To solve this problem, an
+attention-weighted strategy is proposed, to assign different weights to the hidden states of
+different frames, through the attention mechanism, achieving the goal of distinguishing the
+contribution of different frames. Through extensive experiments, the proposed AW-LSTM
+is veriﬁed, to further improve the fault prediction accuracy of time series bearing signals.
+2. Attention-Weighted Long Short-Term Memory Network (AW-LSTM)
+2.1. Empirical Mode Decomposition (EMD)
+Empirical mode decomposition (EMD) is an effective method for processing non-linear
+and uncertain time series signals. The basic idea is to transform a waveform with irregular
+frequencies into a form of the accumulation of multiple single-frequency waves. In theory,
+EMD can be applied to any type of time series data decomposition. Therefore, it can
+decompose non-stationary, nonlinear, irregular, time-varying, and noisy multi-frequency
+bearing signals into independently layered data representations at different frequencies,
+through intrinsic mode functions (IMFs).
+For a given original time series x(t), for each t2(1,n), the speciﬁc steps of EMD
+decomposition are as follows:
+1. Calculate the instantaneous peak value and average value of the envelope of the
+function x(t)at all data points, and then use cubic interpolation to ﬁt the envelope
+lines xup(t)andxdown(t)of the original data separately. Finally, calculate the average
+value m(t)of the envelope line:
+m(t) = [xup(t) +xdown(t)]/2. (1)
+2. Subtract the mean envelope line m(t)from all data points in the original signal x(t),
+to obtain a new data sequence h(t):
+h(t) =x(t) m(t). (2)
+3. Check if h(t)satisﬁes the IMF constraint. If it does not, treat it as a new input sequence,
+and repeat steps (1) to (2) until the constraint is met. If it does, h(t)is the ﬁrst IMF
+component. Record it as im f1(t), separate the IMF component im f 1(t)from the
+original sequence x(t), and obtain the residual component r1(t):
+r1(t) =x(t) im f1(t). (3)
+4. The residual component r1(t)is treated as a new sequence, and the above steps are
+repeated multiple times until rn(t)cannot be further decomposed, thus obtaining all
+IMF components im fi(t), where i2(1,n).
+------------------------------End of the page -----------------------------------
+Appl. Sci. 2023 ,13, 9276 4 of 13
+Using EMD decomposition, it is possible to decompose the bearing fault signal from
+the wind turbine gearbox into different trend components and time-domain signals with
+different frequencies, forming a series of subsequence components of different timescales.
+Compared to the original data, these subsequence components have stronger stability,
+making them more suitable for normalization. Additionally, they facilitate the analysis of
+effective data in the bearing signal by LSTM, while ignoring the interference caused by
+irrelevant component signals.
+2.2. Long Short-Term Memory (LSTM) Networks
+LSTM, also known as long short-term memory neural networks, has been successfully
+applied to various time series analysis tasks, such as natural language processing, machine
+translation, and human pose analysis. As the bearing signal in the gearbox is also a
+special type of time series data, LSTM can be naturally transferred to the gear fault signal
+prediction task. Structurally, RNN has a single structured hidden layer state, which is
+good at processing short-term input information, while LSTM adds a memory unit that
+can process and store long-term information. Therefore, theoretically, it can alleviate
+the gradient disappearance problem of traditional RNN and has better performance in
+extracting context information and long-distance dependency relationships of bearing
+signals. Figure 1 shows the internal structure diagram of a single LSTM unit.
+1th−
+tx
+th
+tanh
+tanh
+
+
+细胞状态
+隐层状态
+输入
+tf
+ti
+tC
+to细胞状态
+隐层状态... ...
+1th−
+tx
+th
+tanh
+tanh
+
+
+细胞状态
+隐层状态
+输入
+tf
+ti
+tC
+to细胞状态
+隐层状态... ...
+1th−
+tx
+th
+tanh
+tanh
+
+
+
+Cell state
+Hidden state
+Input signal
+tf
+ti
+tC
+toCell state
+Hidden state... ...
+1th−
+tx
+th
+tanh
+tanh
+
+
+Cell state
+Hidden state
+Input signal
+tf
+ti
+tC
+toCell state
+Hidden state... ...
+Figure 1. Internal structure of LSTM units.
+Compared to the classical RNN-based temporal analysis model, LSTM contains three
+gates: the input gate it, the forget gate ft, and the output gate ot. The input gate is used to
+control the amount of information updated in the memory unit. The forget gate is used
+to control the amount of information that can be used from the previous hidden state at
+the current time. The output gate is used to control the amount of information outputted
+to the next memory unit. Given the current time tand the previous hidden state ht 1the
+LSTM unit can update the current hidden state memory state xtthrough the internal neural
+network, to obtain the output vector ctat the current time:
+it=s
+Wixt+Uih(t 1)+bi
+ft=s
+Wfxt+Ufh(t 1)+bf
+ot=s
+Woxt+Uoh(t 1)+bo
+ct=ft
+ct 1+it
+tanh(Wcxt+Ucht e+cc)
+ht=ot
+tanh(ct).(4)
+Here, it,ft, and otdenote the input gate, forget gate, and output gate, respectively.
+The parameter set fWi,Ui,Wf,Uf,Wo,Uogrepresents the weight matrix corresponding
+to different gates, and the parameter set fbi,bf,bo,bcgrepresents the corresponding bias
+terms. The sigmoid activation function is d. The symbolNrepresents element-wise
+multiplication.
+------------------------------End of the page -----------------------------------
+Appl. Sci. 2023 ,13, 9276 5 of 13
+Generally speaking, due to the advantages of the gate mechanism, LSTM often has a
+strong modeling ability for long-term dependency relationships in time series data com-
+pared to RNN networks, and has a certain fault tolerance. Moreover, EMD can effectively
+decompose high-frequency, low-frequency, and irrelevant components in data signals,
+which has natural effectiveness for processing nonlinear and non-stationary time series
+data. Therefore, combining EMD and LSTM, and applying them to gearbox bearing fault
+signal analysis, can achieve higher fault prediction accuracy. This was also one of the main
+starting points of this research. Unfortunately, LSTM can only treat data at all time steps
+equally, and cannot explicitly distinguish the importance and contribution of different data
+frames to fault prediction. Therefore, the performance improvement achieved by simply
+applying LSTM is often very limited.
+2.3. Attention-Weighted LSTM Fault Detection Model
+For bearing signal analysis, there is a signiﬁcant temporal correlation between adjacent
+data frames. Moreover, the impact of previous data frames on the current frame is often
+different. In addition, different frames theoretically contribute differently to fault prediction
+in the entire time series signal. For example, signals at peaks and valleys often accompany
+data anomalies, making them more important for fault prediction. On the other hand, the
+importance of unrelated, noisy signals is lower. Therefore, if an algorithm can distinguish
+the importance of different data frames, it can improve the ﬁnal bearing fault detection rate .
+Attention mechanism is a good probability weight allocation mechanism that calcu-
+lates the attention probability weights at different times. It can allow nodes that are highly
+relevant to the fault prediction target to receive more attention and be assigned larger
+probability weights, thereby improving the quality of the hidden layer feature vector and
+helping to improve fault prediction accuracy. The model structure of the attention-weighted
+long short-term memory network proposed in this paper is shown in Figure 2.
+Figure 2. Attention-weighted LSTM for fault detection.
+In the attention operation combined with LSTM, for the original data signal x(t),
+with i2(1,n),xiis input to the LSTM network, and the output hidden state is denoted
+as(h1, ...,ht 1,ht, ...,hn). Then, after attention re-weighting, the new hidden state sis
+obtained by jointly operating on the initially hidden state vectors hifrom each time step.
+The calculation steps include
+ei=vtanh(whi+b)
+ai=exp(ei)
+ån
+i=1exp(ei)
+s=n
+å
+i=1aihi(5)
+------------------------------End of the page -----------------------------------
+Appl. Sci. 2023 ,13, 9276 6 of 13
+where eiis the intermediate energy value of the fourth hidden state, obtained from a
+full connection to the network, wandvrepresent the trainable weight matrices, bdenotes
+the bias vector, and exprepresents the natural exponential function. The resulting aiis the
+attention weight, which reﬂects other moments’ hidden states for the present impact of
+the moment: if it is larger, it indicates that the i-th frame is more important and should
+be focused, and vice versa, by calculating the correlation between LSTM states and the
+resulting attention matrix and the ﬁnal re-weighted feature representation.
+As shown in Figure 3, the AW-LSTM model proposed in this paper mainly consists of
+three parts: a data processing module, a feature extraction layer, and a data output layer.
+The data processing module decomposes the original data signal into DIMF components
+fIMF dgD
+d=1through EMD. The feature extraction layer is composed of four layers of LSTM
+and attention operations. The data output layer is implemented through an additional fully
+connected network.
+LSTM
+ LSTM
+ LSTM
+注意力运算
+... ...... ...
+LSTM
+ LSTM
+ LSTM
+注意力运算
+... ...
+............
+ ...
+softmax  分类器
+... ...
+ ... ...
+ 齿轮箱轴承信号
+EMD
+LSTM
+ LSTM
+ LSTM
+Attention computation
+... ...... ...
+LSTM
+ LSTM
+ LSTM
+Attention computation
+... ...
+............
+ ...
+softmax  classifier
+... ...
+ ... ...
+Times-series Gearbox 
+bearing signal
+EMD
+Figure 3. Empirical mode decomposition (EMD). We show that six sub-sequences fIMF ig6
+i=1and
+one residual component rare obtained by the EMD decomposition.
+The implementation details are as follows.
+Data processing module. The original bearing vibration signals usually contain anoma-
+lies generated during the data acquisition process, so the isolated forest algorithm is used
+to eliminate the high anomalies in the data. In addition, in order to help the downstream
+neural network layer focus more explicitly on the high-frequency response in the data and
+ignore irrelevant terms, such as noise interference, this paper uses EMD to decompose the
+signal into IMF components and residuals at different frequencies, which contains a total of
+D=7fIMF dgD
+d=1components.
+Feature extraction layer. The goal of the feature extraction layer is to efﬁciently analyze
+the IMF components of the bearing signal and to extract effective information, so as to
+achieve high-precision fault detection. This is mainly achieved through the following
+three steps.
+Step 1: For the d-th IMF component, assuming the current output vector of the
+current step is IMF d,tand the previous hidden state ht 1, calculate the current hidden
+state. For simplicity, the update of the long short-term memory network in Formula (4)is
+simpliﬁed as
+ht=LSTM (IMF d,t,ht 1), (6)
+where the data dimension of the hidden unit is 256, and where htandht 1are the hidden
+states of the previous and current steps.
+Step 2: Allocate attention weights aito the LSTM hidden state according to the atten-
+tion operation, and calculate the new hidden layer state vector st, as shown in Equation (5).
+It is worth noting that the dimension of the obtained attention hidden feature st2Rm1
+------------------------------End of the page -----------------------------------
+Appl. Sci. 2023 ,13, 9276 7 of 13
+is consistent with the initial hidden state. Since the attention weights at each time point
+are different, the initial hidden state at each time point also plays a different role in fault
+prediction. Moments that are helpful for fault prediction are assigned larger weights, while
+those that are not important are assigned correspondingly smaller weights.
+Step 3: Stack L=4layers of attention-weighted long short-term memory networks
+(AW-LSTM), to increase the model’s robustness and expressive power, and use different
+IMF components as inputs to the neural network in parallel.
+Data output layer. The function softmax is used to calculate the label distribution
+probability of different IMF components on annotated data at each time point, and the
+outputs corresponding to DIMF components are averaged to obtain the ﬁnal result ˆy:
+ˆy=softmax 
+D
+å
+d=1tanh(Wdsd+bd)!
+, (7)
+where Wd2R1mis the weight matrix between the attention hidden layer and the output
+layer, bdis the bias term, and ˆy2[0, 1]represents the probability of a fault occurring in the
+current bearing signal. If y>0.5, a fault is considered to exist; otherwise, the gearbox is
+fault-free. The structure diagram of the proposed AW-LSTM gearbox fault detection model
+is shown in Figure 3.
+3. Experimental Analysis
+3.1. Description of Gearbox Data
+The gearbox is the core component in improving the speed of fan blades: its failure can
+easily to lead to wind turbine shutdown and other serious conditions. The gearbox is mainly
+composed of four parts: bearing, gear, transmission, and drive shaft. The mechanical energy
+generated by blade rotation is passed through the spindle to the gearbox, to increase the
+speed of the gears, which accelerate in order to provide more mechanical energy to drive
+the wind turbine. After the transmission is put into use, its load is unable to maintain
+a stable state, coupled with its long-term maintenance in a harsh environment, so that
+the gear in the transmission can easily break. In the process of manufacturing, gear tooth
+shape and tooth gap and error can easily occur, coupled with wear and tear in the process
+of transportation and installation. These are important reasons for the failure of gearbox.
+Combined with the theory of vibration dynamics, a simple vibration model of gearbox
+vibration can be established, to analyze the phenomenon of gear modulation, the time-
+frequency characteristics of the vibration signal when the gear fails, and the common
+vibration signal analysis methods of the gearbox.
+For this paper, two types of wind turbine gearbox datasets were used for experi-
+mentation: the SCADA (supervisory control and data acquisition) dataset and the OWT
+(offshore wind turbine) dataset. The wind turbine experimental platform mainly included
+ﬁve components: (1) magnetic particle loader, (2) gear accelerator, (3) torque sensor and
+speed detection, (4) three-axis accelerometer, and (5) three-phase asynchronous AC motor.
+The wind turbine gearbox speed was 1500 rpm, and the sampling frequency was 10 KHz.
+The vibration signal was collected through two accelerometers. The two bearing models
+were NJ210 and NJ405.
+3.2. Description of Comparison Methods
+To fully validate the effectiveness of the proposed algorithm, this paper used four fault
+detection models that have emerged in recent years as comparison methods: (1) EMD–GRU
+(gated recurrent unit with empirical mode decomposition); (2) LSTM (long short-term mem-
+ory network); (3) CNN (convolutional neural network); (4) FFT (fast Fourier transform).
+3.3. Analysis of Gearbox Fault Signal Characteristics
+Based on the analysis of the vibration signal characteristics of the gearbox fault, it is
+known that in the actual rotation process, when the gear produces a vibration signal, the
+------------------------------End of the page -----------------------------------
+Appl. Sci. 2023 ,13, 9276 8 of 13
+amplitude and frequency will affect one other [ 12]. The author summarized the gear failure
+operation and vibration signal modulation phenomenon, and detailed information can be
+found in Tables 1 and 2.
+Table 1. Vibration signal representation of typical gearbox faults.
+Fault Types Time-Domain Phenomenon Frequency-Domain Phenomenon
+Normal Sine wave appearing Frequency and harmonics
+Off-centering Amplitude modulation Frequency is the same as the rotation
+Abrasion Waveform damage Bigger amplitude
+Table 2. Particular signal representation of typical gearbox faults.
+Corrosive pitting Shock pulse Less but concentrated distribution
+Skip tooth pulse Frequency and harmonics Many orders but scattered distribution
+Tooth error Low frequency Same rotation and meshing frequency
+From the above two tables, it can be seen that the time-domain and frequency-domain
+characteristics of the vibration signals of the gear in the fault state show a variable state.
+Due to the interference of wind power size, the load of the mechanical transmission system
+cannot maintain a stable state, especially in the mountainous and hilly areas of China,
+where the complex terrain will have different degrees of impact on the airﬂow changes,
+resulting in wind power instability.
+Therefore, when diagnosing the gearbox fault, the unstable data of the signal of the
+faulty gearbox should be removed, to maximize the accuracy of the fault diagnosis.
+Figure 4 show that six subsequences fIMF ig6
+i=1and one residual component rare
+obtained by the EMD decomposition.
+Figure 4. Empirical Mode Decomposition (EMD).
+------------------------------End of the page -----------------------------------
+Appl. Sci. 2023 ,13, 9276 9 of 13
+Based on the above analysis, this paper further studied the distribution of gear vibra-
+tion signals, summarized the causes and forms of wind turbine bearing faults, collected
+vibration acceleration signals through professional methods, and uploaded them to sensors.
+Finally, important parameters used in the vibration signal of the gearbox were used as fault
+feature indicators for gearbox fault diagnosis.
+3.4. EMD Fault Data Decomposition
+By using EMD for decomposition, the preprocessed sample data was decomposed
+into seven IMF components and one residual component r, of which IMF1, IMF2, and
+IMF3 were the high-frequency signals, IMF4 and IMF5 were the mid-frequency signals,
+and IMF6 and IMF7 were the low-frequency signals, forming multidimensional vector data.
+Compared to the original data, the decomposed IMF components became smoother. The
+experimental simulation is shown in Figure 5 ( ris included in the IMF components).
+Figure 5. Empirical mode decomposition (EMD).
+3.5. Experimental Implementation
+Software : Matlab R2020a (Math-Works); Windows 11 operating system; the processor
+is Intel-Core i9-10th; the graphics card is Nvidia GTX1080Ti.
+Network structure : After multiple experiments, the number of hidden neurons was
+selected as 32, with a structure of 5-10-1 and LSTM layers of four. The loss function was the
+mean square error RMSE. The attention mechanism dimension was 256, and there were
+250 iterations. In addition, learning and momentum factors were included, with values of
+0.01 and 0.04, respectively. The input data length was 750 and the output length was 220.
+Comparison standards : Three comparison standards were selected in this paper, to
+evaluate the performance of different algorithms, including the root mean square error
+(RMSE), the mean absolute error (MAE), and the mean absolute percentage error (MAPE).
+Data preprocessing : The AW-LSTM network involves different physical quantities,
+and different input nodes may have varying values, due to different environmental
+factors [13] . Therefore, this paper ﬁrst normalized the experimental data, to ensure the
+stability of the neural network training phase, with data normalization as follows:
+x0=x xmin
+xmax xmin, (8)
+where xrepresents the original data, x0represents the normalized data, and xminandxmax
+represent the minimum and maximum values in the data, respectively.
+Model training : To verify the effectiveness of the AW-LSTM model, this paper used
+the bearing signal data of the ﬁrst two months as input to predict the load data of the
+following week. The weights of the neurons in the proposed model were initialized using
+Gaussian distribution with a mean of 0 and a variance of 1. Figure 6 shows the training
+error convergence curves of the proposed AW-LSTM algorithm on different datasets. The
+left ﬁgure shows the error curve with 12 months of SCADA data as the training set and
+the right ﬁgure shows the error curve with 12 months of OWT data as the training set.
+------------------------------End of the page -----------------------------------
+Appl. Sci. 2023 ,13, 9276 10 of 13
+The AW-LSTM network parameters were set as follows: an Adam optimizer was used for
+optimization, with an initial learning rate of 0.002. It can be observed from the ﬁgure that
+the proposed AW-LSTM reduced the training error gradually, with the increase of iteration
+times on different datasets, which demonstrates the effectiveness and generalization of the
+proposed algorithm. Moreover, it can be observed from Figure 5 that AW-LSTM gradually
+converged at 1000 iterations on the two public datasets, indicating that the proposed
+method has good convergence speed.
+Figure 6. Empirical mode decomposition (EMD). We show that six subsequences fIMF ig6
+i=1and
+one residual component rare obtained by the EMD decomposition.
+3.6. Experimental Results
+Comparison between AW-LSTM prediction results and actual values: After training
+the fault signal feature analysis indicators, the network model could be input for testing the
+AW-LSTM fault prediction model. The SCADA database recorded some training sample
+data information. Under consistent experimental conditions, and with the help of the
+AW-LSTM network principle, the effect of AW-LSTM on gearbox faults was analyzed.
+At the same time, an AW-LSTM prediction model combining LSTM with the attention
+mechanism was constructed. Figure 6 details the prediction error of the network. It can be
+seen that the proposed AW-LSTM model had a very small deviation between the predicted
+accuracy and the actual values that was almost indistinguishable by the naked eye.
+This result fully demonstrates the performance of the AW-LSTM model. Detailed
+Results Analysis: To fully validate the effectiveness of the proposed AW-LSTM algorithm,
+this paper selected FFT, LSTM, CNN, and EMD–GRU as the comparative methods. Addi-
+tionally, the root mean square error (RMSE) was calculated for different prediction time
+steps (60, 100, 160, 200, 220) on two different datasets (SCADA and OWT). The prediction
+results on the SCADA dataset are shown in Table 3, and the prediction results on the
+OWT dataset are shown in Table 4. The bold results indicate the accuracy achieved by
+the proposed AW-LSTM model in this paper. Overall, AW-LSTM had higher prediction
+accuracy for different time steps, and the error between the predicted and actual values was
+very small. In particular, compared to the comparative methods, the long-term prediction
+results of AW-LSTM were signiﬁcantly better, indicating that the proposed method has a
+signiﬁcant advantage in fault prediction performance. This is mainly due to the fact that
+the LSTM network can model the time correlation between different data frames in the
+bearing signal well. Additionally, compared to the comparative methods, the attention
+------------------------------End of the page -----------------------------------
+Appl. Sci. 2023 ,13, 9276 11 of 13
+mechanism used in AW-LSTM can extract the weights of different frames fully, as well
+as the different contributions to the model performance. At the same time, the attention
+mechanism can assign small weights to irrelevant or interfering data, while assigning more
+attention to data that can contribute signiﬁcantly to prediction accuracy.
+Table 3. RMSE comparison of different baselines at different time steps on the SCADA dataset.
+Models 60 100 160 200 220
+FFT 1.783 1.945 2.221 2.512 3.341
+LSTM 1.344 1.553 1.989 2.503 3.011
+CNN 1.121 1.441 1.685 2.310 2.894
+EMD–GRU 1.236 1.473 1.789 2.201 2.673
+AW-LSTM 1.007 1.134 1.385 1.678 1.875
+Table 4. RMSE comparison of different baselines at different time steps on OWT dataset.
+Models 60 100 160 200 220
+FFT 1.787 1.984 2.103 2.561 2.679
+LSTM 1.542 1.763 2.041 2.231 2.318
+CNN 1.234 1.434 1.717 2.102 2.398
+EMD–GRU 1.220 1.456 1.672 2.001 2.301
+AW-LSTM 1.104 1.215 1.443 1.802 1.945
+AW-LSTM identiﬁcation results for different gear operating modes: In addition, to
+better validate the effectiveness of the AW-LSTM network in diagnosing gearbox faults,
+this paper trained and tested the network using test data samples under different gear
+operating modes of the wind turbine signal in the same experimental environment. The
+EMD–GRU method, which performed well in the previous experiments, was selected as
+the comparative baseline, and the identiﬁcation results are shown in Table 5. It can be seen
+that AW-LSTM has good prediction accuracy for different gear modes.
+Table 5. Diagnostic recognition results.
+Gear Mode Target Vector AW-LSTM EMD–GRU
+Normal 1 0.9532 1.3043
+Damage 2 2.1456 1.8545
+Skip tooth 3 3.1383 3.2007
+Average Results Analysis: In the process of identifying gearbox faults, this paper
+concludes—through sufﬁcient experimental veriﬁcation and analysis—that, compared
+to the FFT, LSTM, CNN, and EMD–GRU networks, the advantages of the AW-LSTM
+network lie in its accurate diagnostic function, convergence speed, and strong diagnostic
+adaptability. For example, when identifying gearbox fracture, the RMSE error of the
+AW-LSTM network was reduced by more than 10%, compared to the best-performing
+comparative method. In addition to the distributed RMSE error, the average RMSE, MAE,
+and MAPE for all prediction time steps on the two datasets were also calculated for this
+paper. The experimental results are shown in Table 6. It can be seen from the results that the
+RMSE, MAE, and MAPE obtained by the four comparative methods were larger than those
+of the proposed AW-LSTM. The experiment shows that the fault prediction accuracy of the
+wind turbine gearbox based on AW-LSTM is higher than that of the fault diagnosis accuracy
+that has emerged in recent years, while maintaining the completeness of wind turbine
+gearbox fault signal data. Additionally, Table 6 compares the inference time overhead of
+different methods, and it can be seen that the proposed AW-LSTM model has a lower time
+overhead during testing, making it more conducive to the deployment of the model in
+practical environments.
+------------------------------End of the page -----------------------------------
+Appl. Sci. 2023 ,13, 9276 12 of 13
+Table 6. Error comparison of different methods.
+Models Inference Time RMSE MAE MAPE
+FFT 43 s 2.534 1.645 20.31
+LSTM 69 s 2.060 1.627 15.779
+CNN 54 s 2.112 1.453 12.342
+EMD–GRU 46 s 1.873 1.133 11.232
+AW-LSTM 36 s 1.384 0.983 9.638
+4. Conclusions
+This work proposes a novel model for predicting wind turbine gearbox failures using
+neural networks and signal processing techniques. We introduced the use of SCADA and
+OWT datasets for experimentation, and we compared the effectiveness of four methods—
+EMD–GRU, LSTM, CNN, and FFT. We analyzed the characteristics and distribution of
+gearbox vibration signals, summarized the causes and forms of wind turbine bearing
+failures, and proposed gearbox fault feature indicators. We also described the software
+and network structure used in the experiments, and we evaluated the performance of
+different algorithms using three comparison standards. We provided a detailed discussion
+of the data preprocessing and model training for the AW-LSTM model, and we presented
+a comparison of the AW-LSTM prediction results to the actual values. Our experimental
+results show that the proposed AW-LSTM model has higher prediction accuracy, better
+diagnostic capabilities and convergence speed, and stronger diagnostic adaptability than
+the other four methods, making it a promising approach for fast fault diagnosis in wind
+power generation systems. The algorithm code will be publicly available after the paper
+is accepted. Authors should discuss the results and how they can be interpreted from
+the perspective of previous studies and of the working hypotheses. The ﬁndings and
+their implications should be discussed in the broadest context possible. Future research
+directions may also be highlighted.
+For this paper, during the experimental process, the SCADA data, as well as the OWT
+data, were individually used for fault prediction, and the generalization ability of the model
+has not been veriﬁed. The next step will be to select sample data from multiple wind farms
+for hybrid modeling training, to further improve the accuracy of similar anomalous pattern
+judgments, and to enhance the generalization ability of the model.
+Author Contributions: Software, Y .Z.; Data curation, R.H.; Writing—original draft, Y .Z.; Writing—review
+& editing, Y .Z.; Funding acquisition, Z.L. All authors have read and agreed to the published version of the
+manuscript.
+Funding: This research was funded by National Natural Science Foundation of China: Research on a
+new high-efﬁciency on-chip integrated polarization controller: 61705127.
+Institutional Review Board Statement: Not applicable.
+Informed Consent Statement: Informed consent was obtained from all subjects involved in the
+study.
+Conﬂicts of Interest: The authors declare no conﬂict of interest.
+References
+1. Wang, P .; Kong, X.; Li, X.; Hu, H.; Wang, Z.; Li, H.; Liu, W. Fault Diagnosis Method of Aeroengine Bearing Based on Convolution
+Self-Coded Neural Network. In Proceedings of the 2019 12th International Congress on Image and Signal Processing, BioMedical
+Engineering and Informatics (CISP-BMEI), Suzhou, China, 19–21 October 2019; pp. 1–6.
+2. Wei, W. Optimization of Multi-Parameter Fault Diagnosis Method for Gearbox Based on Vibration Monitoring and Oil Analysis.
+Master’s Thesis, China University of Mining and Technology, Xuzhou, China, 2019 .
+3. Ge, X.; Zou, D. Multi-layer noise reduction technology and bearing fault diagnosis method based on Hilbert transform. J. Mot.
+Control 2020 ,190, 13–21.
+4. Wang, L.; Liu, Z.; Cao, H. Subband averaging kurtogram with dual-tree complex wavelet packet transform for rotating machinery
+fault diagnosis. Mech. Syst. Signal Process. 2020 ,142, 106755. [CrossRef]
+------------------------------End of the page -----------------------------------
+Appl. Sci. 2023 ,13, 9276 13 of 13
+5. Zhang, L.; Zhang, H.; Cai, G. The multiclass fault diagnosis of wind turbine bearing based on multisource signal fusion and deep
+learning generative model. IEEE Trans. Instrum. Meas. 2022 ,71, 3514212. [CrossRef]
+6. Ma, S.; Cai, W.; Liu, W.; Shang, Z.; Liu, G. A lighted deep convolutional neural network based fault diagnosis of rotating
+machinery. Sensors 2019 ,19, 2381. [CrossRef] [PubMed]
+7. Zhang, S. Fault Diagnosis Method of Rolling Bearing and Planetary Gearbox Based on Convolution Neural Network ; Anhui University of
+Technology: Ma’anshan, China, 2019.
+8. Sha, M.; Liu, L. Summary of bearing fault diagnosis technology based on vibration signal. Bearings 2015 ,9, 59–63.
+9. Liu, Q.; Guo, Y. Dynamic model of faulty rolling element bearing on double impact phenomenon. In Proceedings of the 2015
+IEEE International Conference on Information and Automation, Lijiang, China, 2–5 August 2015; pp. 2017–2021.
+10. Xie, X.T.; Li, S.B.; Yang, G.C.; Liu, G.K.; Yao, X.M. Fault diagnosis of Rolling bearing based on FFT and CS-SVM. Comb. Mach. Tool
+Autom. Mach. Technol. 2019 ,4, 90–94.
+11. Sikder, N.; Bhakta, K.; Al Nahid, A.; Islam, M.M. Islam, Fault Diagnosis of Motor Bearing Using Ensemble Learning Algorithm
+with FFT-based Preprocessing. In Proceedings of the 2019 International Conference on Robotics, Electrical and Signal Processing
+Techniques (ICREST), Dhaka, Bangladesh, 10–12 January 2019; pp. 564–569.
+12. Wang, J.; He, Q. Wavelet Packet Envelope Manifold for Fault Diagnosis of Rolling Element Bearings. IEEE Trans. Instrum. Meas.
+2016 ,65, 2515–2526. [CrossRef]
+13. Chen, J.; Li, Y.; Ye, F. Uncertain information fusion for gearbox fault diagnosis based on BP neural network and DS evidence
+theory. In Proceedings of the 2016 12th World Congress on Intelligent Control and Automation (WCICA), IEEE, Guilin, China,
+12–15 June 2016; pp. 1372–1376.
+14. Yu, J.; Bai, M.; Wang, G.; Shi, X. Fault diagnosis of planetary gearbox with incomplete information using assignment reduction
+and ﬂexible naive Bayesian classiﬁer. J. Mech. Sci. Technol. 2018 ,32, 37–47. [CrossRef]
+15. Zhang, K.; Tang, B.; Deng, L.; Liu, X. A hybrid attention improved ResNet based fault diagnosis method of wind turbines gearbox.
+Measurement 2021 ,179, 109491. [CrossRef]
+16. Su, Y.; Meng, L.; Kong, X.; Xu, T.; Lan, X.; Li, Y. Small sample fault diagnosis method for wind turbine gearbox based on optimized
+generative adversarial networks. Eng. Fail. Anal. 2022 ,140, 106573. [CrossRef]
+17. Bebars, A.D.; Eladl, A.A.; Abdulsalam, G.M.; Badran, E.A. Internal electrical fault detection techniques in DFIG-based wind
+turbines: A review. Prot. Control. Mod. Power Syst. 2022 ,7, 18. [CrossRef]
+18. Lu, Q.; Ye, W.; Yin, L. ResDenIncepNet-CBAM with principal component analysis for wind turbine blade cracking fault prediction
+with only short time scale SCADA data. Measurement 2023 ,212, 112696. [CrossRef]
+19. Uppal, M.; Gupta, D.; Mahmoud, A.; Elmagzoub, M.A.; Sulaiman, A.; Reshan, M.S.A.; Juneja, S. Fault Prediction Recommender
+Model for IoT Enabled Sensors Based Workplace. Sustainability 2023 ,15, 1060. [CrossRef]
+20. Luo, Z.; Liu, C.; Liu, S. A novel fault prediction method of wind turbine gearbox based on pair-copula construction and BP neural
+network. IEEE Access 2023 ,8, 91924–91939. [CrossRef]
+21. Ou, Z.; Lin, D.; Huang, J. Fault Prediction Model of Wind Power Pitch System Based on BP Neural Network. In Proceedings of
+the 2023 9th International Conference on Control, Automation and Robotics (ICCAR), Beijing, China, 21–23 April 2023; pp. 43–48.
+[CrossRef]
+22. Zhu, A.; Zhao, Q.; Yang, T.; Zhou, L.; Zeng, B. Condition monitoring of wind turbine based on deep learning networks and kernel
+principal component analysis. Comput. Electr. Eng. 2023 ,105, 108538. [CrossRef]
+23. Dibaj, A.; Gao, Z.; Nejad, A.R. Fault detection of offshore wind turbine drivetrains in different environmental conditions through
+optimal selection of vibration measurements. Renew. Energy 2023 ,203, 161–176. [CrossRef]
+24. Qiao, L.; Zhang, Y.; Wang, Q. Fault detection in wind turbine generators using a meta-learning-based convolutional neural
+network. Mech. Syst. Signal Process. 2023 ,200, 110528. [CrossRef]
+25. Wang, H.; Zhao, X.; Wang, W. Fault diagnosis and prediction of wind turbine gearbox based on a new hybrid model. Environ. Sci.
+Pollut. Res. 2023 ,30, 24506–24520. [CrossRef] [PubMed]
+26. Xie, T. The fault frequency priors fusion deep learning framework with application to fault diagnosis of offshore wind turbines.
+Renew. Energy 2023 ,202, 143–153. [CrossRef]
+Disclaimer/Publisher’s Note: The statements, opinions and data contained in all publications are solely those of the individual
+author(s) and contributor(s) and not of MDPI and/or the editor(s). MDPI and/or the editor(s) disclaim responsibility for any injury to
+people or property resulting from any ideas, methods, instructions or products referred to in the content.
+------------------------------End of the page -----------------------------------

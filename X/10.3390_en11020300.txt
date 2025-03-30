@@ -1,0 +1,886 @@
+energies
+Article
+Bayesian Based Diagnostic Model for Condition
+Based Maintenance of Offshore Wind Farms
+Masoud Asgarpour1,2,* and John Dalsgaard Sørensen1
+1Department of Civil Engineering, Aalborg University, DK-9220 Aalborg, Denmark; jds@civil.aau.dk
+2Vattenfall, Business Area Wind, Analytics & Asset Integrity Management, Hoekenrode 8,
+1102 BR Amsterdam, The Netherlands
+*Correspondence: masoud.asgarpour@vattenfall.com; Tel.: +31-621-258-748
+Received: 20 November 2017; Accepted: 26 January 2018; Published: 29 January 2018
+Abstract: Operation and maintenance costs are a major contributor to the Levelized Cost of Energy for
+electricity produced by offshore wind and can be signiﬁcantly reduced if existing corrective actions
+are performed as efﬁciently as possible and if future corrective actions are avoided by performing
+sufﬁcient preventive actions. This paper presents an applied and generic diagnostic model for
+fault detection and condition based maintenance of offshore wind components. The diagnostic
+model is based on two probabilistic matrices; ﬁrst, a conﬁdence matrix, representing the probability
+of detection using each fault detection method, and second, a diagnosis matrix, representing the
+individual outcome of each fault detection method. Once the conﬁdence and diagnosis matrices of a
+component are deﬁned, the individual diagnoses of each fault detection method are combined into
+a ﬁnal verdict on the fault state of that component. Furthermore, this paper introduces a Bayesian
+updating model based on observations collected by inspections to decrease the uncertainty of initial
+conﬁdence matrix. The framework and implementation of the presented diagnostic model are further
+explained within a case study for a wind turbine component based on vibration, temperature, and oil
+particle fault detection methods. The last part of the paper will have a discussion of the case study
+results and present conclusions.
+Keywords: diagnostic; condition based maintenance; offshore wind; O&M; conﬁdence matrix;
+diagnosis matrix; Bayesian updating; vibration; temperature; oil particle
+1. Introduction
+By the end of 2016 wind energy with 153.7 GW installed capacity was the second largest power
+generation capacity in Europe [ 1]. The majority (91.6%) of installed wind capacity in Europe is currently
+in the form of onshore wind; however, recent rapid cost reductions within offshore wind has motivated
+European governments to shift their focus into more and more offshore wind development tenders [ 1].
+The offshore wind can be considered as a solid and sustainable business case only if the Levelized Cost
+of Energy (LCoE) produced by offshore wind is reduced to its minimum. The LCoE of offshore wind
+farms can be reduced by decreasing their CAPEX and OPEX, and increasing their energy yield.
+The purpose of this paper is to provide a contribution to OPEX reduction and energy yield
+increase of offshore wind farms by means of operation and maintenance (O&M) cost reductions. It is
+possible to reduce the O&M costs of offshore wind farms if optimal O&M planning and decision
+models for optimization of O&M resources and work orders are used, and future component failures
+are avoided. In the past decades, several studies on O&M planning and optimization of offshore wind
+farms are carried out. In [ 2], an extensive overview on 246 mainly academic studies focused on O&M
+planning and optimization of wind energy assets published in the period 1997 to 2016 is given. Earlier
+studies on offshore wind O&M optimization are typically based on long-term averaging of O&M costs.
+In [3], an overview on mean-value and Monte Carlo based O&M cost models for long-term O&M
+Energies 2018 ,11, 300; doi:10.3390/en11020300 www.mdpi.com/journal/energies
+------------------------------End of the page -----------------------------------
+Energies 2018 ,11, 300 2 of 17
+optimization of offshore wind farms is given, see [ 4–9] for illustrative case studies on offshore wind
+O&M cost models.
+In recent years, more advanced models such as Markov, Petri net, Bayesian, and Artiﬁcial
+Intelligence (AI) models are used in O&M optimization of wind energy assets. In [ 10], the application
+of Markov models for downtime reduction and in [ 11], the application of Markov models for O&M
+optimization of wind turbines are discussed. In [ 12–14], the O&M modelling and optimization of wind
+turbines based on Petri nets is investigated. In [ 15–18] and Section 2.4 of this paper, the application
+of Bayesian risk-based methods for optimal O&M planning of offshore wind turbines is discussed.
+Furthermore, in [ 19,20], the application of Artiﬁcial Neural Networks (ANNs) for O&M optimization
+of wind turbines and in [ 21], intelligent maintenance planning of wind energy assets based on a
+combination of AI models are studied.
+Next to optimal O&M planning and decision models, avoiding future component failures will
+reduce the O&M costs of offshore wind farms. The majority of O&M costs of offshore wind farms is
+due to unplanned failures of wind farm components, and subsequently their corrective maintenance
+effort [ 6]. The O&M costs can be signiﬁcantly reduced if the faults of wind farm components can
+be predicted (before they occur) or be detected (as soon as they occur and before they lead to a
+complete failure). The focus of this paper is only fault detection of components and not their fault
+prediction. In [ 22], an overview of applicable prognostic models for offshore wind turbines is give,
+see [23,24], [25–28] for illustrative case studies on fault prediction of wind turbine components.
+The state-of-the-art and future trends of fault detection and condition monitoring of wind turbine
+components are extensively reviewed in [ 29–39]. In [ 29], a systematic review on applicable fault
+detection techniques for main wind turbine components is given. In [ 30–32], speciﬁc diagnostic
+techniques for low-speed machinery, gearbox and bearings are discussed respectively. In [ 33],
+a thorough introduction into vibration and SCADA based fault detection methods is given and
+based on a cost-beneﬁt analysis a recommended scope of condition monitoring for wind turbines is
+discussed. In [ 34], applicable fault detection methods for each failure mode of each main system and
+sub-component of wind turbines are discussed. In [ 35], an overview of condition monitoring sensors
+and applicable signal processing methods is given and a fault tree for critical failure modes of wind
+turbine components is brieﬂy discussed. In [ 36], a survey of 23 commercial condition monitoring
+systems is discussed, and it is concluded that future condition monitoring systems should be applicable
+to all wind turbine types capable of reliable and low-cost fault detection of all mechanical and electrical
+sub-components. In [ 37], applicable fault detection methods for main systems of wind turbines are
+brieﬂy discussed, and it is concluded that future studies should conduct more research on multi-agent
+fault detection methods. In [ 38], applicable condition monitoring and fault detection methods for both
+main systems and sub-components of wind turbines within several illustrative examples are discussed.
+In [39], condition monitoring beneﬁt for offshore wind turbines based on a variety probabilistic fault
+detection methods is quantiﬁed.
+In [40], an overview on failure frequency and maintenance effort of offshore wind turbine
+components is given. As shown in Figure 1, based on failure data over a ﬁve-year period from
+350 offshore wind turbines, authors in [ 40] have concluded that on average an offshore wind turbine
+has 8.3 failures per year, of which 6.2 are minor repairs, 1.1 are major repairs and 0.3 are major
+replacements, while 0.7 failures per turbine per year have no cost data so cannot be categorized.
+------------------------------End of the page -----------------------------------
+Energies 2018 ,11, 300 3 of 17
+Energies 2018 , 11, x FOR PEER REVIEW  3 of 17 
+  
+Figure 1.  Failure frequency of offshore wind turbine components categorized by their maintenance 
+effort [40]. 
+As highlighted in [36,37], existing academic literature pays limited attention to generic and 
+applied diagnostic models applicable for real-time fault detection of all mechanical and electrical 
+wind farm components. This paper introduces a generic diagnostic model applicable for all electrical 
+and mechanical wind turbines and the balance of plant components of an offshore wind farm.  The following will discuss first the probabilistic co nfidence and diagnosis matrices required for this 
+diagnostic model, and then present a case study for condition based maintenance of offshore wind components. The last section contains  a discussion of the case study results and presents conclusions. 
+2. Diagnostic Model 
+According to EN 13306:2010 [41], fault is the “ state of an item characterized by inability to perform a 
+required function, excluding the inabilit y during preventive maintenance or other planned actions, or due to 
+lack of external resources ” .  F a u l t s  i n  w i n d  f a r m  c o m p o n e n t s  are usually pre-existing, meaning that 
+there is an opportunity to detect faults before they lead to a failure. Figure 2 illustrates the state of a 
+component with undetected faults leading to failure and detected faults leading to condition based maintenance. 
+ 
+Figure 2.  State of a component with undetected faults (leading to failure) and detected faults (leading 
+to condition based maintenance). 
+Diagnostic or fault detection of offshore wind  turbines and balance of plant components is 
+mainly done for mechanical and electrical components as their faults can rapidly (days to months) lead to a complete failure, causing high maintenanc e costs and/or long downti me. Figure 1 also shows 
+Figure 1. Failure frequency of offshore wind turbine components categorized by their maintenance
+effort [40].
+As highlighted in [ 36,37], existing academic literature pays limited attention to generic and
+applied diagnostic models applicable for real-time fault detection of all mechanical and electrical wind
+farm components. This paper introduces a generic diagnostic model applicable for all electrical and
+mechanical wind turbines and the balance of plant components of an offshore wind farm. The following
+will discuss ﬁrst the probabilistic conﬁdence and diagnosis matrices required for this diagnostic model,
+and then present a case study for condition based maintenance of offshore wind components. The last
+section contains a discussion of the case study results and presents conclusions.
+2. Diagnostic Model
+According to EN 13306:2010 [ 41], fault is the “ state of an item characterized by inability to perform a
+required function, excluding the inability during preventive maintenance or other planned actions, or due to lack
+of external resources ”. Faults in wind farm components are usually pre-existing, meaning that there is an
+opportunity to detect faults before they lead to a failure. Figure 2 illustrates the state of a component
+with undetected faults leading to failure and detected faults leading to condition based maintenance.
+Energies 2018 , 11, x FOR PEER REVIEW  3 of 17 
+  
+Figure 1.  Failure frequency of offshore wind turbine components categorized by their maintenance 
+effort [40]. 
+As highlighted in [36,37], existing academic literature pays limited attention to generic and 
+applied diagnostic models applicable for real-time fault detection of all mechanical and electrical 
+wind farm components. This paper introduces a generic diagnostic model applicable for all electrical 
+and mechanical wind turbines and the balance of plant components of an offshore wind farm.  The following will discuss first the probabilistic co nfidence and diagnosis matrices required for this 
+diagnostic model, and then present a case study for condition based maintenance of offshore wind components. The last section contains  a discussion of the case study results and presents conclusions. 
+2. Diagnostic Model 
+According to EN 13306:2010 [41], fault is the “ state of an item characterized by inability to perform a 
+required function, excluding the inabilit y during preventive maintenance or other planned actions, or due to 
+lack of external resources ” .  F a u l t s  i n  w i n d  f a r m  c o m p o n e n t s  are usually pre-existing, meaning that 
+there is an opportunity to detect faults before they lead to a failure. Figure 2 illustrates the state of a 
+component with undetected faults leading to failure and detected faults leading to condition based maintenance. 
+ 
+Figure 2.  State of a component with undetected faults (leading to failure) and detected faults (leading 
+to condition based maintenance). 
+Diagnostic or fault detection of offshore wind  turbines and balance of plant components is 
+mainly done for mechanical and electrical components as their faults can rapidly (days to months) lead to a complete failure, causing high maintenanc e costs and/or long downti me. Figure 1 also shows 
+Figure 2. State of a component with undetected faults (leading to failure) and detected faults (leading to
+condition based maintenance).
+------------------------------End of the page -----------------------------------
+Energies 2018 ,11, 300 4 of 17
+Diagnostic or fault detection of offshore wind turbines and balance of plant components is mainly
+done for mechanical and electrical components as their faults can rapidly (days to months) lead to a
+complete failure, causing high maintenance costs and/or long downtime. Figure 1 also shows that
+major repair or replacement is mostly done for mechanical and electrical components of offshore
+wind turbines. This paper does not explicitly consider the offshore wind structural components
+such as blades, tower, or foundation since they are designed according to high safety factors, and
+typically their annual service will detect and maintain their potential faults, before these might lead to
+a complete failure.
+As discussed in the previous section, in the wind industry, the lack of a generic diagnostic model
+suitable for all wind turbine and component types is evident. Since no single fault detection method is
+able to detect faults of all component types accurately, a hybrid of several individual non-correlated
+fault detection methods, or diagnostic agents for each component, or component failure mode are
+required. Figure 3, presents a framework of such a generic multi-agent diagnostic model for fault
+detection of one mechanical or electrical wind farm component.
+Energies 2018 , 11, x FOR PEER REVIEW  4 of 17 
+ that major repair or replacement is mostly done for mechanical and electrical components of 
+offshore wind turbines. This paper does not exp licitly consider the offs hore wind structural 
+components such as blades, tower, or foundation since they are designed according to high safety 
+factors, and typically their annual service will dete ct and maintain their potential faults, before these 
+might lead to a complete failure.  
+As discussed in the previous section, in the wi nd industry, the lack of a generic diagnostic 
+model suitable for all wind turbine and component types is evident. Since no single fault detection method is able to detect faults of all componen t types accurately, a hybrid  of several individual 
+non-correlated fault detection methods, or diagno stic agents for each component, or component 
+failure mode are required. Figure 3, presents a fr amework of such a generic multi-agent diagnostic 
+model for fault detection of one mechanical or electrical wind farm component. 
+ 
+Figure 3.  Framework of a multi-agent diagnostic model for one wind farm component. 
+As shown in Figure 3, it is assumed that faults of this component can be optimally detected by a 
+hybrid of three diagnostic agents or fault detect ion methods. The probability of detection of each 
+diagnostic agent is defined within a Confidence Matrix. Once the individual diagnosis of each 
+diagnostic agent is estimated and placed in a Diagnosis Matrix, the total probability theorem can be 
+used to incorporate all pr obabilistic fault detection results into on e final verdict. The following sections 
+will further discuss both confidence and diagnoses matrices. 
+2.1. Confidence Matrix 
+A confidence or Probability of Detection (PoD) ma trix for diagnostics is a measure for reliability 
+or confidence level of diagnostic agents for a given component or component failure mode. At the 
+beginning of the wind farm lifetime, since no prio r operational data is available, the confidence 
+matrix should be defined based on experts’ experience on confidence level of each diagnostic agent 
+f o r  e a c h  c o m p o n e n t .  S i m i l a r l y ,  i t  i s  p o s s i b l e  t o  use operational data of the same components in 
+similar operational wind farms to estimate the initial confidence matrix.  
+Once sufficient operational data is available, based on Bayes’ rule and correctness of each fault 
+detection agent determined by inspections, the initial or prior confidence matrix can be updated. 
+  
+Figure 3. Framework of a multi-agent diagnostic model for one wind farm component.
+As shown in Figure 3, it is assumed that faults of this component can be optimally detected
+by a hybrid of three diagnostic agents or fault detection methods. The probability of detection of
+each diagnostic agent is deﬁned within a Conﬁdence Matrix. Once the individual diagnosis of each
+diagnostic agent is estimated and placed in a Diagnosis Matrix, the total probability theorem can be
+used to incorporate all probabilistic fault detection results into one ﬁnal verdict. The following sections
+will further discuss both conﬁdence and diagnoses matrices.
+2.1. Conﬁdence Matrix
+A conﬁdence or Probability of Detection (PoD) matrix for diagnostics is a measure for reliability
+or conﬁdence level of diagnostic agents for a given component or component failure mode. At the
+beginning of the wind farm lifetime, since no prior operational data is available, the conﬁdence matrix
+should be deﬁned based on experts’ experience on conﬁdence level of each diagnostic agent for
+each component. Similarly, it is possible to use operational data of the same components in similar
+operational wind farms to estimate the initial conﬁdence matrix.
+------------------------------End of the page -----------------------------------
+Energies 2018 ,11, 300 5 of 17
+Once sufﬁcient operational data is available, based on Bayes’ rule and correctness of each fault
+detection agent determined by inspections, the initial or prior conﬁdence matrix can be updated.
+2.2. Diagnosis Matrix
+The probability diagnosis matrix is a hybrid placeholder for individual probabilistic diagnosis of
+each diagnostic agent. The diagnosis of each diagnostic agent can be determined using several different
+lifetime estimation techniques, e.g., a stochastic, physical, data-driven, or Artiﬁcial Intelligence (AI)
+model. The diagnosis of components can be presented using a stochastic model if sufﬁcient information
+on the physics of failure is available, or if a diagnostic model with minimum implementation effort is
+desired. The diagnosis of critical components can be presented using a physical or data-driven model
+if higher level of accuracy is needed. In [ 42], a review on statistical data-driven approaches for lifetime
+estimation techniques is given. In [ 43], optimal selection of a lifetime estimation technique based on
+several classiﬁcation methods and process ﬂow diagrams is discussed. In [ 44], an overview of lifetime
+estimation techniques with focus on applications to wind turbines is given.
+This paper only considers stochastic diagnosis models for fault detection of mechanical and
+electrical components. In [ 45–48], stochastic reliability models based on Weibull distribution, Gamma
+distribution and Poisson process are discussed. In the diagnostic model discussed here, an exponential
+CDF presents the diagnosis of anomaly detection agents:
+P(D=HealthyjA)=e lADA
+P(D=FaultyjA)=1 e lADA(1)
+The Nomenclature appendix of this paper presents the variables used in equations. The diagnosis
+exponential rates of anomaly detection agents can be estimated based on experts’ opinion or existing
+operational data of similar offshore operational wind farms. For instance, the exponential rate of a
+diagnostic agent can be calculated as:
+lA= ln(1 P)
+Deviation(2)
+The Deviation in Equation (2) is a DA, in which an expert is conﬁdent that a component
+fault is certain. Section 3 of this paper further explains, within a case study, formulation of the
+diagnostic matrix.
+2.3. Total Probability of Fault
+Once the probability conﬁdence and diagnosis matrices are both known, based on a hybrid of
+several non-correlated diagnostic agents and using the total probability theorem, the probability of a
+component being in the faulty state can be calculated as:
+P(D=Faulty )=i=n
+å
+i=1P(D=FaultyjAi)P(Ai) (3)
+2.4. Decision Model
+Once the total probability of a component being in fault condition is estimated, a decision has to
+be made if an inspection is to be performed to conﬁrm the fault and, subsequently, to repair/maintain
+the fault. This process can be formulated within a Bayesian decision model where the objective is to
+assist in decision-making that minimizes the total expected remaining lifetime O&M costs. Figure 4
+shows a framework for a risk based Bayesian decision model to minimize the total expected costs in
+the remaining lifetime of an offshore wind farm, based on [15].
+------------------------------End of the page -----------------------------------
+Energies 2018 ,11, 300 6 of 17
+Energies 2018 , 11, x FOR PEER REVIEW  6 of 17 
+  
+Figure 4.  Framework of a risk based Bayesian decision  model for optimal O&M planning. Reproduced 
+with permission of John Wiley and Sons [15] . 
+This paper does not consider the ‘i nitial design (z)’ phase shown in  Figure 4. In this paper, the 
+‘inspection/monitoring plan (e)’ phase of Figure 4 corresponds to the planning of which diagnostic 
+agents to use. The ‘inspection/moni toring result (S)’ corresponds to the output from the diagnostic 
+agents. Based on that, the probability of faulty cond ition is estimated by Equation (3). The decision 
+rule d(S) is related to the decision of whether or not it is necessary to perform an inspection and a 
+possible repair maintenance action. The decision rule is related to the probability of fault exceeding a given probability threshold. The ‘state of nature’ represents all other uncertainties more or less directly influencing the condition of a given compon ent, e.g., wind speed. The total expected benefit 
+(W) of the model is the total benefit gained minus to tal costs in the remaining part of lifetime after 
+the time of the decision. 
+At each time step during the lif etime of an offshore wind farm, an updated decision (e) on which 
+agents to use and which probability thre shold to use in the decision rule d(S) for repair/maintenance. 
+These decisions are made so as to optimize the total expected cost-benef it (W) in the remaining 
+lifetime. Additionally, using Bayesian updating th e probabilistic model is continuously updated when 
+new information becomes available, see the next section.  
+2.5. Posterior Confidence 
+If an inspection outcome confirms that the stat e of the component is Faulty, then a condition 
+based maintenance work order shou ld be created to maintain the component before its failure. 
+Additionally, since sufficient operational data is available after this inspection, the prior estimations 
+of the confidence matrix can be updated by Bayesian updating: 
+(ܲ
+ܣ|ݕݐ݈ݑܽܨ=ܦ(ܲ=)ݕݐ݈ݑܽܨ=ܦ |ܣ(′ܲ)ܣ)
+)ݕݐ݈ݑܽܨ=ܦ(ܲ ൘  (4)
+The )ݕݐ݈ݑܽܨ=ܦ(ܲ  in Equation (3) is the total probability of a component being in a faulty 
+condition, based on diagnosis of all diagnostic agents calculated using Equation (3). 
+A posterior probability is a condit ional probability taking into acco unt all available observations 
+on the state of a variable. The updated posterior co nfidence levels of diagnostic agents should be 
+used for future diagnostics to reduce the model unce rtainty and to enhance the fault detection accuracy. 
+  
+Figure 4. Framework of a risk based Bayesian decision model for optimal O&M planning. Reproduced
+with permission of John Wiley and Sons [15].
+This paper does not consider the ‘initial design (z)’ phase shown in Figure 4. In this paper, the
+‘inspection/monitoring plan (e)’ phase of Figure 4 corresponds to the planning of which diagnostic
+agents to use. The ‘inspection/monitoring result (S)’ corresponds to the output from the diagnostic
+agents. Based on that, the probability of faulty condition is estimated by Equation (3). The decision
+rule d(S) is related to the decision of whether or not it is necessary to perform an inspection and a
+possible repair maintenance action. The decision rule is related to the probability of fault exceeding a
+given probability threshold. The ‘state of nature’ represents all other uncertainties more or less directly
+inﬂuencing the condition of a given component, e.g., wind speed. The total expected beneﬁt (W) of the
+model is the total beneﬁt gained minus total costs in the remaining part of lifetime after the time of
+the decision.
+At each time step during the lifetime of an offshore wind farm, an updated decision (e) on which
+agents to use and which probability threshold to use in the decision rule d(S) for repair/maintenance.
+These decisions are made so as to optimize the total expected cost-beneﬁt (W) in the remaining lifetime.
+Additionally, using Bayesian updating the probabilistic model is continuously updated when new
+information becomes available, see the next section.
+2.5. Posterior Conﬁdence
+If an inspection outcome conﬁrms that the state of the component is Faulty, then a condition based
+maintenance work order should be created to maintain the component before its failure. Additionally,
+since sufﬁcient operational data is available after this inspection, the prior estimations of the conﬁdence
+matrix can be updated by Bayesian updating:
+P(AjD=Faulty )=P(D=FaultyjA)P0(A)/P(D=Faulty ) (4)
+The P(D=Faulty )in Equation (3) is the total probability of a component being in a faulty
+condition, based on diagnosis of all diagnostic agents calculated using Equation (3).
+A posterior probability is a conditional probability taking into account all available observations
+on the state of a variable. The updated posterior conﬁdence levels of diagnostic agents should be used
+for future diagnostics to reduce the model uncertainty and to enhance the fault detection accuracy.
+------------------------------End of the page -----------------------------------
+Energies 2018 ,11, 300 7 of 17
+2.6. Diagnostic Model
+Now that conﬁdence and diagnosis matrices and a decision model are introduced, and the total
+probability of fault and the posterior conﬁdence levels can be calculated, a diagnostic model can be
+deﬁned. Figure 5 outlines a framework for a diagnostic model with Bayesian updating for offshore
+wind components.
+Energies 2018 , 11, x FOR PEER REVIEW  7 of 17 
+ 2.6. Diagnostic Model 
+Now that confidence and diagnosis matrices and a decision model are introduced, and the total 
+probability of fault and the posterior confidence levels can be calculated, a diagnostic model can be 
+defined. Figure 5 outlines a framework for a diagnostic model with Bayesian updating for offshore 
+wind components. 
+ 
+Figure 5.  Framework for a diagnostic model with Bayesian updating for offshore wind components. 
+The next section presents a case study for fault detection and condition based maintenance of an 
+offshore wind turbine component based on three diagnostic agents. 
+3. Case Study 
+As discussed in the previous section, instead of assessing results of each diagnostic agent 
+individually, a hybrid or multi-agent diagnostic approach can be used, which takes into account the results of all available diagnostic agents at once and,  as a result, the diagnosis (state of the component) 
+is determined. This case study discusses the outl ine and implementation steps of this diagnostic 
+model for an offshore wind turbine’s main bearing, based on three diagnostic agents. In this case study, it is assumed that vibration, temperature, and oil particle are independent diagnostic agents 
+for this wind turbine main bearing. As a result  from each agent, the diagnosis (state of the 
+component) can be estimated as a probability. The following sections will briefly explain these diagnostic methods. 
+3.1. Vibration Based 
+Vibration analysis is the most re liable method for diagnostic of dr ivetrain mechanical components. 
+The vibration analysis is based on data from 6 to 10 accelerometer, velocity, and displacements sensors installed on bearings, shafts, gearbox, coupling, and generator of wind turbines. These 
+sensors are not a part of SCADA system and, theref ore, a separate network infrastructure for their 
+data acquisition, transfer, and storage is required. As illustrated in Figure 6, the vibration analysis can be done in time domain (such as trend anal ysis) or in frequency domain (such as envelop 
+analysis). In [33], the time and frequency domain analyses for vibration based condition monitoring are further explained. In [38], several case studies for vibration based condition monitoring of two research wind turbines are presented. 
+Figure 5. Framework for a diagnostic model with Bayesian updating for offshore wind components.
+The next section presents a case study for fault detection and condition based maintenance of an
+offshore wind turbine component based on three diagnostic agents.
+3. Case Study
+As discussed in the previous section, instead of assessing results of each diagnostic agent
+individually, a hybrid or multi-agent diagnostic approach can be used, which takes into account
+the results of all available diagnostic agents at once and, as a result, the diagnosis (state of the
+component) is determined. This case study discusses the outline and implementation steps of this
+diagnostic model for an offshore wind turbine’s main bearing, based on three diagnostic agents. In this
+case study, it is assumed that vibration, temperature, and oil particle are independent diagnostic agents
+for this wind turbine main bearing. As a result from each agent, the diagnosis (state of the component)
+can be estimated as a probability. The following sections will brieﬂy explain these diagnostic methods.
+3.1. Vibration Based
+Vibration analysis is the most reliable method for diagnostic of drivetrain mechanical components.
+The vibration analysis is based on data from 6 to 10 accelerometer, velocity, and displacements sensors
+installed on bearings, shafts, gearbox, coupling, and generator of wind turbines. These sensors
+are not a part of SCADA system and, therefore, a separate network infrastructure for their data
+acquisition, transfer, and storage is required. As illustrated in Figure 6, the vibration analysis can
+be done in time domain (such as trend analysis) or in frequency domain (such as envelop analysis).
+In [33], the time and frequency domain analyses for vibration based condition monitoring are further
+explained. In [ 38], several case studies for vibration based condition monitoring of two research wind
+turbines are presented.
+------------------------------End of the page -----------------------------------
+Energies 2018 ,11, 300 8 of 17
+Energies 2018 , 11, x FOR PEER REVIEW  8 of 17 
+  
+Figure 6.  Time and frequency domain analyses for vibration based diagnostic [3]. 
+Once the state of a component deviates consider ably from its healthy vibration signature, a 
+warning is generated. The vibration based analysis can detect drivetrain mechanical faults a few 
+months prior to their potential failure, which provides sufficient time for preparation and planning of the subsequent condition based work orders. 
+In the wind industry vibration analysis is inco rrectly known as the Condition Monitoring System 
+(CMS) since it is the most used CMS for wind turbine components. However, besides vibration based sensors there are several other wind turbine sensors which can be used for condition monitoring, such as temperature or hydraulic oil sensors. 
+3.2. Temperature Based 
+The majority of drivetrain components of offsho re wind turbines are equipped with temperature 
+sensors. The data acquisition of  temperature sensors is typically handled by wind turbine SCADA 
+system. This makes temperature analysis an interesting diagnostic method as it can be done for almost any turbine platform without demanding any additional sensor or network infrastructure. 
+There are several methods for temperature analysis of drivetrain components. A typical 
+temperature analysis is based on automated anomal y detection. Once the real-time temperature of a 
+component is considerably higher than its temperatur e profile, a warning is generated. The temperature 
+of a component is dependent on turbine accumulat ed active power and weather conditions such as 
+ambient temperature or humidity. It is possible to  calculate the temperature profile of a component 
+based on data-driven models or AI models. Figure 7 shows the temperature sensor data of the main 
+bearing of the offshore wind turbine used in this case study.  
+As seen in Figure 7, prior to the main bearing failure, significant (more than 20 degrees) 
+temperature deviations are observed. The temperatur e based diagnostic of this bearing could be 
+used to initiate condition based maintenance to repair the bearing fault prior to its complete failure.  
+Another possible temperature analysis technique is to compare real-time component temperature 
+signals of a wind turbine to its neighbor wind turbines with similar wake condition. In [49], a case study for temperature based condition monitoring of wind turbine gearbox is discussed in detail.  
+The temperature analysis can predict faults of me chanical and electrical components from a few 
+months to a few weeks prior to their potential failure. Once an anomaly in the temperature of a 
+component, a temperature based warning is triggered. 
+Figure 6. Time and frequency domain analyses for vibration based diagnostic [3].
+Once the state of a component deviates considerably from its healthy vibration signature,
+a warning is generated. The vibration based analysis can detect drivetrain mechanical faults a few
+months prior to their potential failure, which provides sufﬁcient time for preparation and planning of
+the subsequent condition based work orders.
+In the wind industry vibration analysis is incorrectly known as the Condition Monitoring System
+(CMS) since it is the most used CMS for wind turbine components. However, besides vibration based
+sensors there are several other wind turbine sensors which can be used for condition monitoring, such
+as temperature or hydraulic oil sensors.
+3.2. Temperature Based
+The majority of drivetrain components of offshore wind turbines are equipped with temperature
+sensors. The data acquisition of temperature sensors is typically handled by wind turbine SCADA
+system. This makes temperature analysis an interesting diagnostic method as it can be done for almost
+any turbine platform without demanding any additional sensor or network infrastructure.
+There are several methods for temperature analysis of drivetrain components. A typical
+temperature analysis is based on automated anomaly detection. Once the real-time temperature of a
+component is considerably higher than its temperature proﬁle, a warning is generated. The temperature
+of a component is dependent on turbine accumulated active power and weather conditions such as
+ambient temperature or humidity. It is possible to calculate the temperature proﬁle of a component
+based on data-driven models or AI models. Figure 7 shows the temperature sensor data of the main
+bearing of the offshore wind turbine used in this case study.
+As seen in Figure 7, prior to the main bearing failure, signiﬁcant (more than 20 degrees)
+temperature deviations are observed. The temperature based diagnostic of this bearing could be
+used to initiate condition based maintenance to repair the bearing fault prior to its complete failure.
+Another possible temperature analysis technique is to compare real-time component temperature
+signals of a wind turbine to its neighbor wind turbines with similar wake condition. In [ 49], a case
+study for temperature based condition monitoring of wind turbine gearbox is discussed in detail.
+The temperature analysis can predict faults of mechanical and electrical components from a few
+months to a few weeks prior to their potential failure. Once an anomaly in the temperature of a
+component, a temperature based warning is triggered.
+------------------------------End of the page -----------------------------------
+Energies 2018 ,11, 300 9 of 17
+Energies 2018 , 11, x FOR PEER REVIEW  9 of 17 
+  
+Figure 7.  Temperature based diagnostic of the main bearing of the wind turbine used in the case study. 
+3.3. Oil Based 
+The oil analysis is based on the lubrication syst em of the drivetrain components. The hydraulic 
+oil analysis can be done using online oil sensors (such as oil pressure, temperature, or particle counter) 
+or offline oil samples (to check oil cleanliness or oxidation).  
+The offline oil samples and online oi l pressure data can be used for fault detection of the lubrication 
+system. However, the oil temperature and particle counter data can be used for fault detection of 
+drivetrain components. Similar to  temperate analysis, oil temperature anomaly detection can be 
+triggered once the oil temperature deviates signific antly from the oil temperature profile. In [33], 
+several illustrative examples for oil based condition monitoring of wind turbines are given. 
+The oil particle counter data can be used to monitor a sudden increase of particles (such as wear 
+debris) created by degradation of drivetrain mechanical components. An automated oil analysis will generate an oil based warning once the oil particle rises unexpectedly in a given time.  
+Limited increase of oil particles (e.g., increase of 10 to 50 oil particles per month) is due to 
+expected fatigue of mechanical drivetrain components, but sudden increase of oil particles (e.g., increase of 200 oil particles in one hour) is most likely caused by sudden degradation of a drivetrain component. Figure 8 visualizes the oil particle sensor  data of the offshore wi nd turbine used in this 
+case study. As highlighted by orange dashed lines in Figure 8, the number of oil particles in the 
+hydraulic oil of the drivetrain of this offshore wind turbine increases suddenly by 136, which is typically a clear sign for sudden degradation of one or several drivetrain components. 
+Similar to temperature signals, oil pressure, oil temperature, and particle  counting sensor data 
+are collected by the SCADA system. The oil particle counters can detect faults from a few weeks to a 
+few days prior to their potential failure and are typically very reliable. However, the oil particle results cannot identify the exact location of the fault, and typically the short time period between the diagnosis and potential failure does not allow proper  preparation and planning for follow up condition 
+based work orders. 
+Besides the discussed diagnostic methods, seve ral other less well-known fault detection methods 
+are available (such as visual, acoustic, or ultrasonic), which are not covered in this case study. Now 
+that diagnostic agents are briefly explained, the confidence and diagnosis matrices associated with these three diagnostic agents can be formulated. 
+Figure 7. Temperature based diagnostic of the main bearing of the wind turbine used in the case study.
+3.3. Oil Based
+The oil analysis is based on the lubrication system of the drivetrain components. The hydraulic
+oil analysis can be done using online oil sensors (such as oil pressure, temperature, or particle counter)
+or ofﬂine oil samples (to check oil cleanliness or oxidation).
+The ofﬂine oil samples and online oil pressure data can be used for fault detection of the lubrication
+system. However, the oil temperature and particle counter data can be used for fault detection of
+drivetrain components. Similar to temperate analysis, oil temperature anomaly detection can be
+triggered once the oil temperature deviates signiﬁcantly from the oil temperature proﬁle. In [ 33],
+several illustrative examples for oil based condition monitoring of wind turbines are given.
+The oil particle counter data can be used to monitor a sudden increase of particles (such as wear
+debris) created by degradation of drivetrain mechanical components. An automated oil analysis will
+generate an oil based warning once the oil particle rises unexpectedly in a given time.
+Limited increase of oil particles (e.g., increase of 10 to 50 oil particles per month) is due to expected
+fatigue of mechanical drivetrain components, but sudden increase of oil particles (e.g., increase of
+200 oil particles in one hour) is most likely caused by sudden degradation of a drivetrain component.
+Figure 8 visualizes the oil particle sensor data of the offshore wind turbine used in this case study.
+As highlighted by orange dashed lines in Figure 8, the number of oil particles in the hydraulic oil of
+the drivetrain of this offshore wind turbine increases suddenly by 136, which is typically a clear sign
+for sudden degradation of one or several drivetrain components.
+Similar to temperature signals, oil pressure, oil temperature, and particle counting sensor data are
+collected by the SCADA system. The oil particle counters can detect faults from a few weeks to a few
+days prior to their potential failure and are typically very reliable. However, the oil particle results
+cannot identify the exact location of the fault, and typically the short time period between the diagnosis
+and potential failure does not allow proper preparation and planning for follow up condition based
+work orders.
+Besides the discussed diagnostic methods, several other less well-known fault detection methods
+are available (such as visual, acoustic, or ultrasonic), which are not covered in this case study. Now
+that diagnostic agents are brieﬂy explained, the conﬁdence and diagnosis matrices associated with
+these three diagnostic agents can be formulated.
+------------------------------End of the page -----------------------------------
+Energies 2018 ,11, 300 10 of 17
+Energies 2018 , 11, x FOR PEER REVIEW  10 of 17 
+  
+Figure 8.  Oil particle based diagnostic of the drivetrain of the wind turbine used in this case study. 
+3.4. Initial Confidence Matrix 
+In Section 2.1, it was explained that the initial confidence matrix can be defined based on the 
+available operational data of the sa me components in similar operatio nal wind farms. Table 1 provides 
+the fault detection history of the main bearing used in this case study based on operational data of similar offshore wind farms. According to Table 1, in two occasions out of th e total 10 available main 
+bearing fault detection records, the temperature ba sed diagnostic method has detected the bearing 
+fault earlier than the vibration or oil particle based diagnostic methods. 
+Table 1.  Fault detection history of the main bearing used  in this case study based on operational data 
+of similar offshore wind farms. 
+Component  Number of Early Fault Detections  
+Vibration Based Temperature Based Oil Particle Based Total 
+Main Bearing 3 2 5 10 
+Now, based on the fault detection history given in Ta ble 1, the initial confidence level of vibration, 
+temperature, and oil particle based diagnostic agents for detection of faults in a wind turbine main 
+bearing can be estimated: 
+(ܲܣ௏)஻௘௔௥௜௡௚=310ൗ=0 . 3 , (ܲܣ்)஻௘௔௥௜௡௚=210ൗ=0 . 2 , (ܲܣை)஻௘௔௥௜௡௚=510ൗ=0 . 5  (5)
+Using inspection based observations in a Bayesian  updating model, the uncertainty of the initial 
+confidence matrix can be significantly reduced. Furthe rmore, as discussed in Section 2.4 of this paper, 
+the update of the confidence matrix can be incorp orated into the update of a risk based Bayesian 
+decision model. 
+3.5. Diagnosis Matrix 
+The next step is to define a diagnosis matrix for this diagnostic model. To do so, first the 
+exponential rates of temperature and oil particle based diagnostic agents should be estimated. In this case study, it is assumed that once the temperature deviation of the main bearing is larger than 20 degrees or once increase in oil particles of the dr ivetrain rises above 200, then with 90% probability 
+the main bearing is in fault condition. Therefore, using Equation (2), the exponential rates of the 
+temperature and oil particle based diagnostic agents for the main bearing can be calculated as: 
+Figure 8. Oil particle based diagnostic of the drivetrain of the wind turbine used in this case study.
+3.4. Initial Conﬁdence Matrix
+In Section 2.1, it was explained that the initial conﬁdence matrix can be deﬁned based on the
+available operational data of the same components in similar operational wind farms. Table 1 provides
+the fault detection history of the main bearing used in this case study based on operational data of
+similar offshore wind farms. According to Table 1, in two occasions out of the total 10 available main
+bearing fault detection records, the temperature based diagnostic method has detected the bearing
+fault earlier than the vibration or oil particle based diagnostic methods.
+Table 1. Fault detection history of the main bearing used in this case study based on operational data
+of similar offshore wind farms.
+ComponentNumber of Early Fault Detections
+Vibration Based Temperature Based Oil Particle Based Total
+Main Bearing 3 2 5 10
+Now, based on the fault detection history given in Table 1, the initial conﬁdence level of vibration,
+temperature, and oil particle based diagnostic agents for detection of faults in a wind turbine main
+bearing can be estimated:
+P(AV)Bearing =3/10=0.3,P(AT)Bearing =2/10=0.2,P(AO)Bearing =5/10=0.5 (5)
+Using inspection based observations in a Bayesian updating model, the uncertainty of the initial
+conﬁdence matrix can be signiﬁcantly reduced. Furthermore, as discussed in Section 2.4 of this paper,
+the update of the conﬁdence matrix can be incorporated into the update of a risk based Bayesian
+decision model.
+3.5. Diagnosis Matrix
+The next step is to deﬁne a diagnosis matrix for this diagnostic model. To do so, ﬁrst the
+exponential rates of temperature and oil particle based diagnostic agents should be estimated. In this
+case study, it is assumed that once the temperature deviation of the main bearing is larger than
+------------------------------End of the page -----------------------------------
+Energies 2018 ,11, 300 11 of 17
+20 degrees or once increase in oil particles of the drivetrain rises above 200, then with 90% probability
+the main bearing is in fault condition. Therefore, using Equation (2), the exponential rates of the
+temperature and oil particle based diagnostic agents for the main bearing can be calculated as:
+lAT= ln(1 0.9)
+20=0.115 (1C)
+lAO= ln(1 0.9)
+200=0.0115(6)
+Figure 9 shows the probability of the main bearing being in fault condition, based on temperature
+and oil particle diagnostic agents, in which 90% probability of fault in both graphs is highlighted.
+Energies 2018 , 11, x FOR PEER REVIEW  11 of 17 
+ ߣ஺೅=−ln(1−0.9)
+20= 0.115(1
+°C) 
+ߣ஺ೀ=−ln(1−0.9)
+200= 0.0115  (6)
+Figure 9 shows the probability of the main bearin g being in fault condition, based on temperature 
+and oil particle diagnostic agents, in which 90% prob ability of fault in both graphs is highlighted. 
+ 
+Figure 9.  Probability of fault for temperature and oil part icle diagnostic agents of the main bearing 
+based on exponential rates calculated in Equation (6). 
+Now that the exponential rates are known, based on the condition monitoring data given in a 
+time interval, the probability of the main bearing of  this offshore wind turbine being in faulty state 
+can be calculated. This case study focuses on the one-hour time interval highlighted with orange 
+dashed line in Figure 8. In this one-hour time in terval, based on temperature and oil particle graphs 
+given in Figures 7 and 8, there is a maximum temper ature deviation of 14.5 degrees and increase of 
+136 oil particles. Therefore, based on Equation (1), the probability of the main bearing of this wind 
+turbine being in faulty condition can be estimated as: 
+ݕݐ݈ݑܽܨ=ܦ(ܲ |ܣ்)=1−eିఒಲ೅∆ಲ೅=1−e x p (−0.115×14.5 )=0 . 8 1  
+ݕݐ݈ݑܽܨ=ܦ(ܲ |ܣை)=1−eିఒಲೀ∆ಲೀ=1−e x p (−0.0115×136 )=0 . 7 9  (7)
+The vibration based diagnosis of the main bearing of this wind turbine in the same time interval 
+is in criticality level four, which can be translated into 80% probability of fault. Table 2 gives an overview of the diagnosis matrix of the main bearing of the wind turbine discussed in this case study. 
+Table 2.  Diagnosis matrix of the main bearing of the wind turbine discussed in this case study. 
+Component Diagnosis of Diagnostic Agent— P(D|A )
+Vibration Based Temperature Based Oil Particle Based 
+Healthy Faulty Healthy Faulty Healthy Faulty 
+Bearing 0.2 0.8 0.19 0.81 0.21 0.79 
+Now that both probability confidence and diag nosis matrices are known, based on the total 
+probability theorem given in Equation  (3), the probability of this main bearing being in faulty condition 
+can be estimated as:  
+Figure 9. Probability of fault for temperature and oil particle diagnostic agents of the main bearing
+based on exponential rates calculated in Equation (6).
+Now that the exponential rates are known, based on the condition monitoring data given in a
+time interval, the probability of the main bearing of this offshore wind turbine being in faulty state can
+be calculated. This case study focuses on the one-hour time interval highlighted with orange dashed
+line in Figure 8. In this one-hour time interval, based on temperature and oil particle graphs given
+in Figures 7 and 8, there is a maximum temperature deviation of 14.5 degrees and increase of 136 oil
+particles. Therefore, based on Equation (1), the probability of the main bearing of this wind turbine
+being in faulty condition can be estimated as:
+P(D=FaultyjAT)=1 e lATDAT=1 exp( 0.11514.5)=0.81
+P(D=FaultyjAO)=1 e lAODAO=1 exp( 0.0115136)=0.79(7)
+The vibration based diagnosis of the main bearing of this wind turbine in the same time interval is
+in criticality level four, which can be translated into 80% probability of fault. Table 2 gives an overview
+of the diagnosis matrix of the main bearing of the wind turbine discussed in this case study.
+------------------------------End of the page -----------------------------------
+Energies 2018 ,11, 300 12 of 17
+Table 2. Diagnosis matrix of the main bearing of the wind turbine discussed in this case study.
+ComponentDiagnosis of Diagnostic Agent— P(D|A )
+Vibration Based Temperature Based Oil Particle Based
+Healthy Faulty Healthy Faulty Healthy Faulty
+Bearing 0.2 0.8 0.19 0.81 0.21 0.79
+Now that both probability conﬁdence and diagnosis matrices are known, based on the total
+probability theorem given in Equation (3), the probability of this main bearing being in faulty condition
+can be estimated as:
+P(D=Faulty )Bearing
+=P(D=FaultyjAV)P(AV)+P(D=FaultyjAT)P(AT)
++P(D=FaultyjAO)P(AO)=0.80.3+0.810.2+0.790.5
+=0.797(8)
+Therefore, based on a hybrid of all diagnostic agents, the probability of the main bearing of this
+wind turbine is 79.7%. Figure 10 shows an overview of the case study results.
+Energies 2018 , 11, x FOR PEER REVIEW  12 of 17 
+ )ݕݐ݈ݑܽܨ=ܦ(ܲ ஻௘௔௥௜௡௚
+=	 ݕݐ݈ݑܽܨ=ܦ(ܲ |ܣ௏)(ܲܣ௏)+ݕݐ݈ݑܽܨ=ܦ(ܲ |ܣ்)(ܲܣ்)
++ݕݐ݈ݑܽܨ=ܦ(ܲ |ܣை)ܣ(ܲை) = 0.8×0.3+0.81×0.2+0.79×0.5
+= 0.797  (8)
+Therefore, based on a hybrid of all diagnostic agents, the probability of the main bearing of this 
+wind turbine is 79.7%. Figure 10 shows an  overview of the case study results.  
+ 
+ 
+Figure 10.  Overview of the case study results of a wind turbine’s main bearing. 
+As discussed in Section 2.6 and visualized in Figu re 5, the estimated probability of being in fault 
+condition should be used in a decision model to initiate follow up inspection and condition based 
+maintenance actions. In the next section, it is as sumed that based on the decision model outcome, an 
+inspection should be initiated to validate the diagnosis. 
+3.6. Posterior Confidence Matrix 
+If an inspection confirms that the state of the component is faulty, then the prior estimations of 
+the confidence matrix can be updated by Bayesian updating. For instance, based on Equation (4), the 
+posterior confidence level of temperature based diag nostic agent for the main bearing given 0.797 as 
+the total probability of the bearing being in fault condition is: 
+(ܲܣ்|ݕݐ݈ݑܽܨ=ܦ(ܲ=)ݕݐ݈݈ݑܽܨ=ܦ |ܣ்)(′ܲܣ்)
+)ݕݐ݈ݑܽܨ=ܦ(ܲ ൘ =0.81×0.20.797ൗ
+= 0.203  (9)
+It should be noted that P(D = Faulty ) is the total probability of a component being in faulty state 
+and not the probability of fault given the inspection outcome. 
+Table 3 shows the prior and posterior confidence levels of all diagnostic agents for the main 
+bearing. It also shows that posterior confidence levels can be easily calculated by dividing the Bayes Numerator of each agent by total Bayes Numerator or P(D = Faulty ) = 0.797 of the main bearing. 
+  
+Figure 10. Overview of the case study results of a wind turbine’s main bearing.
+As discussed in Section 2.6 and visualized in Figure 5, the estimated probability of being in fault
+condition should be used in a decision model to initiate follow up inspection and condition based
+maintenance actions. In the next section, it is assumed that based on the decision model outcome,
+an inspection should be initiated to validate the diagnosis.
+3.6. Posterior Conﬁdence Matrix
+If an inspection conﬁrms that the state of the component is faulty, then the prior estimations of
+the conﬁdence matrix can be updated by Bayesian updating. For instance, based on Equation (4),
+------------------------------End of the page -----------------------------------
+Energies 2018 ,11, 300 13 of 17
+the posterior conﬁdence level of temperature based diagnostic agent for the main bearing given 0.797
+as the total probability of the bearing being in fault condition is:
+P(ATjD=Faullty )=P(D=FaultyjAT)P0(AT)/P(D=Faulty )=0.810.2/0.797
+=0.203(9)
+It should be noted that P(D = Faulty ) is the total probability of a component being in faulty state
+and not the probability of fault given the inspection outcome.
+Table 3 shows the prior and posterior conﬁdence levels of all diagnostic agents for the main
+bearing. It also shows that posterior conﬁdence levels can be easily calculated by dividing the Bayes
+Numerator of each agent by total Bayes Numerator or P(D = Faulty ) = 0.797 of the main bearing.
+Table 3. Posterior conﬁdence levels of diagnostic agents for the main bearing.
+Diagnostic Agent Prior Conﬁdence Diagnosis Bayes Numerator Posterior Conﬁdence
+A P (A) P(D = Faulty|A ) P(A)P(D = Faulty|A ) P(A|D = Faulty )
+Vibration based 0.3 0.80 0.240 0.301
+Temperature based 0.2 0.81 0.162 0.203
+Oil particle based 0.5 0.79 0.395 0.496
+Total 1.0 NA 0.797 1.0
+The updated posterior conﬁdence levels of diagnostic agents should be used for future diagnostics
+to enhance the fault detection accuracy made by this holistic diagnostic model.
+4. Discussion
+The case study presented in this paper is based on three diagnostic agents for two component
+states (healthy or faulty), and the probability of each diagnosis is modelled using an exponential
+distribution. Future studies could explore the application of another diagnostic agent and more
+accurate probabilistic diagnosis models for multiple component states or deterioration levels (such as
+healthy, minor damaged, damaged, server damaged).
+The conﬁdence matrix of this case study shown in Table 1 is based on documented early
+fault detection data of the main bearing in similar operational offshore wind farms. If sufﬁciently
+documented fault detection data is not available, equal initial PoD or conﬁdence levels for all diagnostic
+agents can be assumed. In this respect, it should be noted that early results of this diagnostic model
+are associated with high uncertainties, but after a few Bayesian updates of the model based on actual
+fault detection data, the uncertainty of the conﬁdence levels should be reduced to an acceptable level.
+As instance, Table 4 shows that assumed equal conﬁdence levels for vibration, temperature, and oil
+particle based agents after two hypothetical fault detections are respectively updated to 0.15, 0.04,
+and 0.81. The more this diagnostic model is used in practice, the less the associated uncertainties are.
+Table 4. Sensitivity analysis of initial equal conﬁdence levels after two hypothetical diagnoses.
+Diagnostic Agent Assumed Conﬁdence 1st Diagnosis 1st Updated Conﬁdence 2nd Diagnosis 2nd Updated Conﬁdence
+Vibration based 0.33 0.2 0.18 0.6 0.15
+Temperature based 0.33 0.1 0.09 0.3 0.04
+Oil particle based 0.34 0.8 0.73 0.8 0.81
+Total 1.0 NA 1.0 NA 1.0
+Furthermore, the conﬁdence model of such a diagnostic model can be based on each failure mode
+of each single component to increase the accuracy of the model results.
+As discussed in Section 2.4 and visualized in Figure 4, future studies could investigate application
+of a risk based Bayesian decision model for optimal inspection and monitoring planning of an offshore
+wind farm.
+------------------------------End of the page -----------------------------------
+Energies 2018 ,11, 300 14 of 17
+Last but not least, it should be noted that the purpose of the discussed case study in this paper
+is to demonstrate the framework and the implementation steps of the diagnostic model and not the
+validation of the accuracy of the model. The fault detection accuracy of this diagnostic model is
+depending on the accuracy of the applied diagnostic agents, which is not the focus of this paper.
+5. Conclusions
+The diagnostic model introduced in this paper is a hybrid multi-agent model, which can
+incorporate results of multiple diagnostic agents into each other to detect faults of a single wind
+farm component. This diagnostic model is based on the assumption that no diagnostic agent can
+single-handedly optimally detect faults in a wind farm component. The probability of fault detection
+of each diagnostic agent is deﬁned within an initial conﬁdence matrix. When the diagnosis of such a
+diagnostic model is veriﬁed by inspections, based on the Bayes’ rule, the initial conﬁdence matrix can
+be updated to reduce the uncertainties associated with the initial conﬁdence levels.
+As elaborated in Section 4 of this paper, in future studies on this topic, application of more accurate
+reliability models and fault detection techniques within the described diagnostic framework can be
+further investigated. Additionally, ﬁnancial beneﬁt of this diagnostic model within a case study for
+critical components of all wind turbines of an offshore wind farm can be quantiﬁed.
+Once based on the hybrid diagnostic model deﬁned in this paper, optimal condition based work
+orders are created, a work order scheduling and prioritization model such as the one shown in
+Figure 11 should be used to determine optimal short-term O&M planning for all outstanding work
+orders in a working shift (including corrective, scheduled, predictive, and upgrade work orders).
+In [50], scheduling and prioritization model is further discussed.
+Energies 2018 , 11, x FOR PEER REVIEW  14 of 17 
+ diagnostic model is verified by inspections, based on the Bayes’ rule, the initial confidence matrix 
+can be updated to reduce the uncertainties asso ciated with the initial confidence levels.  
+As elaborated in Section 4 of this paper, in future studies on this topic, application of more 
+accurate reliability models and fault detection tech niques within the described diagnostic framework 
+can be further investigated. Additionally, financial benefit of this diagnostic model within a case study for critical components of all wind turbines  of an offshore wind farm can be quantified. 
+Once based on the hybrid diagnostic model de fined in this paper, optimal condition based 
+work orders are created, a work order scheduling and prioritization model such as the one shown in Figure 11 should be used to determine optimal short-term O&M planning for all outstanding work 
+orders in a working shift (including corrective, sc heduled, predictive, and upgrade work orders).  
+In [50], scheduling and prioritization model is further discussed. 
+ 
+Figure 11.  Framework for optimal short-term O&M planning of offshore wind farms. 
+The application of the discussed decision and diagnostic models shown in Figures 4 and 5, 
+within the short-term O&M planning framework shown in Figure 11, can result in a significant O&M cost reduction for offshore wind farms.  
+The presented generic diagnostic model can be implemented into any asset management or IT 
+infrastructure to detect faults, prevent failures, and reduce O&M costs and downtime of offshore 
+wind components. The discussed diagnostic model can also be used for onshore wind farms,  but within a cost-benefit analysis the optimal scop e of the diagnostic model should be determined. 
+The fault detection and condition based maintenanc e of all sub-components of onshore wind farms 
+can result in more cost than benefit since O&M co sts of onshore wind farms are considerably lower 
+than offshore ones. 
+Author Contributions:  Masoud Asgarpour introduced a probabilistic Bayesian method for multi-agent 
+diagnostics and condition based main tenance of offshore wind componen ts and performed a case study to 
+demonstrate the model; Masoud Asgarpour defined, sco ped and wrote the paper and John Dalsgaard Sørensen 
+reviewed the paper and contributed to  the Section 2.4 of this paper.  
+Conflicts of Interest:  The authors declare no conflict of interest. 
+Nomenclature 
+ܣ fault detection or diagnostic agent A 
+∆஺ deviation of the actual signal compared  to its profile for diagnostic agent ܣ 
+ߣ஺ exponential rate of diagnostic agent ܣ 
+ܲ probability level of the expert’s judgement 
+ܣ(ܲ௜) confidence level of diagnostic agent ܣ௜ 
+Figure 11. Framework for optimal short-term O&M planning of offshore wind farms.
+The application of the discussed decision and diagnostic models shown in Figures 4 and 5, within
+the short-term O&M planning framework shown in Figure 11, can result in a signiﬁcant O&M cost
+reduction for offshore wind farms.
+The presented generic diagnostic model can be implemented into any asset management or IT
+infrastructure to detect faults, prevent failures, and reduce O&M costs and downtime of offshore wind
+components. The discussed diagnostic model can also be used for onshore wind farms, but within
+a cost-beneﬁt analysis the optimal scope of the diagnostic model should be determined. The fault
+detection and condition based maintenance of all sub-components of onshore wind farms can result
+------------------------------End of the page -----------------------------------
+Energies 2018 ,11, 300 15 of 17
+in more cost than beneﬁt since O&M costs of onshore wind farms are considerably lower than
+offshore ones.
+Author Contributions: Masoud Asgarpour introduced a probabilistic Bayesian method for multi-agent
+diagnostics and condition based maintenance of offshore wind components and performed a case study to
+demonstrate the model; Masoud Asgarpour deﬁned, scoped and wrote the paper and John Dalsgaard Sørensen
+reviewed the paper and contributed to the Section 2.4 of this paper.
+Conﬂicts of Interest: The authors declare no conﬂict of interest.
+Nomenclature
+A fault detection or diagnostic agent A
+DA deviation of the actual signal compared to its proﬁle for diagnostic agent A
+lA exponential rate of diagnostic agent A
+P probability level of the expert’s judgement
+P(Ai) conﬁdence level of diagnostic agent Ai
+P0(A) prior conﬁdence level of diagnostic agent A
+P(DjA) probability of the component diagnosis Dbeing faulty or healthy given agent A
+P(D=Faulty ) probability of a component being in faulty state
+P(D=FaultyjAi) probability of component being faulty given diagnostic agent Ai
+P(AjD=Faulty ) posterior conﬁdence level of diagnostic agent A
+References
+1. WindEurope. Wind in Power: 2016 European Statistics ; WindEurope: Brussels, Belgium, 2017.
+2. Shaﬁee, M.; Sørensen, J.D. Maintenance Optimization and Inspection Planning of Wind Energy Assets:
+Models, Methods and Strategies. Reliab. Eng. Syst. Saf. 2017 , 1–19. [CrossRef]
+3. Hofmann, M. A Review of Decision Support Models for Offshore Wind Farms with an Emphasis on
+Operation and Maintenance Strategies. Wind Eng. 2011 ,35, 1–16. [CrossRef]
+4. Asgarpour, M.; Sørensen, J.D. State of the Art in Operation and Maintenance Planning of Offshore Wind
+Farms. In Proceedings of the European Safety & Reliability Conference (ESREL), Zurich, Switzerland,
+7–10 September 2015; pp. 1119–1125.
+5. Asgarpour, M.; Dalsgaard Sorensen, J. O&M Modeling of Offshore Wind Farms—State of the Art and Future
+Developments. In Proceedings of the Reliability and Maintainability Symposium (RAMS), Tucson, AZ, USA,
+25–28 January 2016.
+6. Asgarpour, M.; van de Pieterman, R. O&M Cost Reduction of Offshore Wind Farms—A Novel Case Study ; Energy
+Centre of the Netherlands (ECN): Petten, The Netherlands, 2014.
+7. Hofmann, M.; Bakken, I. NOWIcob—A tool for reducing the maintenance costs of offshore wind farms.
+Energy Procedia 2013 ,35, 177–186. [CrossRef]
+8. Van Bussel, G.J.W.; Bierbooms, W.A.A.M. The DOWEC Offshore Reference Windfarm: Analysis of transportation
+for operation and maintenance. Wind Eng. 2003 ,27, 381–392. [CrossRef]
+9. Dinwoodie, I.; Endrerud, O.V .; Hofmann, M.; Martin, R.; Sperstad, I.B. Reference Cases for Veriﬁcation
+of Operation and Maintenance Simulation Models for Offshore Wind Farms. Wind Eng. 2015 ,39, 1–14.
+[CrossRef]
+10. Ossai, C.I.; Boswell, B.; Davies, I.J. A Markovian approach for modelling the effects of maintenance on
+downtime and failure risk of wind turbine components. Renew. Energy 2016 ,96, 775–783. [CrossRef]
+11. Byon, E.; Ding, Y. Season-Dependent Condition-Based Maintenance for a Wind Turbine Using a Partially
+Observed. IEEE Trans. Power Syst. 2010 ,25, 1823–1834. [CrossRef]
+12. Leigh, J.M.; Dunnett, S.J. Use of Petri nets to model the maintenance of wind turbines. Qual. Reliab. Eng. Int.
+2016 ,32, 167–180. [CrossRef]
+13. Guedes Santos, F.; Teixeira, A.P .; Guedes Soares, C.G. Modelling and simulation of the operation and
+maintenance of offshore wind turbines. Risk Reliab. 2015 ,229, 385–393.
+14. Zhang, Y.; Huang, B.; Sang, Q. Modeling and analysis of maintenance processes for offshore wind farms
+based on GSPN. J. Tsinghua Univ. 2014 ,7, 942–951.
+------------------------------End of the page -----------------------------------
+Energies 2018 ,11, 300 16 of 17
+15. Sørensen, J.D. Framework for Risk-based Planning of Operation and Maintenance for Offshore Wind
+Turbines. Wind Energy 2009 ,12, 493–506. [CrossRef]
+16. Nielsen, J.J.; Sørensen, J.D. On risk-based operation and maintenance of offshore wind turbine components.
+Reliab. Eng. Syst. Saf. 2011 ,96, 218–229. [CrossRef]
+17. Rangel-Ram írez, J.G.; Sørensen, J.D. Risk-based inspection planning optimisation of offshore wind turbines.
+Struct. Infrastruct. Eng. 2012 ,8, 473–481. [CrossRef]
+18. Nielsen, J.S.; Sørensen, J.D. Methods for Risk-Based Planning of O&M of Wind Turbines. Energies 2014 ,7,
+6645–6664.
+19. Tian, Z.; Ding, Y.; Ding, F. Maintenance Optimization of Wind Turbine Systems Based on Intelligent Prediction
+Tools. Innov. Comput. Methods 2011 ,357, 53–71.
+20. Hameed, Z.; Wang, K. Development of Optimal Maintenance Strategies for Offshore Wind Turbine by using
+Artiﬁcial Neural Network. Wind Eng. 2012 ,36, 353–364. [CrossRef]
+21. Pattison, D.; Segovia Garcia, M.; Xie, W.; Quail, F.; Revie, M.; Whitﬁeld, I.; Irvine, I. Intelligent integrated
+maintenance for wind power generation. Wind Energy 2016 ,19, 547–562. [CrossRef]
+22. Lau, B.C.P .; Ma, E.W.M.; Pecht, M. Review of Offshore Wind Turbine Failures and Fault Prognostic Methods.
+In Proceedings of the Prognostics & System Health Management Conference, Beijing, China, 23–25 May 2012 .
+23. Canizo, M.; Onieva, E.; Conde, A.; Charramendieta, S.; Trujillo, S. Real-time Predictive Maintenance for
+Wind Turbines Using Big Data Frameworks. In Proceedings of the International Conference on Prognostics
+and Health Management (ICPHM), Dallas, TX, USA, 19–21 June 2017; pp. 1–8.
+24. Nielsen, J.S.; Sørensen, J.D. Bayesian Estimation of Remaining Useful Life for Wind Turbine Blades. Energies
+2017 ,10, 664. [CrossRef]
+25. Nijssen, L. Fatigue Life Prediction and Strength Degradation of Wind Turbine Rotor Blade Composites.
+Ph.D. Thesis, Delft University, Delft, The Netherlands, 2006.
+26. Rasekhi Nejad, A.; Odgaard, P .F.; Gao, Z.; Moan, T. A prognostic method for fault detection in wind turbine
+drivetrains. Eng. Fail. Anal. 2014 ,42, 324–336. [CrossRef]
+27. Grifﬁth, D.T.; Yoder, N.C.; Resor, B.; White, J.; Paquette, J. Structural health and prognostics management
+for the enhancement of offshore wind turbine operations and maintenance strategies. Wind Energy 2014 ,17,
+1737–1751. [CrossRef]
+28. Chen, B.; Matthews, P .C.; Tavner, P .J. Wind turbine pitch faults prognosis using a-priori knowledge-based
+ANFIS. Expert Syst. Appl. 2013 ,40, 6863–6876. [CrossRef]
+29. Liu, W.Y.; Tang, B.P .; Han, J.G.; Lu, X.N.; Hu, N.N.; He, Z.Z. The structure healthy condition monitoring
+and fault diagnosis methods in wind turbines: A review. Renew. Sustain. Energy Rev. 2015 ,44, 466–472.
+[CrossRef]
+30. Kandukuri, S.T.; Klausen, A.; Karimi, H.R.; Robbersmyr, K.G. A review of diagnostics and prognostics of
+low-speed machinery towards wind turbine farm-level health management. Renew. Sustain. Energy Rev.
+2016 ,53, 697–708. [CrossRef]
+31. Nie, M.; Wang, L. Review of condition monitoring and fault diagnosis technologies for wind turbine gearbox.
+Procedia CIRP 2013 ,11, 287–290. [CrossRef]
+32. Dias Machado de Azevedo, H.; Maur ício Ara újo, A.; Bouchonneau, N. A review of wind turbine bearing
+condition monitoring: State of the art and challenges. Renew. Sustain. Energy Rev. 2016 ,56, 368–379.
+[CrossRef]
+33. Coronado, D.; Fischer, K. Condition Monitoring of Wind Turbines: State of the Art, User Experience and
+Recommendations ; VGB Research Foundation, VGB-Nr. 383; Fraunhofer-IWES: Bremerhaven, Germany, 2015.
+34. Tchakoua, P .; Wamkeue, R.; Ouhrouche, M.; Slaoui-hasnaoui, F.; Tameghe, T.A.; Ekemb, G. Wind Turbine
+Condition Monitoring: State-of-the-Art Review, New Trends, and Future Challenges. Energies 2014 ,7,
+2595–2630.
+35. Pedro, F.; M árquez, G.; Mark, A.; Mar ía, J.; P érez, P .; Papaelias, M. Condition monitoring of wind turbines:
+Techniques and methods. Renew. Energy 2012 ,46, 169–178.
+36. Yang, W.; Tavner, P .J.; Crabtree, C.J.; Feng, Y.; Qiu, Y. Wind Turbine Condition Monitoring: Technical &
+Commercial Challenges. Wind Energy 2014 ,7, 673–693.
+37. Lu, B.; Li, Y.; Wu, X.; Yang, Z. A Review of Recent Advances in Wind Turbine Condition Monitoring and Fault
+Diagnosis. In Proceedings of the Power Electronics and Machines in Wind Applications, Lincoln, NE, USA ,
+24–26 June 2009.
+------------------------------End of the page -----------------------------------
+Energies 2018 ,11, 300 17 of 17
+38. Hameed, Z.; Hong, Y.S.; Cho, Y.M.; Ahn, S.H.; Song, C.K. Condition monitoring and fault detection of wind
+turbines and related algorithms: A review. Renew. Sustain. Energy Rev. 2009 ,13, 1–39. [CrossRef]
+39. McMillan, D.; Ault, G.W. Quantiﬁcation of Condition Monitoring Beneﬁt for Offshore Wind Turbines.
+Wind Eng. 2007 ,31, 267–285. [CrossRef]
+40. Carroll, J.; McDonald, A.; McMillan, D. Failure Rate, Repair Time and Unscheduled O&M Cost Analysis of
+Offshore Wind Turbines. Wind Energy 2016 ,19, 1107–1119.
+41. Technical Committee CEN 319. EN 13306 Maintenance Terminology ; CEN: Brussels, Belgium, 2010.
+42. Si, X.; Wang, W.; Hu, C.; Zhou, D. Remaining useful life estimation—A review on the statistical data driven
+approaches. Eur. J. Oper. Res. 2011 ,213, 1–14. [CrossRef]
+43. Sikorska, J.; Ma, L. Prognostic modeling options for remaining useful life estimation by industry. Mech. Syst.
+Signal Process. 2011 ,25, 1803–1836. [CrossRef]
+44. Welte, T.M.; Wang, K. Models for lifetime estimation: An overview with focus on applications to wind
+turbines. Adv. Manuf. 2014 ,2, 79–87. [CrossRef]
+45. Ronold, K.O.; Larsen, G.C. Reliability-based design of wind-turbine rotor blades against failure in ultimate
+loading. Eng. Struct. 2000 ,22, 565–574. [CrossRef]
+46. Bagheri, S.F.; Alizadeh, M.; Nadarajah, S.; Deiri, E. Efﬁcient Estimation of the PDF and the CDF of the Weibull
+Extension Model. Commun. Stat. Simul. Comput. 2016 ,45, 2191–2207. [CrossRef]
+47. Gray, C.S.; Watson, S.J. Physics of failure approach to wind turbine condition based maintenance. Wind Energy
+2010 ,13, 395–405. [CrossRef]
+48. Guo, H.; Watson, S.; Tavner, P .; Xiang, J. Reliability analysis for wind turbines with incomplete failure data
+collected from after the date of initial installation. Reliab. Eng. Syst. Saf. 2009 ,94, 1057–1063. [CrossRef]
+49. Garcia, M.C.; Sanz-Bobi, M.A.; del Pico, J. SIMAP: Intelligent System for Predictive Maintenance Application
+to the health condition monitoring of a windturbine gearbox. Comput. Ind. 2006 ,57, 552–568. [CrossRef]
+50. Asgarpour, M. Risk and Reliability Based O&M Planning of Offshore Wind Farms. Ph.D. Thesis,
+Aalborg University, Aalborg, Denmark, 2018.
+©2018 by the authors. Licensee MDPI, Basel, Switzerland. This article is an open access
+article distributed under the terms and conditions of the Creative Commons Attribution
+(CC BY) license (http://creativecommons.org/licenses/by/4.0/).
+------------------------------End of the page -----------------------------------

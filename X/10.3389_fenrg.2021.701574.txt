@@ -1,0 +1,633 @@
+Cost-Sensitive LightGBM-Based
+Online Fault Detection Method for
+Wind Turbine Gearboxes
+Mingzhu Tang1†, Qi Zhao1, Huawei Wu2* and Zimin Wang3†
+1School of Energy and Power Engineering, Changsha University of Science and Technology, Changsha, China,2Hubei Key
+Laboratory of Power System Design and Test for Electrical Vehicle, Hubei University of Arts and Science, Xiangyang, China,
+3School of Computer Science and Information Security, Guilin University of Electronic Technology, Guilin, China
+In practice, faulty samples of wind turbine (WT) gearboxes are far smaller than normal
+samples during operation, and most of the existing fault diagnosis methods for WTgearboxes only focus on the improvement of classi ﬁcation accuracy and ignore the
+decrease of missed alarms and the reduction of the average cost. To this end, a newframework is proposed through combining the Spearman rank correlation featureextraction and cost-sensitive LightGBM algorithm for WT gearbox ’s fault detection. In
+this article, features from wind turbine supervisory control and data acquisition (SCADA)systems are ﬁrstly extracted. Then, the feature selection is employed by using the expert
+experience and Spearman rank correlation coef ﬁcient to analyze the correlation between
+the big data of WT gearboxes. Moreover, the cost-sensitive LightGBM fault detection
+framework is established by optimizing the misclassi ﬁcation cost. The false alarm rate and
+the missed detection rate of the WT gearbox under different working conditions are ﬁnally
+obtained. Experiments have veri ﬁed that the proposed method can signi ﬁcantly improve
+the fault detection accuracy. Meanwhile, the proposed method can consistentlyoutperform traditional classi ﬁers such as AdaCost, cost-sensitive GBDT, and cost-
+sensitive XGBoost in terms of low false alarm rate and missed detection rate. Owingto its high Matthews correlation coef ﬁcient scores and low average misclassi ﬁcation cost,
+the cost-sensitive LightGBM (CS LightGBM) method is preferred for imbalanced WTgearbox fault detection in practice.
+Keywords: fault detection, Spearman rank correlation, cost-sensitive classi ﬁcation, lightGBM, wind turbine
+INTRODUCTION
+With the increase in the capacity of wind turbine assembly machines, wind power generation brings
+economic bene ﬁts and also raised important crucial challenges related to reliability ( Qiao and Lu,
+2015 ;Wang et al., 2019 ). On the one hand, wind power generation technology has been developed
+rapidly, but wind turbine (WT) fault detection and condition monitoring technologies have not beenimproved accordingly, which results in frequent WT faults that cannot be timely maintained; on theother hand, WTs are often located in remote areas with rich wind resources and operated in harshworking environments for a long time, which can easily cause frequent WT faults ( Yang et al., 2021 ).
+Gearboxes are often operating under tough circumstances, which will cause a high fault rate andirreversible damage to WT. The wind turbine gearbox faults will inevitably affect the performance ofWT ( Teng et al., 2016a ). Therefore, fault detection of WT gearbox is of great signi ﬁcance for reducingEdited by:
+Dongran Song,
+Central South University, China
+Reviewed by:
+Rizk Masoud,
+University of Menou ﬁa, Egypt
+Yunsong Xu,
+Harbin Institute of Technology, China
+*Correspondence:
+Huawei Wu
+whw_xy@hbuas.edu.cn
+†These authors have contributed
+equally to this work
+Specialty section:
+This article was submitted to
+Smart Grids,
+a section of the journal
+Frontiers in Energy Research
+Received: 28 April 2021
+Accepted: 30 June 2021
+Published: 06 August 2021
+Citation:
+Tang M, Zhao Q, Wu H and Wang Z
+(2021) Cost-Sensitive LightGBM-
+Based Online Fault Detection Method
+for Wind Turbine Gearboxes.
+Front. Energy Res. 9:701574.
+doi: 10.3389/fenrg.2021.701574
+Frontiers in Energy Research | www.frontiersin.org August 2021 | Volume 9 | Article 701574 1ORIGINAL RESEARCH
+published: 06 August 2021
+doi: 10.3389/fenrg.2021.701574
+------------------------------End of the page -----------------------------------
+the operation and maintenance cost of WTs and improving the
+power generation ef ﬁciency of the entire wind farm ( Chen et al.,
+2017 ).
+WT is a typical complex system, and its operating status is
+complex and changeable, which brings dif ﬁculties to the fault
+detection and condition monitoring of WTs ( Ra et al., 2021 ;Song
+et al., 2021 ). The fault mechanism is complicated, and the
+correlation characteristics between kinds of feature vectorsunder various fault types will be different ( Liang et al., 2018 ).
+Data in the wind turbine SCADA system are usually high-dimensional data, so it is necessary to reduce thedimensionality of the big data in the SCADA system. Forinstance, Amirat et al. (2018) proposed an ensemble empirical
+mode decomposition fault diagnosis method. The Pearsoncorrelation analysis method was implemented to select the
+closest intrinsic mode function and to analyse the data
+correlation. Yang et al. (2019) adopted the convolution neural
+network fault diagnosis method, in which the Spearman rankcorrelation analysis is used to sort the relevant image layers of theconvolutional neural network and comprehensively extract datafeatures ( Long et al., 2018 ;Long et al., 2021a ). This method
+effectively veri ﬁes the necessity of feature selection and improves
+the fault detection rate. Since data in the SCADA system areinterrelated, feature selection and reducing the dimensionality ofthe big data of WTs will increase the availability of data samplesand improve the accuracy of fault detection ( Long et al., 2021b ).
+Many scholars and experts have carried out extensive and in-
+depth research on WT fault detection and diagnosis methods,including signal processing methods, multivariate statisticalmethods, and classi ﬁcation algorithms ( Jiang et al., 2015 ). For
+example, Teng et al. (2016b) proposed a complex wavelettransform for multifault detection of the WT fault detectionmethod. By analyzing the multiscale enveloping spectrogram,the fault characteristics of weak bearings can be detected and faultdiagnosis of WTs can be realized. Due to the nonlinear andnonstationary characteristics of the gearbox, Han et al. (2020)
+considered the correlation between variables and used a
+quantitative diagnosis method for gearbox faults based on
+generalized canonical correlation analysis, which caneffectively identify the severity of gearbox faults under variousconditions. Gao et al. (2018) explained the drawbacks of the
+current support vector machine (SVM) algorithm and proposedthe WT fault diagnosis method based on the least squares supportvector machine. Zheng and Peng (2019) used an improved
+AdaBoost –SVM method for WT converter fault diagnosis, the
+wavelet transform is employed to reduce signal noise, and faultfeature vectors are input into the improved AdaBoost –SVM
+classi ﬁer to achieve fault diagnosis. Zhang et al. (2018)
+proposed a wind turbine fault diagnosis method combining
+Random Forest (RF) and extreme gradient boosting(XGBoost) that were used to establish the data-driven WTfault detection framework. RF is used to rank the features ofWTs by importance, and XGBoost trains the ensemble classi ﬁer
+for each speci ﬁc fault. This method is able to protect against
+overﬁtting, and it achieves better wind turbine fault detection
+results than SVM when processing multidimensional data. Tang
+et al. (2020) adopted the WT gearbox fault detection method thatcombines correlation analysis and improved LightGBM. The
+maximum information coef ﬁcient analysis method is adopted
+to select features for the big data of WTs. The improvedLightGBM is implemented by the Bayesian optimization for
+classi ﬁcation so as to diagnose the fault of WT gearbox.
+However, the fault diagnosis performance needs to beimproved when the data are imbalanced.
+To this end, the current fault diagnosis methods for WTs are
+generally based on machine learning ( Stetco et al., 2019 ), that is,
+dealing with the existing data to train a fault diagnosis model andusing this model to realize fault diagnosis. Machine learningalgorithms have been employed to solve the problem of WT faultdetection, in which samples are assumed based on a balanceddistribution. Most of the current data-driven machine learningmethods assume that the number of normal samples and fault
+samples are close. However, normal samples are speci ﬁcally much
+greater than the number of fault samples in the real industrialﬁeld. This means that many machine learning methods fail in
+dealing with imbalanced data and the majority class has higherrecognition rate while the minority class fails. During theoperation of WTs, faults occur for a short period of time andmost of the condition are in normal conditions; therefore, thefault sample is the minority class, and the normal sample is themajority class. However, traditional machine learning methodsfor WTs fault diagnosis do not consider the data imbalanceproblems and the losses caused by fault alarms and missing
+detection. The Gini coef ﬁ
+cient and information gain rate are
+considered as the optimization target, in which themisclassi ﬁcation cost is not introduced in the base classi ﬁer
+evaluation function and the fault detection performance is notvery well.
+The contributions of this article are summarized as follows:
+1) The fault diagnosis method takes misclassi ﬁcation costs into
+account, and the optimization objective aims to minimizeaverage total cost, which will effectively improve the faultdetection rate. The ef ﬁciency of the base classi ﬁer has been
+improved, especially in terms of their ability in WT fault
+detection.
+2) Since the fault sample is the minority class and the normal
+sample is the majority class, a method based on cost-sensitiveLightGBM WT fault detection is proposed to deal with theimbalance data distribution problem. Speci ﬁcally, the cost
+function is introduced in the weight formula of theLightGBM algorithm to replace the information gain, sothat the algorithm pays attention to the minority class ineach iteration update, thereby improving the classi ﬁcation
+effect of imbalanced data.
+3) Spearman rank correlation method is used for WT feature
+selection replacing the raw dataset studied with new attributesranked in order of correlation; thus, it can help to reduce boththe redundancy and the dimension between WT featuredatasets and ensure to remove redundant and irrelevantinformation in the original feature space.
+4) Experiment shows that the proposed method can quickly
+perform fault diagnosis of WTs. Compared with othercost-sensitive ensemble algorithms, the cost-sensitive
+Frontiers in Energy Research | www.frontiersin.org August 2021 | Volume 9 | Article 701574 2Tang et al. Cost-Sensitive LightGBM-Based Fault Detection
+------------------------------End of the page -----------------------------------
+LightGBM is more suitable for highly imbalanced data and
+can achieve more accurate fault classi ﬁcation. The experiment
+veriﬁes the effectiveness and validity of the proposed method.
+RELATED WORK
+The cost-learning methods aim to minimize total
+misclassi ﬁcation cost rather than total error. Cost-sensitive
+learning has attracted signi ﬁcant attention from researchers
+and scholars. Knoll et al. (1994) proposed misclassi ﬁcation
+costs to improve the classi ﬁcation accuracy of the decision
+tree. Domingos (1999) proposed MetaCost, which made use of
+the bagging algorithm to making the classi ﬁer cost sensitive by
+wrapping a cost-minimizing method. Many scholars attempted toadjust the classi ﬁer to be cost-sensitive by adding the cost
+function to train the algorithm. Among these works, Fan et al.
+(1999) presented the AdaCost method to reduce the cumulative
+misclassi ﬁcation cost more than AdaBoost. Fumera and Roli
+(2002) proposed cost-sensitive SVM under the framework of
+the structural risk minimization induction principle viaminimizing the associate risk. Tremendous cost-sensitivelearning has been conducted to improve the classi ﬁer
+performance. It is noteworthy that how to train LightGBM
+algorithm under an imbalanced fault diagnosis situation is stilla problem for real WT fault diagnosis.
+BACKGROUND
+Spearman Rank Correlation Method for
+Feature Selection
+Since data from WTs are big and the feature correlation between
+data has some problems such as low correlation and redundantfeatures, it is necessary to use feature selection on the big data of
+WTs. The commonly used correlation coef ﬁcients include the
+Pearson linear correlation coef ﬁcient, Kendall rank correlation
+coefﬁcient, Spearman rank correlation coef ﬁcient, and tail
+dependence coef ﬁcients ( Bonett and Wright, 2000 ). Since the
+correlation analysis of characteristics of WTs showed nonlinearcorrelation between variables, while the Kendall rank correlationcoefﬁcient and Spearman rank correlation coef ﬁcient have similar
+properties, the Spearman rank correlation coef ﬁcient is used in
+this work ( Croux and Dehon, 2010 ).
+The Spearman rank correlation coef ﬁcient is designed to
+measure the linear or nonlinear relationship of variables.
+Given two discrete features of xand yand M data samples,
+the Spearman rank correlation coef ﬁcient can be calculated by the
+following formula:
+r
+s/equals/summationtexti(xi−x)/parenleftbigyi−y/parenrightbig/radicaltpext/radicaltpext/radicaltpext/radicaltpext/radicaltpext/radicaltpext/radicaltpext/radicaltpext/radicaltpext
+/summationtexti(xi−x)2/radicalBig /radicaltpext/radicaltpext/radicaltpext/radicaltpext/radicaltpext/radicaltpext/radicaltpext/radicaltpext/radicaltpext
+/summationtexti/parenleftbigyi−y/parenrightbig2/radicalBig . (1)
+Here, x/equals1
+M/summationtextM
+i/equals1xiandy/equals1
+M/summationtextM
+i/equals1yi, which can also be rewritten
+as follows:rs/equalscov/parenleftbigx,y/parenrightbig
+σxσy. (2)
+Here, covrepresents the standard deviation, and σis the
+covariance.
+Spearman rank correlation coef ﬁcient rsranges from −1t o1 .
+When rs/equals1, it means that xand yare relatively positively
+correlated, rs/equals−1, it means that xand yare strictly
+negatively correlated, and rs/equals0, it means that the two
+features are independent of each other.
+The Spearman rank correlation coef ﬁcient is designed to
+measure the correlation between features. If the index with a
+higher correlation coef ﬁcient is directly deleted, some features
+may be missing. To ensure that the redundancy between faultfeatures is reduced and the information of different features isretained, the feature with the highest Spearman rank correlationcoefﬁcient in the raw dataset is selected, while the other fault
+features and features with high linear correlation are classi ﬁed
+into a set of feature sets according to the threshold, until faultfeatures in the original data set are eliminated or selected. Thefeature selection method is shown in Figure 1 .
+Cost-Sensitive Learning
+Since traditional classi ﬁcation algorithms are not suitable for
+imbalanced data, a cost-sensitive method was developed ( Turney,
+1994 ), that is, by introducing a misclassi ﬁcation cost in attribute
+splitting instead of information gain, Gini coef ﬁcient, and other
+indicators, which aims to minimize the average total cost andimprove the prediction of the minority samples ( Tang et al.,
+2019 ).
+The misclassi ﬁcation costs are usually described as a cost
+matrix, as shown in Table 1 .
+InTable 1 ,C
+Fis the fault class, CNis the normal class,
+F(CF,CF) represents the cost of the fault class being correctly
+classi ﬁed as the fault class, F(CF,CN) represents the cost of the
+fault category being wrongly classi ﬁed as the normal
+category, F(CN,CF) represents the cost of the normal class
+being wrongly classi ﬁed into the fault class, and F(CN,CN)
+represents the cost of the normal class being correctlyclassi ﬁed into the normal class.
+Given the misclassi ﬁcation cost matrix C, if the actual class is j
+and the predicted category class is i,i fi/equalsj, the prediction is
+correct. The best prediction result of the sample xshould be the
+class that minimizes the expected total sample:
+R(C
+I|x)/equals/summationdisplayP/parenleftBigCj|x/parenrightBigF/parenleftBigCj,Ci/parenrightBig. (3)
+Here, P(Cj|x)is the posterior probability of classifying sample
+xinto Cj.
+A training set S of N samples is given, where
+S/equals{(xi,yi)},i/equals1,... ,N,xi(xi∈X)represents xin the
+k-dimensional vector space X/equals{x1,x2,... ,xk},yi∈Y/equals{0,1}
+is the class label of xi, and yi/equals1 indicates a small number of
+samples, namely, fault samples. Generally, F(CF,CN)>F(CF,CF)
+and F(CN,CF)>F(CN,CN). The essence of cost-sensitive
+classi ﬁcation is that even if the sample xis more likely to be
+Frontiers in Energy Research | www.frontiersin.org August 2021 | Volume 9 | Article 701574 3Tang et al. Cost-Sensitive LightGBM-Based Fault Detection
+------------------------------End of the page -----------------------------------
+assigned to a certain category, xneeds to be classi ﬁed into the
+class that minimizes the cost.
+LightGBM Classi ﬁer
+LightGBM is an improved variant gradient boosting decision tree
+(GBDT) framework based on the decision tree algorithm ( Ke
+et al., 2017 ). Given the supervised learning dataset X /equals
+{(xi,yi)}N
+i/equals1, where xrepresents the samples data and y
+represents the class labels, the aims of LightGBM algorithm is
+toﬁnd a mapping relationship /hatwideF(x) to approximate the function
+F(x), so as to minimize the loss function Ψ(y, F(x )),
+/hatwideF/equalsargmin FEy,xΨ/parenleftbigy,F(x)/parenrightbig, (4)
+and the objective function Obj(t)can be expressed as follows:
+Obj(t)/equals/summationdisplayn
+i/equals1Ψ/parenleftbigyi,Ft−1(xi)+ft(xi)/parenrightbig+/summationdisplay
+kΩ/parenleftbigfk/parenrightbig. (5)
+Here,Ω(fk)represents the regular term.
+In LightGBM, Newton ’s method is used to quickly
+approximate the objective function.
+Obj(t)/C129/summationdisplayn
+i/equals1/bracketleftbigggift(xi)+1
+2hif2
+t(xi)/bracketrightbigg+/summationdisplay
+kΩ/parenleftbigfk/parenrightbig, (6)
+where giandhirepresent a ﬁrst-order loss function and a second-
+order loss function, respectively.gi/equalszFt−1(xi)Ψ/parenleftbigyi,Ft−1(xi), (7)
+hi/equalsz2
+Ft−1(xi)Ψ/parenleftbigyi,Ft−1(xi). (8)
+The information gain in LightGBM is de ﬁned as follows:
+G/equals1
+2⎡⎢⎢⎢⎣/parenleftBig/summationtexti∈ILgi/parenrightBig2
+/summationtexti∈ILhi+λ+/parenleftBig/summationtexti∈IRgi/parenrightBig2
+/summationtexti∈IRhi+λ−/parenleftbig/summationtexti∈Igi/parenrightbig2
+/summationtexti∈Ihi+λ⎤⎥⎥⎥⎦. (9)
+Compared to the GBM algorithm, the LightGBM algorithm is
+more ef ﬁcient in processing high-dimensional big data. This is
+because of exclusive feature bundling (EFB) algorithm andgradient-based one-side sampling (GOSS) algorithm inLightGBM. The GOSS method introduces a data instance witha constant multiplier and a small gradient, which can sample the
+data from the big dataset that has the same distribution and
+characteristics as the raw data and ensuring the classi ﬁcation
+accuracy while improving the classi ﬁcation speed. In the high-
+dimensional space, the data are sparsely coded, while in the sparsefeature space, nonzero values rarely appear at the same time. TheEFB method is used for feature sampling to bundle two features toform a new feature which can decrease the data sample. Besides,the traditional gradient boosting method uses an exhaustiveattack method to ﬁnd segmentation features and thresholds,
+while LightGBM uses a histogram-based method to ﬁnd
+suboptimal solution segmentation features and thresholds and
+reducing calculation time. Speci ﬁcally, a certain feature of the
+data is discretized into a histogram algorithm and the discretizedvalue is used as an index to accumulate statistics in the histogram.After data traversal, the histogram accumulates the requiredstatistics and then according to the discrete value of thehistogram, traverses to ﬁnd the optimal split point. The tree of
+XGBoost is grown by the level-wise tree growth method ( Mitchell
+and Frank, 2017 ;Chen and Guestrin 2016 ) and leaf-wise treeFIGURE 1 | Feature selection based on the Spearman rank correlation coef ﬁcient.
+TABLE 1 | Cost matrix.
+Type CF CN
+CF F(CF,CF) F(CF,CN)
+CN F(CN,CF) F(CN,CN)
+Frontiers in Energy Research | www.frontiersin.org August 2021 | Volume 9 | Article 701574 4Tang et al. Cost-Sensitive LightGBM-Based Fault Detection
+------------------------------End of the page -----------------------------------
+growth in LightGBM; however, leaf-wise splits lead to an increase
+in complexity and may lead to over ﬁtting, and a tree grown with
+leaf-wise growth will be deeper when the number of leaves is thesame. Figure 2 is a schematic presentation of two tree growth
+methods.
+Because the minority fault samples and majority normal
+samples of WTs and the LightGBM algorithm are morefocusing on the classi ﬁcation of the majority sample, the cost
+function is introduced to replace the information gain in the weightformula of the algorithm to form the cost-sensitive LightGBMalgorithm ( Elkan 2001 ). In each iteration update processing, the
+algorithm will pay much attention to the minority class whichimproves identi ﬁcation of the minority class.
+Cost-Sensitive LightGBM Algorithm
+For binary classi ﬁcation problems, the commonly used logistic
+loss function of LightGBM is the logistic loss function, and theexpression is as follows:
+logloss /parenleftbigx
+i,yi/parenrightbig/equals−1
+N/summationdisplayN
+i/equals1/bracketleftbigyilogP(xi)+/parenleftbig1−yi/parenrightbiglog(1−P(xi)/bracketrightbig
+(10)
+where Prepresents the posterior probability. In the log loss
+function of the cost-sensitive LightGBM algorithm ( Zheng and
+Peng, 2019 ), we replace P(xi)with the following:
+P(xi)/equals1
+1+e−2δ(xi)−2η, (11)
+where δ/equalsF(CF,CN)+F(CN,CF)
+2,η/equals1
+2logF(CN,CF)
+F(CF,CN), and the cost-sensitive
+logic loss function can be simpli ﬁed asb follows:
+CSlogloss /parenleftbigxi,yi/parenrightbig/equals1
+F(CF,CN)+F(CN,CF)
+logP(c/equalsF|xi)F(CN,CF)
+P(c/equalsN|xi)F(CF,CN),(12)
+where P(c/equalsF|xi)represents the posterior probability of dividing
+the sample xiinto the fault class and P(c/equalsN|xi)represents the
+posterior probability of dividing the sample xiinto the normal
+class ( Mitchell and Frank, 2017 ). Obviously, there is
+P(c/equalsF|xi)/equals1−P(c/equalsN|xi).
+According to Eq. 5 , the objective function of CS LightGBM
+can be written as follows:
+Obj(t)/equals/summationdisplayn
+i/equals1Ψ/parenleftbigyi,Ft−1(xi)+ft(xi)/parenrightbig+/summationdisplay
+kΩ/parenleftbigfk/parenrightbig, (13)
+whereΨis the loss function and Ωis the regular term. According
+to the second-order Taylor expansion, the objective function canbe rewritten as
+Obj
+(t)/C129/summationdisplayn
+i/equals1/bracketleftbiggΨ/parenleftbigyi,Ft−1(xi)/parenrightbig+gift(xi)+1
+2hif2
+t(xi)/bracketrightbigg+/summationdisplay
+kΩ/parenleftbigfk/parenrightbig.
+(14)
+The ﬁrst-order loss function giand the second-order loss
+function hiofxiare as follows:gi(xi)/equals2δ/bracketleftbigy−P(xi)/bracketrightbig, (15)
+hi(xi)/equals−4δ2P(xi)[1−P(xi)]. (16)
+Given the structure of the tree, the optimal weight wp
+jof each
+leaf node is obtained as follows:
+wp
+j/equals−/summationtexti∈Ijgi
+/summationtexti∈Ijhi+λ. (17)
+The algorithm of cost-sensitive LightGBM (CS LightGBM) is
+given as follows.
+COST-SENSITIVE LIGHTGBM FAULT
+DETECTION MODEL
+In order to minimize the loss caused by fault alarm and
+missed detection due to the imbalanced data of WTs, the CSLightGBM fault detection model is established. The WTfault detection process can be divided into two parts:ofﬂine modeling and online detection, as shown in
+FIGURE 2 | Comparison of level-wise tree growth and leaf-wise tree
+growth.
+Frontiers in Energy Research | www.frontiersin.org August 2021 | Volume 9 | Article 701574 5Tang et al. Cost-Sensitive LightGBM-Based Fault Detection
+------------------------------End of the page -----------------------------------
+Figure 3 .T h em a i ns t e p so fo f ﬂine modeling are given as
+follows.
+The main steps of online fault detection are given as
+follows:
+Figure 3 gives out the basic framework of cost-sensitive LightGBM
+algorithm. The complete fault detection procedure including of ﬂine
+training and online detection is shown in Figure 3 . Speci ﬁcally, the
+procedure has gone through ﬁve phases, namely, data extraction, data
+preprocessing (normalization), feature selection (Spearman rankcorrelation), model optimization, and decision making.
+EXPERIMENTAL CASE
+The main structure of WT is shown in Figure 4 .T h em a i n
+components of WT include a wind wheel, gearbox, generator,converter, yaw system, pitch system, and hydraulic system. Amongthese subsystems, the gearbox failure will cause a high fault rate andirreversible damage to WT. In order to verify the effectiveness of CSLightGBM compared with other cost-sensitive ensemble learning
+methods in the detection of WT gearbox faults, a comparative
+experiment was set up. The experimental steps are given as follows:
+1) Collect raw data from the SCADA system and perform data
+preprocessing:
+xi/equalsx−xmin
+xmax−xmin(18)
+2) Use Spearman rank correlation analysis methods to perform
+feature selection on the extracted features
+3) Divide the training set, test set, and validation set into the
+existing dataset and establish the CS LightGBM of ﬂine model
+4) Perform online detection based on the established CS
+LightGBM model
+5) Evaluate the fault detection method of CS LightGBM and
+calculate the false alarm rate, missing detection rate, andMatthews correlation coef ﬁcient
+Feature Extraction
+In order to verify the performance of the gearbox fault detection
+model, the 1.5 MW WT in a wind farm was used as the researchobject. A 3-year gearbox dataset is extracted from the SCADA
+data. The sampling interval is 2 s. Through the analysis of the WTgearbox mechanism and expert experience, the data within theperiod time from 30 min before the start of the fault to 30 minafter the fault were selected as the experimental data. A part of theraw data is shown in Table 2 .
+We select the datasets containing gearbox oil temperature
+overrun fault, gearbox oil ﬁlter pressure fault, and gearbox
+lubrication oil level fault from the SCADA normal operatingcondition data and record them as Dataset 1, Dataset 2, andDataset 3, as shown in Table 3 .
+Feature Selection
+Dataset 1 –Dataset 3 contain 3 types of gearbox faults, including
+the error gearbox oil temperature overrun, error gearbox oil ﬁlter
+pressure, and error gearbox lubrication oil level. To deal with thefeature selection of WT, the fault mechanism and the correlatedparameters of each fault are analyzed as shown in Table 4 .
+The gearbox bearing temperature information is used to
+evaluate the health of the gearbox. When selecting the stateparameters, parameters that have a greater impact onparameters are mainly selected. According to the Spearman
+rank correlation coef ﬁcient analysis method, the correlationFIGURE 3 | Wind turbine fault detection procedure of cost-sensitive
+LightGBM algorithm.
+Frontiers in Energy Research | www.frontiersin.org August 2021 | Volume 9 | Article 701574 6Tang et al. Cost-Sensitive LightGBM-Based Fault Detection
+------------------------------End of the page -----------------------------------
+strength between each state parameter and the gearbox bearing
+temperature is calculated, as shown in Table 5 .
+From the correlation analysis results in Table 5 , it can be seen
+that there is a large difference between features and the gearboxbearing temperature. In order to avoid the in ﬂuence of irrelevant
+and weakly related features on the gearbox fault detection, thecorrelation coef ﬁcient is selected between ±0.50 to ±0.95, which
+are shown in bold in Table 5 .
+FIGURE 4 | Main structure of doubly fed WT.
+TABLE 2 | Part of the raw data of wind turbines on February 27, 2018.
+Feature Time
+11:03:22 11:03:24 11:03:26 – 12:59:44 12:59:46 12:59:48
+30 s average wind speed 5.44 5.44 5.44 – 9.11 9.11 9.11
+Gearbox shaft 1 temperature 84.2 84.2 84.3 – 87.7 87.7 87.7
+Gearbox shaft 2 temperature 76.5 76.5 76.5 – 77.4 77.4 77.4
+Gearbox inlet oil temperature 77.1 77.1 77.1 – 79.7 79.7 79.7
+Gearbox oil temperature 69 69 68.9 – 77 77 77
+Generator winding temperature U 69.1 69.1 69.1 – 77.1 77.1 77.1
+– ––– – –––Generator winding temperature V 69.4 69.4 69.3 – 77.1 77.1 77.1
+Generator winding temperature W 57 57 57 – 56.5 56.5 56.5
+Generator bearing temperature A 62.1 62.1 62.1 – 61.5 61.5 61.5
+Generator bearing temperature B 45.7 45.7 45.7 – 45 45 45
+Nacelle outdoor temperature 35.1 35.1 35.1 – 35.3 35.3 35.3
+Main bearing rotor side temperature 38.9 38.9 38.9 – 38.9 38.9 38.9
+Main bearing gearbox side temperature 50.1 50.1 50.1 – 50.3 50.3 50.3
+Pitch position target 0 0 0 0.02 0.02 0.02Converter motor speed 1,324.8 1,324.8 1,287.3 – 1735.7 1735.7 1735.7
+TABLE 3 | Dataset description.
+Dataset Total
+number of samplesTotal
+number of featuresFault-free Faulty
+Dataset 1 3,586 216 3,118 468
+Dataset 2 5,172 216 3,670 1,502Dataset 3 3,590 216 3,199 390
+Frontiers in Energy Research | www.frontiersin.org August 2021 | Volume 9 | Article 701574 7Tang et al. Cost-Sensitive LightGBM-Based Fault Detection
+------------------------------End of the page -----------------------------------
+Fault Detection Performance Evaluation
+Criteria
+The four states including the normal state, gearbox oil
+temperature overrun fault, gearbox oil ﬁlter pressure fault,
+and gearbox oil level fault are, respectively, marked as Q /equals
+[0,1,2,3], and the dataset is divided into four parts. Bycombining the three types of faults with the normal state inturn, we perform WT fault detect ion through the CS LightGBM
+algorithm to obtain four sets of classi ﬁcation indicators. In order
+to measure the classi ﬁcation of imbalanced data, the Matthews
+correlation coef ﬁcient (MCC) is introduced to evaluate the fault
+detection model. At the same time, the false alarm rate (FAR)and missed detection rate (MDR) are used as fault detectionevaluation indicators. The mixed matrix of two classi ﬁcation
+problems is shown in Table 6 .
+In this study, true positive (TP) is the number of samples
+correctly identi ﬁed as faulty; false positive (FP) is the number of
+samples wrongly identi ﬁed as fault free; true negative (TN) is the
+number of samples correctly identi ﬁed as fault free; and false
+negative (FN) is the number of samples wrongly identi ﬁed as
+faulty. The indicators under the binary classi ﬁcation are as
+follows:FAR /equals
+FP
+FP+TN ,(19)
+MDR /equalsFN
+TP+FN ,(20)
+MCC /equalsTPpTN−FPpFN/radicaltpext/radicaltpext/radicaltpext/radicaltpext/radicaltpext/radicaltpext/radicaltpext/radicaltpext/radicaltpext/radicaltpext/radicaltpext/radicaltpext/radicaltpext/radicaltpext/radicaltpext/radicaltpext/radicaltpext/radicaltpext/radicaltpext/radicaltpext/radicaltpext/radicaltpext/radicaltpext/radicaltpext/radicaltpext/radicaltpext/radicaltpext/radicaltpext/radicaltpext/radicaltpext/radicaltpext/radicaltpext/radicaltpext/radicaltpext /radicaltpext
+(TP+FP)(TP+FN)(TN+FP)(TN+FN)/radicalbig .(21)
+Results and Discussion
+The experimental data are extracted from a 3-year SCADA
+dataset of a wind farm. The experiment veri ﬁes the
+effectiveness of the proposed cost-sensitive LightGBM for fault
+detection of WT gearboxes. In order to further verify theTABLE 4 | WT gearbox fault type and correlated parameters.
+Fault type Fault mechanism Correlated parameters
+Error gearbox oil temperature
+overrunOil temperature over 80°C and lasts 5 s Gearbox oil temperature; bearing temperature; main bearing gearbox side temperature;
+gearbox shaft temperature; and 30 s average wind speed
+Error gearbox oil ﬁlter pressure Oil temperature over 55°C and lasts 12 s Gearbox oil temperature; converter motor speed; converter power; and main loop rotor speed
+Error gearbox lubrication oillevelNo input high level (green light is off) and
+lasts 12 sGearbox oil temperature; bearing temperature; converter motor speed; and converter power
+TABLE 5 | Gearbox features correlation analysis results.
+Feature Spearman rank coef ﬁcient correlation analysis
+Dataset Tag 1 2 330 s average wind speed W −0.389262 0.014553 0.800212
+Gearbox shaft 1 temperature AL 1.000000 1.000000 1.000000Gearbox shaft 2 temperature AM 0.749613 0.911267 0.990621
+Gearbox inlet oil temperature AN 0.593799 0.911752 0.947370
+Gearbox oil temperature AO 0.703876 0.923477 0.964006
+Generator winding temperature U AT 0.707279 0.532421 0.610418
+Generator winding temperature V AV 0.680785 0.627169 0.615225
+Generator winding temperature W AX 0.692507 0.642950 0.622792
+Generator bearing temperature A AZ 0.753099 0.184554 0.717485
+Generator bearing temperature B BA 0.775826 0.541165 0.798545
+Nacelle outdoor temperature BD 0.617450 0.599896 0.908760
+Nacelle temperature BE 0.871901 0.826202 0.671356
+Main bearing rotor side temperature BS 0.702117 -0.036307 0.649327
+Main bearing gearbox side temperature BT 0.780589 0.214435 0.745818
+Pitch position target BU −0.543102 −0.250650 0.735036
+Converter motor speed FD −0.491465 −0.143006 0.261584
+Converter power FF −0.472841 −0.251429 0.287380
+Main loop rotor speed FJ −0.449845 −0.232728 0.323973
+The bold values represents the correlation coef ﬁcient between ±0.50 and ±0.95.
+TABLE 6 | Confusion matrix.
+Actual class Predictive class
+Faulty Fault free
+Faulty TP FN
+Fault free FP TN
+Frontiers in Energy Research | www.frontiersin.org August 2021 | Volume 9 | Article 701574 8Tang et al. Cost-Sensitive LightGBM-Based Fault Detection
+------------------------------End of the page -----------------------------------
+superiority of the method, three advanced fault diagnosis
+methods were compared, including cost-sensitive AdaBoost(AdaCost), cost-sensitive GBDT (GBDTcost), and cost-sensitive XGBoost (XGBcost). By using different evaluationcriteria in three different datasets, Figures 5 ,6show FAR and
+MDR under different algorithms, respectively. In order to avoidoverﬁtting in the model, a ﬁve-fold cross-validation method is
+used to evaluate the model. The smaller FAR and MDR meanbetter performance.
+The comparison results of the proposed method and the
+AdaCost algorithm, GBDTcost algorithm, and XGBcostalgorithm under different fault conditions are shown in
+Figures 5 ,6, respectively. It can be seen that the cost-sensitive
+LightGBM method is lower than the other three algorithms interms of FAR and MDR, and the XGBcost criteria are generallybetter than the AdaCost and GBDTcost methods. Whenanalyzing failure dataset 2, the FAR index of the CSLightGBM method is only 1.43% and the MDR index isonly 1.01%. This method has good fault detectionperformance. The traditional cost-sensitive Boost method
+has high false positives and high false positives in the faultd e t e c t i o np r o c e s s ,w h i l et h ef a l s en e g a t i v ea n df a l s ep o s i t i v e
+FIGURE 5 | False alarm rate of four algorithms for fault detection of wind turbines gearboxes.
+FIGURE 6 | Missing detection rate of four algorithms for fault detection of wind turbines gearboxes.
+Frontiers in Energy Research | www.frontiersin.org August 2021 | Volume 9 | Article 701574 9Tang et al. Cost-Sensitive LightGBM-Based Fault Detection
+------------------------------End of the page -----------------------------------
+rates of the CS LightGBM method are lower than those of the
+other three methods.
+Figure 7 shows the MCC of three different fault datasets. The
+MCC can also be used in the case of imbalanced samples. Thecloser the MCC is to 1, the better the performance of the method.It can be seen from Figure 6 that the MCC of the cost-sensitive
+lightGBM method in dataset 2 is as high as 99.61% and the MCCof the remaining datasets is higher than that of the AdaCost,GBDTcost, and XGBcost.
+CONCLUSION AND FUTURE WORK
+WT gearboxes are operated in harsh conditions for a long time,the fault rate will increase, and it is extremely prone to faults. Theaccuracy of its diagnosis is often affected by many factors such asharsh environments and extreme weather. In order to improve
+the accuracy of fault diagnosis, the shortcomings of traditional
+algorithms are analyzed and compared, and a fault detectionmethod based on CS LightGBM is proposed. The innovation ismainly re ﬂected in the following two aspects:
+1) The fault characteristics of the WT gearbox are analyzed, the
+fault features are extracted, and its fault feature indexes areobtained, by using the correlation between the featurecorrelation to improve the fault diagnosis performance
+2) A method based on CS LightGBM is proposed and applied to
+the actual fault diagnosis of WTs and compared with thetraditional cost-sensitive Boost methods
+The experimental study demonstrated that existing algorithms
+had a low ability of wind turbine ’s fault detection. Two points that
+should be noticed are that the existing algorithm did not performwell just because it is not specially designed for wind turbine faultdetection and it still has distinguished competences in industrial
+fault diagnosis and other ﬁelds. The cost-sensitive LightGBM is
+mainly suitable for imbalanced data, but its ability for other faultdiagnosis remains unknown.
+A single algorithm cannot detect all the faults in the WT, so the
+combined algorithm will become the research topic in the future.The comprehensive simulation of WT fault conditions will alsobe our research topic in the future. That is for all units of WT thatare interconnected, and their features are strongly coupled. The
+occurrence of a fault in a particular component affects all the
+remaining units. Therefore, it is necessary to establish morecompound fault models to conduct a comprehensive analysisof the WT system ( Iranmehr et al., 2019 ).
+DATA AVAILABILITY STATEMENT
+The original contributions presented in the study are included in
+the article/supplementary material; further inquiries can bedirected to the corresponding author.
+AUTHOR CONTRIBUTIONS
+All authors listed have made a substantial, direct, and intellectualcontribution to the work and approved it for publication.
+FUNDING
+This work was supported in part by the National Natural ScienceFoundation of China (Grant No. 61403046), the Natural ScienceFoundation of Hunan Province, China (Grant No. 2019JJ40304),Changsha University of Science and Technology “The Double
+FIGURE 7 | Matthews correlation coef ﬁcient of four algorithms for fault detection of wind turbines gearboxes.
+Frontiers in Energy Research | www.frontiersin.org August 2021 | Volume 9 | Article 701574 10Tang et al. Cost-Sensitive LightGBM-Based Fault Detection
+------------------------------End of the page -----------------------------------
+First Class University Plan ”International Cooperation and
+Development Project in Scienti ﬁc Research in 2018 (Grant No.
+2018IC14), the Research Foundation of the Education Bureau ofHunan Province (Grant No.19K007), Hunan Provincial
+Department of Transportation 2018 Science and Technology
+Progress and Innova-tion Plan Project (Grant No. 201843),the Key Laboratory of Renewable Energy Electric-Technologyof Hunan Province, the Key Laboratory of Ef ﬁcient and Clean
+Energy Utilization of Hunan Province, Innovative Team of KeyTechnologies of Energy Conservation, Emission Reduction and
+Intelligent Control for Power-Generating Equipment and System,CSUST, Hubei Superior and Distinctive Discipline Group ofMechatronics and Automobiles(XKQ2021003 and
+XKQ2021010), National Training Program of Innovation and
+Entrepreneurship for Undergraduates (Grant No.202010536016), Major Fund Project of Technical Innovationin Hubei (Grant No. 2017AAA133), and Guangxi KeyLaboratory of Trusted Software (No.201728).
+REFERENCES
+Amirat, Y., Benbouzid, M. E. H., Wang, T., Bacha, K., and Feld, G. (2018). EEMD-
+based Notch Filter for Induction Machine Bearing Faults Detection. Appl.
+Acoust. 133, 202 –209. doi:10.1016/j.apacoust.2017.12.030
+Bonett, D. G., and Wright, T. A. (2000). Sample Size Requirements for Estimating
+Pearson, Kendall and Spearman Correlations. Psychometrika 65, 23 –28.
+doi:10.1007/bf02294183
+Chen, T., and Guestrin, C. (2016). Xgboost: A Scalable Tree Boosting System. In
+Proceedings of the 22nd Acm Sigkdd International Conference on KnowledgeDiscovery and Data Mining, August 13-17, 2016, San Francisco, CA, USA,785 –794.
+Chen, Z., Ding, S. X., Peng, T., Yang, C., and Gui, W. (2017). Fault Detection for
+Non-gaussian Processes Using Generalized Canonical Correlation Analysis andRandomized Algorithms. IEEE Trans. Ind. Electro. 65, 1559 –1567. doi:10.1109/
+TIE.2017.2733501
+Croux, C., and Dehon, C. (2010). In ﬂuence Functions of the Spearman and Kendall
+Correlation Measures. Stat. Methods Appl. 19, 497 –515. doi:10.1007/s10260-010-0142-z
+Domingos, P. M. (1999). A General Method for Making Classi ﬁers Cost-Sensitive.
+InProceedings of the Fifth ACM SIGKDD International Conference onKnowledge Discovery and Data Mining, San Francisco, CA, USA, August15-18, 1999; pp. 155 –164.
+Elkan, C. (2001). The Foundations of Cost-Sensitive Learning. In Proceedings of
+International Joint Conference on Arti ﬁcial Intelligence 2, 973 –978.
+Fan, W., Stolfo, S. J., Zhang, J., and Chan, P. K. (1999). AdaCost: Misclassi ﬁcation
+Cost-Sensitive Boosting. Proc. Icml ,9 7 –105.
+Fumera, G., and Roli, F. J. V. C. A. I. p. L. I. A. (2002). Cost-sensitive Learning in
+Support Vector Machines. Computer Science .
+G a o ,Q .W . ,L i u ,W .Y . ,T a n g ,B .P . ,a n dL i ,G .J .( 2 0 1 8 ) .AN o v e lW i n d
+Turbine Fault Diagnosis Method Based on Intergral Extension LoadMean Decomposition Multiscale E ntropy and Least Squares Support
+Vector Machine. Renew. Energ. 116, 169 –175. doi:10.1016/
+j.renene.2017.09.061
+Han, L., Wang, Q., Jiang, K., Wang, X., and Zhou, Y. (2020). Quantitative Diagnosis
+Method of Gearbox under Varying Conditions Based on ARX Model andGeneralized Canonical Correlation Analysis. IEEE Access 8, 40629 –40639.
+doi:10.1109/access.2020.2972381
+Iranmehr, A., Masnadi-Shirazi, H., and Vasconcelos, N. (2019). Cost-sensitive
+Support Vector Machines. Neurocomputing 343, 50 –64. doi:10.1016/
+j.neucom.2018.11.099
+Jiang, Q., Yan, X., and Huang, B. (2015). Performance-driven Distributed PCA
+Process Monitoring Based on Fault-Relevant Variable Selection andBayesian Inference. IEEE Trans. Ind. Electro. 63, 377 –386. doi:10.1109/
+TIE.2015.2466557
+Ke, G., Meng, Q., Finley, T., Wang, T., Chen, W., Ma, W., et al. (2017). Lightgbm: A
+Highly Ef ﬁcient Gradient Boosting Decision Tree. Proceedings of Advances in
+Neural Information Processing Systems 30, 3146 –3154. doi:10.5555/
+3294996.3295074
+Knoll, U., Nakhaeizadeh, G., and Tausend, B. (1994). Cost-sensitive Pruning of
+Decision Trees. Proceedings of European Conference on Machine Learning 784,
+383 –386. doi:10.1007/3-540-57868-4_79
+Liang, H., Chen, Y., Liang, S., and Wang, C. (2018). Fault Detection of Stator Inter-
+turn Short-Circuit in PMSM on Stator Current and Vibration Signal. Appl. Sci.
+8, 1677. doi:10.3390/app8091677Long, W., Jiao, J., Liang, X., and Tang, M. (2018). An Exploration-Enhanced Grey
+Wolf Optimizer to Solve High-Dimensional Numerical Optimization. Eng.
+Appl. Artif. Intelligence 68, 63 –80. doi:10.1016/j.engappai.2017.10.024
+Long, W., Jiao, J., Liang, X., Wu, T., Xu, M., and Cai, S. (2021a). Pinhole-imaging-
+based Learning Butter ﬂy Optimization Algorithm for Global Optimization
+and Feature Selection. Appl. Soft Comput. 103, 107146. doi:10.1016/
+j.asoc.2021.107146
+L o n g ,W . ,W u ,T . ,X u ,M . ,T a n g ,M . ,a n dC a i ,S .( 2 0 2 1 b ) .P a r a m e t e r s
+Identi ﬁcation of Photovoltaic Models by Using an Enhanced Adaptive
+Butter ﬂy Optimization Algorithm. Energy 229, 120750. doi:10.1016/
+j.energy.2021.120750
+Mitchell, R., and Frank, E. J. (2017). Accelerating the XGBoost Algorithm Using
+GPU Computing. PeerJ Comp. Sci. 3, 127. doi:10.7717/peerj-cs.127
+Qiao, W., and Lu, D. (2015). A Survey on Wind Turbine Condition Monitoring
+and Fault Diagnosis-Part I: Components and Subsystems. IEEE Trans. Ind.
+Electron. 62, 6536 –6545. doi:10.1109/tie.2015.2422112
+Ra, A ., Aeh, B., and Song, D. Chaos-opposition-enhanced Slime Mould Algorithm
+for Minimizing the Cost of Energy for the Wind Turbines on High-AltitudeSites. ISA Trans. 160, 2021. doi:10.1016/j.isatra.2021.04.011
+Song, D., Chang, Q., Zheng, S., Yang, S., Yang, J., and Hoon Joo, Y. (2021).
+Adaptive Model Predictive Control for Yaw System of Variable-Speed WindTurbines. J. Mod. Power Syst. Clean Energ. 9 (1), 219 –224. doi:10.35833/
+mpce.2019.000467
+Stetco, A., Dinmohammadi, F., Zhao, X., Robu, V., Flynn, D., Barnes, M., et al.
+(2019). Machine Learning Methods for Wind Turbine ConditionMonitoring: A Review. Renew. Energ. 133, 620 –635. doi:10.1016/
+j.renene.2018.10.047
+T a n g ,M . ,D i n g ,S .X . ,Y a n g ,C . ,C h e n g ,F . ,S h a r d t ,Y .A .W . ,L o n g ,W . ,e ta l .
+(2019). Cost-sensitive Large Margin Distribution Machine for FaultDetection of Wind Turbines. Cluster Comput. 22, 7525 –7537.
+doi:10.1007/s10586-018-1854-3
+Tang, M., Zhao, Q., Ding, S. X., Wu, H., Li, L., Long, W., et al. (2020). An Improved
+LightGBM Algorithm for Online Fault Detection of Wind Turbine Gearboxes.Energies 13, 807. doi:10.3390/en13040807
+Teng, W., Ding, X., Zhang, X., Liu, Y., and Ma, Z. (2016). Multi-fault Detection and
+Failure Analysis of Wind Turbine Gearbox Using Complex Wavelet Transform.Renew. Energ. 93, 591 –598. doi:10.1016/j.renene.2016.03.025
+Turney, P. D. J. (1994). Cost-sensitive Classi ﬁcation: Empirical Evaluation of a
+Hybrid Genetic Decision Tree Induction Algorithm. J. Artif. intelligence Res. 2,
+369 –409. doi:10.1613/jair.120
+W a n g ,T . ,H a n ,Q . ,C h u ,F . ,a n dF e n g ,Z .( 2 0 1 9 ) .V i b r a t i o nB a s e dC o n d i t i o nM o n i t o r i n g
+and Fault Diagnosis of Wind Turbine Planetary Gearbox: A Review. Mech. Syst.
+Signal Process. 126, 662 –685. doi:10.1016/j.ymssp.2019.02.051
+Y a n g ,D . ,P a n g ,Y . ,Z h o u ,B . ,a n dL i ,K .( 2 0 1 9 ) .F a u l tD i a g n o s i sf o rE n e r g yI n t e r n e tU s i n g
+Correlation Processing-Based Convolutional Neural Networks. IEEE Trans. Syst.
+Man. Cybern, Syst. 49, 1739 –1748. doi:10.1109/tsmc.2019.2919940
+Yang, J., Fang, L., Song, D., Su, M., Yang, X., Huang, L., et al. (2021). Review of
+Control Strategy of Large Horizontal-axis Wind Turbines Yaw System.
+Wind
+Energy 24 (2), 97 –115. doi:10.1002/we.2564
+Z h a n g ,D . ,Q i a n ,L . ,M a o ,B . ,H u a n g ,C . ,H u a n g ,B . ,a n dS i ,Y .( 2 0 1 8 ) .AD a t a -
+Driven Design for Fault Detectio n of Wind Turbines Using Random
+Forests and XGboost. IEEE Access 6, 21020 –21031. doi:10.1109/
+access.2018.2818678
+Zheng, X.-X., and Peng, P. (2019). Fault Diagnosis of Wind Power
+Converters Based on Compressed Sensing Theory and Weight
+Frontiers in Energy Research | www.frontiersin.org August 2021 | Volume 9 | Article 701574 11Tang et al. Cost-Sensitive LightGBM-Based Fault Detection
+------------------------------End of the page -----------------------------------
+Constrained Adaboost-SVM. J. Power Electro. 19, 443 –453. doi:10.6113/
+JPE.2019.19.2.443
+Conﬂict of Interest: The authors declare that the research was conducted in the
+absence of any commercial or ﬁnancial relationships that could be construed as a
+potential con ﬂict of interest.
+Publisher ’s Note: All claims expressed in this article are solely those of the authors
+and do not necessarily represent those of their af ﬁliated organizations, or those of
+the publisher, the editors and the reviewers. Any product that may be evaluated inthis article, or claim that may be made by its manufacturer, is not guaranteed or
+endorsed by the publisher.
+Copyright © 2021 Tang, Zhao, Wu and Wang. This is an open-access article
+distributed under the terms of the Creative Commons Attribution License (CC BY).The use, distribution or reproduction in other forums is permitted, provided theoriginal author(s) and the copyright owner(s) are credited and that the originalpublication in this journal is cited, in accordance with accepted academic practice.No use, distribution or reproduction is permitted which does not comply withthese terms.
+Frontiers in Energy Research | www.frontiersin.org August 2021 | Volume 9 | Article 701574 12Tang et al. Cost-Sensitive LightGBM-Based Fault Detection
+------------------------------End of the page -----------------------------------

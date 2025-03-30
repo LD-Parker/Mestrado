@@ -1,0 +1,1145 @@
+Citation: Tang, Z.; Shi, X.; Zou, H.;
+Zhu, Y.; Yang, Y.; Zhang, Y.; He, J.
+Fault Diagnosis of Wind Turbine
+Generators Based on Stacking
+Integration Algorithm and Adaptive
+Threshold. Sensors 2023 ,23, 6198.
+https://doi.org/10.3390/s23136198
+Academic Editor: Jongmyon Kim
+Received: 11 June 2023
+Revised: 28 June 2023
+Accepted: 3 July 2023
+Published: 6 July 2023
+Copyright: © 2023 by the authors.
+Licensee MDPI, Basel, Switzerland.
+This article is an open access article
+distributed under the terms and
+conditions of the Creative Commons
+Attribution (CC BY) license (https://
+creativecommons.org/licenses/by/
+4.0/).
+sensors
+Article
+Fault Diagnosis of Wind T urbine Generators Based on Stacking
+Integration Algorithm and Adaptive Threshold
+Zhanjun Tang1,*, Xiaobing Shi1, Huayu Zou1,2, Yuting Zhu1, Yushi Yang1, Yajia Zhang3and Jianfeng He1
+1Faculty of Information Engineering and Automation, Kunming University of Science and Technology,
+Kunming 650500, China; sxb@stu.kust.edu.cn (X.S.); zouhy1993@vip.163.com (H.Z.); zyt@163.com (Y.Z.);
+yangyushi@stu.kust.edu.cn (Y.Y.); jfenghe@kust.edu.cn (J.H.)
+2Key Laboratory of Artiﬁcial Intelligence in Yunnan Province, Kunming 650500, China
+3Yunnan Open University, Kunming 650500, China; star@stu.kust.edu.cn
+*Correspondence: tzj504@163.com; Tel.: +86-155-5963-4615
+Abstract: Fault alarm time lag is one of the difﬁculties in fault diagnosis of wind turbine generators
+(WTGs), and the existing methods are insufﬁcient to achieve accurate and rapid fault diagnosis of
+WTGs, and the operation and maintenance costs of WTGs are too high. To invent a new method
+for fast and accurate fault diagnosis of WTGs, this study constructs a stacking integration model
+based on the machine learning algorithms light gradient boosting machine (LightGBM), extreme
+gradient boosting (XGBoost), and stochastic gradient descent regressor (SGDRegressor) using pub-
+licly available datasets from Energias De Portugal (EDP). This model is automatically tuned for
+hyperparameters during training using Bayesian tuning, and the coefﬁcient of determination (R2)
+and root mean square error (RMSE) were used to evaluate the model to determine its applicability
+and accuracy. The ﬁtted residuals of the test set were calculated, the Pauta criterion (3 ) and the
+temporal sliding window were applied, and a ﬁnal adaptive threshold method for accurate fault
+diagnosis and alarming was created. The model validation results show that the adaptive threshold
+method proposed in this study is better than the ﬁxed threshold for diagnosis, and the alarm times
+for the GENERATOR fault type, GENERATOR_BEARING fault type, and TRANSFORMER fault
+type are 1.5 h, 5.8 h, and 3 h earlier, respectively.
+Keywords: fault diagnosis; WTG; stacking integration algorithm; machine learning; EDP; adaptive
+threshold
+1. Introduction
+As the global demand for energy continues to climb, the massive consumption of
+fossil-fuel-derived energy not only leads to increased environmental pollution, but also
+limits the sustainable socio-economic development. Therefore, renewable energy has been
+developed rapidly and has gradually become a research hotspot, among which wind energy
+is one of the most important components of renewable energy [ 1–3] and plays a key role in
+the low-carbon transformation of the power industry. Currently, the global wind power
+industry is growing rapidly and the cumulative installed capacity is gradually climbing [ 4].
+According to the World Wind Energy Report 2023 published by the Global Wind Energy
+Council (GWEC) [ 5], the global installed wind power capacity was 77.6 GW in 2022 and is
+expected to exceed 100 GW in 2024. The data shows that wind power is one of the most
+important energy sources, therefore, parameters such as wind power energy efﬁciency,
+wind turbine fault diagnosis, and fault warning forecasting should be given more attention.
+However, traditional wind power plants rely on regular maintenance and post mainte-
+nance, and the long deployment cycle of spare parts leads to high failure maintenance costs,
+which has a huge impact on the operation and maintenance economics of wind power
+plants [ 6]. In addition, wind turbine generators (WTGs) are usually installed in areas with
+abundant wind energy resources but that are remote and harsh environments, making
+Sensors 2023 ,23, 6198. https://doi.org/10.3390/s23136198 https://www.mdpi.com/journal/sensors
+------------------------------End of the page -----------------------------------
+Sensors 2023 ,23, 6198 2 of 19
+equipment maintenance more difﬁcult [ 7]. The aging of WTGs leads to the degradation
+of power production performance and reduces the economic efﬁciency. Lagging fault
+diagnosis can lead to faults not being detected in time, which in turn delays fault repair
+and maintenance. In addition, the continued operation of WTGs under fault conditions
+increases the load and risk, compromises the reliability and performance of the equipment,
+and leads to high O&M costs for WTGs. Therefore, to effectively reduce downtime and
+avoid serious component damage, there is an urgent need to explore an efﬁcient fault diag-
+nosis technique to achieve an efﬁcient and sustainable diagnosis method for wind turbines.
+This method can optimize the maintenance strategy and avoid unnecessary maintenance
+activities, so that the fault diagnosis technique can become a way to reduce the O&M cost
+of wind power projects and ﬁnally maximize the proﬁt [8–10].
+Existing methods for fault diagnosis of WTGs can be divided into model-based meth-
+ods, vibration signal methods, and data-driven methods [ 11–13]. Model-based methods
+usually require a mathematical model to describe the structure, characteristics, and op-
+eration of the WTG, and ultimately detect potential faults and abnormalities through
+simulation and analysis [ 14]. For example, Dey et al. [ 15] proposed a cascade approach
+based on two Kalman ﬁlters to construct a detection model that mitigates the effect of non-
+linear aerodynamic torques in the drivetrain dynamics. Jlassi et al. [16] proposed a model
+based on a doubly-fed wind power system, where a state observer of the rotor current was
+established to ﬁnally achieve the detection of rotor converter faults. However, the model
+building process is complex and tedious, requiring consideration of multiple factors and
+parameters, and the accuracy of models is affected by various factors such as parameter un-
+certainties and external environmental disturbances, thus affecting their diagnostic veracity
+and accuracy [ 17]. The vibration signal method is a common non-destructive testing (NDT)
+technique that can detect faults and abnormalities that are present in a unit by collecting,
+processing, and analyzing vibration signals without damaging the object under test, such
+as bearing faults, gear faults, and blade faults [ 18–22]. For example, Rezamand et al. [ 23]
+created a feature-based fault prediction method in the process of the fault study of wind
+turbine bearings. Although certain results have been achieved in the failure of bearings,
+the reasonableness of the feature selection for this study needs to be considered. However,
+the data of the vibration signal method are susceptible to interference from environmental
+noise, leading to misclassiﬁcation or omission, which limits the prospects of this method in
+fault diagnosis [ 24,25]. Data-driven methods are mainly used for fault diagnosis using the
+supervisory control and data acquisition (SCADA) data system, and this system is capable
+of collecting rich operational data and operating for all available conditions, such as wind
+speed, temperature, and rotational speed. This system can monitor the operating status of
+the equipment in real time and can issue fault alerts in time. In addition, the system can
+communicate with other devices to exchange data and take measures to protect the system
+from malicious intrusion [ 2,26–31]. Wang et al. [ 32] proposed a deep conﬁdence network for
+feature learning and classiﬁcation based on SCADA data to achieve sensor fault detection.
+Among them, neural networks (NNs), support vector machine (SVM), random forest (RF),
+and k-nearest neighbors (KNN) [ 33–40] are the most commonly used algorithms. However,
+this method has high data requirements, and the handling of missing data and outliers
+needs careful consideration. In summary, most studies on wind turbine fault diagnosis
+still use a single algorithmic model. Due to the limitations of the models themselves, these
+methods usually have difﬁculty in capturing complex fault patterns and are susceptible to
+outliers or noise [ 41]. Therefore, the use of integrated learning is important to improve the
+accuracy and robustness of classiﬁers. Stacking integration algorithms can well capture
+the speciﬁc difﬁculties between different algorithms and weigh the advantages between
+them to improve the accuracy and reliability of fault diagnosis [ 42]. The use of a stacking
+integrated algorithm model has certain advantages for accurate fault diagnosis in WTGs.
+Therefore, a fault diagnosis method for WTGs based on a stacking integration algo-
+rithm and adaptive thresholds was proposed. In this study, a fusion model of a stacking
+integrated algorithm was used to integrate the light gradient boosting machine (Light-
+------------------------------End of the page -----------------------------------
+Sensors 2023 ,23, 6198 3 of 19
+GBM), extreme gradient boosting (XGBoost), and stochastic gradient descent regressor
+(SGDRegressor) algorithms. In addition, this study also uses the Bayesian tuning method
+to tune the model parameters, thus signiﬁcantly improving the comprehensive diagnostic
+performance of the model. At the level of the diagnosis method, this study proposes an
+adaptive threshold method combining the Pauta criterion (3 ) and a temporal sliding win-
+dow, which can effectively reduce the false alarm situations during the diagnosis process
+and realize the diagnosis and alarm of the fault in advance. This diagnosis method for
+WTGs proposed in this study makes full use of the advantages of linear algorithms and
+decision tree algorithms, while making up for the shortcomings of each, so that it has better
+information extraction and fault analysis capabilities. In addition, this study creates an
+adaptive threshold method for fault diagnosis, which provides a new perspective for the
+accurate diagnosis of wind turbine faults and has obvious innovation and value, and can
+provide technical support for the development of the global wind power business.
+2. Methods and Principles
+The LightGBM and XGBoost were chosen as the base learners, and, ﬁnally, the SG-
+DRegressor was selected as the meta-learner, to construct the stacking integrated model.
+Meanwhile, the hyperparameters were tuned using the Bayesian tuning method. The
+prediction effectiveness of the model was evaluated using the coefﬁcient of determina-
+tion (R2) and root mean square error (RMSE). In addition, an adaptive threshold fault
+precision diagnosis and alarm method was proposed by combining the 3 criterion and
+the temporal sliding window, where the principles of each method are described in the
+following sections.
+2.1. LightGBM Algorithm
+LightGBM, a machine learning algorithm with the gradient boosting decision tree
+(GBDT) algorithm, is a distributed gradient boosting framework based on a decision tree
+algorithm [ 43], and iterative learning with a reduced loss function. During the iterative
+computation, a weak learner is added to the strong learner in the previous learning process
+to make the updated strong learner with the minimum loss function, and the updated
+strong learner is as follows.
+Ft(x)=ht(x)+Ft 1(x). (1)
+The weak learner expression is as follows.
+ht(x)=argmin
+h2HåLoss(y,Ft 1(x)+hx). (2)
+The individual sample’s negative gradients are calculated as approximate residuals
+each time the learner is updated.
+rti= ¶Loss(y,Ft 1(xi))
+¶Ft 1(xi). (3)
+Theht(x)after ﬁtting with the squared difference is as follows.
+ht(x)=argmin
+h2Hå(rti h(x))2, (4)
+where ht(x)is the updated weak learner, Ft 1(x)is the strong learner before the update,
+His the set consisting of all possible base learners, and argmin is the minimum value for
+solving the loss function.
+2.2. XGBoost Algorithm
+XGBoost is an optimized distributed gradient enhancement library and an integrated
+learning model based on decision trees [ 44]. This model can improve the calculation of the
+objective function based on gradient boosting, which transforms the optimization problem
+------------------------------End of the page -----------------------------------
+Sensors 2023 ,23, 6198 4 of 19
+of the objective function into the minimization problem of the quadratic function and uses
+the information of the second-order derivatives of the loss function to train the tree model
+to improve the accuracy of the model. At the same time, the generalization performance of
+the model is improved by adding the complexity of the tree as a regularization term to the
+objective function. The objective function of XGBoost is calculated as follows.
+J=n
+å
+i=1L
+yi,^yi
++K
+å
+k=1W(fk). (5)
+The results of the iterations of the objective function in time period t are as follows.
+J(t)n
+å
+i=1[L
+yi,^yit 1
++ft(xi)] +W(ft)+C. (6)
+The loss function is subjected to a second-order Taylor expansion, and then the objec-
+tive function is calculated as follows.
+J(t)n
+å
+i=1[L
+yi,^yit 1
++gift(xi)+1
+2hift2(xi)] +W(ft)+C, (7)
+where yiis the actual value of the i-th target,^yiis the predicted value of the i-th target,
+L
+yi,^yi
+is the difference between yiand^yi,nis the sample size, W(fk)is the tree complex-
+ity,Kis the number of sample features, ft(xi)is the complexity of the decision tree where
+the variable xiis located, Cis a constant, and giandhiare the ﬁrst-order and second-order
+derivatives of the loss function, respectively.
+2.3. SGDRegressor Algorithm
+SGDRegressor is a regression algorithm that uses stochastic gradient descent (SGD)
+to minimize the loss function and is suitable for handling large-scale datasets. Compared
+with the traditional batch gradient descent, SGDRegressor approximates the E(w,b)true
+gradient by considering only one training sample per iteration, resulting in an efﬁcient
+training process [ 45]. Due to the stochastic nature of the decline, SGDRegressor requires
+more iterations to reach the minimum, but it is still computationally inexpensive. Least
+squares are used as a loss function to calculate the total squared error between the actual
+data and the associated hyperplane. L2 regularization can improve the generalization
+performance by applying a square penalty to the weight vector of the model and limiting
+the complexity of the model. To improve the generalization ability of the model and avoid
+overﬁtting, the L2 regularization term was introduced into the model. In this study, the
+combination of the loss function and L2 regularization term was applied, thus balancing the
+ﬁt of the model on the training data, improving the generalization ability to unseen data,
+and effectively reducing the overﬁtting problem. The loss function and the regularization
+term are used to ﬁt the regression model with the following equations.
+E(w,b)=1
+nn
+å
+i=1L(yi,f(xi))+aR(w), (8)
+L(yi,f(xi))=1
+2(yi f(xi))2, (9)
+R(w)=1
+2m
+å
+j=1wj2=kwk2
+2(10)
+where Lis the loss function, Ris the regularization term (L2 parametric), and a>0
+hyperparameters are used to control the regularization strength.
+------------------------------End of the page -----------------------------------
+Sensors 2023 ,23, 6198 5 of 19
+2.4. Stacking Integration Algorithm
+Ensemble learning is an approach to complete a learning task by constructing and
+combining multiple learners. It ﬁrst generates a set of base learners and then combines them
+through some learning strategy to output the ﬁnal result [ 46]. Currently, ensemble learning
+mainly includes homogeneous integration and heterogeneous integration. Bagging [ 47–49]
+and boosting [ 44] are the most classical homogeneous integration methods. Homogeneous
+integration patterns are highly correlated and prone to overﬁtting where the model over-ﬁts
+the training dataset. Overﬁtting can lead to a decrease in the generalization ability of the
+model to the point where it does not generalize well to new, unseen data. In addition,
+frequent application of averaging can lead to a homogeneous integration model that simply
+linearizes the results of the base learner, from which it is difﬁcult to accurately reﬂect
+the true diagnostic results. Heterogeneous integration primarily includes stacking [ 50].
+The stacking algorithm is a typical representative of heterogeneous integration methods
+and consists of two main layers of structure. Layer 1 is the base learner, which is used
+to train and predict the original samples. Layer 2 is the meta-learner, which is used to
+combine the diagnosis results of layer 1, to learn again, and perform the diagnosis. The high
+diversity of heterogeneous integration methods has signiﬁcant algorithmic advantages,
+thus outperforming the prediction performance of a single learner [ 51]. In this study,
+LightGBM and XGBoost were used as base learners, and SGDRegressor was used as a
+meta-learner, combined with a 5-fold cross-validation method to train each base learner
+separately for integration, as shown in Figure 1.
+Sensors 2023 , 23, x FOR PEER REVIEW 6 of 20 
+ 
+ Original 
+DatasetFinal  
+ResultMeta-Learner
+SGDRegressorR1
+R2
+N1
+N2Training 
+Set
+Test 
+SetXGBoostN2meanLightGBMN1Base Learners
+meanD1 D D3 D D5
+D1 D2 D D4 D5
+D1 D2 D3 D D5
+D1 D2 D3 D4 DD D2 D3 D4 D5
+Original 
+Test 
+Setn1
+n2
+n3
+n4
+n5B1
+B2
+B3
+B4
+B5
+D1 D D3 D4 D5
+D1 D2 D D4 D5D D2 D3 D4 D5
+Original 
+Test 
+Setn1
+n2
+n3
+n4
+n5B1
+B2
+B3
+B4
+B5R1 r1 r2 r3 r4 r5mean
+R2 r1 r2 r3 r4 r5meanD1 D2 D3 D4 DD1 D2 D3 D D5
+ 
+Figure 1. The computational flow of the stacking integration algorithm. 
+2.5. Bayesian Tuning 
+For the model, a suitable hyperparameter configuration can greatly improve its per-
+formance. Commonly used tuni ng methods include the manual tuning method, random 
+search method [52], and Bayesian tuning method [53]. The manual tuning method cannot 
+find the best combination of parameters an d is time consuming. The random search 
+method does not make full use of the a priori information. In contrast, the Bayesian tuning method can make full use of prior information to efficiently search for the optimal solution 
+of hyperparameters in fewer iterations. Its ma in steps include setting the parameter search 
+range, randomly generating the initial set of  candidate solutions, finding the next point 
+based on these points, and repeating this step until the end of the iteration. Therefore, the 
+Bayesian tuning method is chosen to automatically tune the parameters of the algorithm in the model training process of this study. 
+The core of Bayesian optimization is the probabilistic agent model and the collection 
+function. The probabilistic agent model is commonly used in Gaussian process regression, 
+and the collection function is commonly used in probability of improvement (PI) [54]. The 
+main idea is to use the posterior model to es timate the probability that the function value 
+of an unknown point is greater than the existing maximum value, and take the point with 
+the highest probability 
+X∗ as the next search point. The collection function formula is 
+shown below. 
+() () () ()() ()
+()xf x
+P IX Pfx fxxμ θ
+θφσ+
+∗+ −− =≥ + =, (11)
+where X∗ is the next search point, 0θ> denotes the equilibrium parameter for explor-
+ing unknown points or exploring nearby maxima using known points, ().φ denotes the 
+cumulative density function of the standard normal cumulative distribution, ()fx is the 
+target value, ()fx+ denotes the existing maximum value, ()xμ  represents the mean of 
+the objective function of the Gaussian process, and ()xσ  represents its standard devia-
+tion. 
+2.6. Evaluation of the Model 
+The coefficient of determination (R2) is a commonly used regression model predictor 
+to measure the correlation between model pred ictions and actual resu lts. The value of R2 
+ranges from [0, 1], and usually the closer the value is to 1, the better the predictive ability 
+of the model, and vice versa [55]. 
+Figure 1. The computational ﬂow of the stacking integration algorithm.
+(1) The original training set is divided into 5 subsets, denoted as D1–D5;
+(2) In the 1st cross-validation, D2–D5 are input to the base learner as the training set,
+and the trained base model is denoted as B1. D1 is input to B1 as the validation set D, and
+the output is denoted as r1.
+(3) This process is repeated. After reaching 5-fold cross-validation, 5 models (B1, B2,
+B3, B4, B5) are trained, and 5 results (r1, r2, r3, r4, r5) are output, and the output results are
+combined into a set and then averaged (R1).
+(4) The test set is input into B1–B5, and the output results are recorded as n1–n5, and
+after taking the average value, they are recorded as N1.
+(5) Finally, after the above 4 steps are executed for both of the 2 base models, the
+diagnostic results R1 and R2 and the mean values N1 and N2 of the prediction results are
+output. These two parts of the results are used as the training set and test set of the second
+layer model, respectively, and the ﬁnal results are output.
+------------------------------End of the page -----------------------------------
+Sensors 2023 ,23, 6198 6 of 19
+2.5. Bayesian Tuning
+For the model, a suitable hyperparameter conﬁguration can greatly improve its per-
+formance. Commonly used tuning methods include the manual tuning method, random
+search method [ 52], and Bayesian tuning method [ 53]. The manual tuning method cannot
+ﬁnd the best combination of parameters and is time consuming. The random search method
+does not make full use of the a priori information. In contrast, the Bayesian tuning method
+can make full use of prior information to efﬁciently search for the optimal solution of
+hyperparameters in fewer iterations. Its main steps include setting the parameter search
+range, randomly generating the initial set of candidate solutions, ﬁnding the next point
+based on these points, and repeating this step until the end of the iteration. Therefore, the
+Bayesian tuning method is chosen to automatically tune the parameters of the algorithm in
+the model training process of this study.
+The core of Bayesian optimization is the probabilistic agent model and the collection
+function. The probabilistic agent model is commonly used in Gaussian process regression,
+and the collection function is commonly used in probability of improvement (PI) [ 54]. The
+main idea is to use the posterior model to estimate the probability that the function value
+of an unknown point is greater than the existing maximum value, and take the point with
+the highest probability Xas the next search point. The collection function formula is
+shown below.
+PI(X)=P 
+f(x)f 
+x++q=fm(x) f(x+) q
+s(x)
+, (11)
+where Xis the next search point, q>0denotes the equilibrium parameter for explor-
+ing unknown points or exploring nearby maxima using known points, f(.)denotes the
+cumulative density function of the standard normal cumulative distribution, f(x)is the
+target value, f(x+)denotes the existing maximum value, m(x)represents the mean of the
+objective function of the Gaussian process, and s(x)represents its standard deviation.
+2.6. Evaluation of the Model
+The coefﬁcient of determination (R2) is a commonly used regression model predictor
+to measure the correlation between model predictions and actual results. The value of R2
+ranges from [0, 1], and usually the closer the value is to 1, the better the predictive ability of
+the model, and vice versa [55].
+R2=ån
+i=1^yi  y2
+ån
+i=1
+yi  y2(12)
+where yidenotes the true value,^yidenotes the predicted value of the model, and ydenotes
+the mean value.
+The root mean squared error (RMSE) is a commonly used metric to assess the predic-
+tive performance of regression models and is interpretable to penalize the squared loss of
+large deviations. A smaller value of RMSE indicates a smaller degree of difference between
+the predicted and true values, thus indicating a better prediction of the model [ 56]. The
+RMSE is calculated by the following formula.
+RMSE =r
+1
+NåN
+i=1
+yi ^yi2
+(13)
+where Ndenotes the number of samples, yidenotes the true value, and^yidenotes the
+predicted value of the model.
+------------------------------End of the page -----------------------------------
+Sensors 2023 ,23, 6198 7 of 19
+2.7. Pauta Criterion (3 s)
+The Pauta criterion is a statistical method used to assess the dispersion and stability
+of a dataset and can help to identify possible outliers. According to the 3 criterion, the
+probability that a data point is within the interval (  ,+) is 0.6827, the probability
+that a data point is within the interval (  2,+ 2) is 0.9544, and the probability that a
+data point is within the interval (  3,+ 3) is 0.9974 [ 57]. Data points outside the range
+indicate that there are possible outliers in these data points that require further examination
+and analysis. In the fault diagnosis process of this study, the 3 criterion calculates speciﬁc
+thresholds, and then an adaptive threshold method is proposed by combining the idea of
+time-series sliding windows.
+3. Modeling Methods for Troubleshooting
+Firstly, the SCADA data were cleaned, and then the features were ﬁltered by the
+Pearson correlation coefﬁcient, Spearman correlation coefﬁcient, and variance selection,
+and the LightGBM, XGBoost, and SGDRegressor models were constructed separately.
+Finally, the stacking integrated model was constructed. This integrated model was applied
+to predict the potential fault data by multi-objective regression and calculate the ﬁtted
+residuals to realize the fault diagnosis of multiple components of wind turbines; the
+modeling process is shown in Figure 2.
+Sensors 2023 , 23, x FOR PEER REVIEW 8 of 20 
+ 
+ 
+start
+Supplement 
+missing data
+Eliminate 
+invalid data
+Feature screening
+Data cleansing
+Pearson
+ Spearman
+variance 
+selection
+Data partioningTraining data 
+validation data
+ testing dataNormal Data 
+Abnormal Data
+Regression model 
+construction
+LightGBM
+ XGboost
+ SGDRegressor
+Stacking
+Regression prediction
+Fitting residuals
+Fault diagnosis
+sliding window
+ 3σ
+End
+ 
+Figure 2. Modeling process of fault diagnosis.  
+3.1. Source of Data 
+The dataset was obtained from the Energias De Portugal (EDP) open data platform 
+[58]. This dataset contains all the data of five wind turbines (T01, T06, T07, T09, T11), each 
+with a rated power of 2 MW, whose theoretical cut-in wind speed is 4 m/s and the theo-
+retical rated wind speed is 12 m/s. The generator bearing temperature, oil temperature, 
+pitch angle, generator speed, and other types of data were recorded by the sensors. The 
+data were recorded at a frequency of every 10 min and the data spanned from 2016 to 2017, containing a total of 521,784 data with 83 ch aracteristic columns. Some of the data are 
+shown in Table 1. The data from the T06 and T07 units, including 102,922 and 104,739 
+records, respectively, were selected for this study. 
+Table 1. Presentation of selected datasets. 
+ Timestamp Gen_RPM_Max ...... Gen_Bear2_Temp_
+Avg Nac_Direction_Avg 
+T11 1 January 2016 00:00 1339.4 ...... 38 206.9 
+T06 1 January 2016 00:00 1270.0 ...... 35 204.6 
+T01 1 January 2016 00:00 1277.4 ...... 37 218.5 
+T09 1 January 2016 00:00 1376.7 ...... 33 214.0 T07 1 January 2016 00:00 1317.5 ...... 39 197.3 
+...... ...... ...... ...... ...... ...... 
+T11 31 December 2017 23:50 1320.5 ...... 37 331.5 T07 31 December 2017 23:50 1329.9 ...... 32 334.8 
+T01 31 December 2017 23:50 1273.1 ...... 38 347.8 
+T09 31 December 2017 23:50 1258.3 ...... 32 339.7 
+T06 31 December 2017 23:50 1270.8 ...... 40 325.1 
+In addition, the fault logging data includes 5 different types of faults (28 in total), 
+namely, GEARBOX, GENERATOR, GE NERATOR_BEARING, HYDRAULIC_GROUP, 
+Figure 2. Modeling process of fault diagnosis.
+3.1. Source of Data
+The dataset was obtained from the Energias De Portugal (EDP) open data platform [ 58].
+This dataset contains all the data of ﬁve wind turbines (T01, T06, T07, T09, T11), each with
+a rated power of 2 MW, whose theoretical cut-in wind speed is 4 m/s and the theoretical
+rated wind speed is 12 m/s. The generator bearing temperature, oil temperature, pitch
+angle, generator speed, and other types of data were recorded by the sensors. The data
+were recorded at a frequency of every 10 min and the data spanned from 2016 to 2017,
+------------------------------End of the page -----------------------------------
+Sensors 2023 ,23, 6198 8 of 19
+containing a total of 521,784 data with 83 characteristic columns. Some of the data are
+shown in Table 1. The data from the T06 and T07 units, including 102,922 and 104,739
+records, respectively, were selected for this study.
+Table 1. Presentation of selected datasets.
+Timestamp Gen_RPM_Max . . . . . . Gen_Bear2_Temp_Avg Nac_Direction_Avg
+T11 1 January 2016 00:00 1339.4 . . . . . . 38 206.9
+T06 1 January 2016 00:00 1270.0 . . . . . . 35 204.6
+T01 1 January 2016 00:00 1277.4 . . . . . . 37 218.5
+T09 1 January 2016 00:00 1376.7 . . . . . . 33 214.0
+T07 1 January 2016 00:00 1317.5 . . . . . . 39 197.3
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+T11 31 December 2017 23:50 1320.5 . . . . . . 37 331.5
+T07 31 December 2017 23:50 1329.9 . . . . . . 32 334.8
+T01 31 December 2017 23:50 1273.1 . . . . . . 38 347.8
+T09 31 December 2017 23:50 1258.3 . . . . . . 32 339.7
+T06 31 December 2017 23:50 1270.8 . . . . . . 40 325.1
+In addition, the fault logging data includes 5 different types of faults (28 in total),
+namely, GEARBOX, GENERATOR, GENERATOR_BEARING, HYDRAULIC_GROUP , and
+TRANSFORMER. The data used in this study are mainly temperature data, and the tem-
+perature data were collected by temperature sensors. Temperature sensors are used to
+monitor the temperature of individual components to ensure proper system operation and
+reduce thermal damage to critical components. There are speciﬁc requirements for the
+installation location of temperature sensors. For example, generator temperature sensors
+are usually installed on the stator and rotor to monitor the generator temperature; gearbox
+temperature sensors are usually installed internally to monitor gear and bearing tempera-
+tures; and transformer temperature sensors are usually installed on the heat sink or critical
+components to ensure proper operating temperatures. However, not all types of faults can
+be reﬂected by temperature changes. Therefore, GENERATOR, GENERATOR_BEARING,
+and TRANSFORMER-type fault data should be used as the focus of the study for fault
+diagnosis and are shown in Table 2.
+Table 2. Recorded data of faults.
+T urbine_ID Component Timestamp Remarks
+T06 GENERATOR 24 July 2016 17:01 Generator temperature sensor failure
+T07 GENERATOR_BEARING 20 August 2017 06:08 Generator bearings damaged
+T07 TRANSFORMER 10 July 2016 03:46 High temperature transformer
+3.2. Cleaning of Data
+As shown in Table 3, there are a few missing values in some feature columns in the
+dataset. To solve this problem, a forward interpolation method is used to ﬁll in these
+missing values. When the wind turbine is shut down, the data recorded by the SCADA
+system may not reﬂect the actual generator status and performance. For example, the value
+of the “Grd_Prod_PsblePwr_Avg” characteristic column has 0 or negative values, which
+does not match the actual situation. Therefore, in order to ensure the accuracy of the data,
+these invalid data need to be ﬁltered and eliminated when performing troubleshooting or
+performance evaluation, in order to avoid the impact on subsequent analysis and research.
+The aim is to improve the reliability of the analysis results and to ensure that studies and
+applications based on the SCADA data more accurately reﬂect the true operating status
+of WTGs.
+------------------------------End of the page -----------------------------------
+Sensors 2023 ,23, 6198 9 of 19
+Table 3. Missing data.
+Feature Column Rate of Missing (%)
+Gen_Bear_Temp_Avg 0.001342
+Grd_Prod_CosPhi_Avg 0.001342
+3.3. Filtering of Features
+Three metrics, the Pearson correlation coefﬁcient, Spearman correlation coefﬁcient,
+and variance, were used to screen the characteristics. Among them, the Pearson correlation
+coefﬁcient is used to measure the linear correlation between two variables, which is obtained
+by dividing the covariance by the standard deviation of the two variables. Although the
+covariance can reﬂect the correlation degree of two random variables, its value is greatly
+inﬂuenced by the magnitude, and the judgment of the correlation degree of variables
+cannot be simply given from the numerical size of the covariance. To eliminate the effect
+of this magnitude, the concept of the correlation coefﬁcient is introduced. The correlation
+coefﬁcient is meaningful when the variance of both variables is not zero, and the correlation
+coefﬁcient takes values in the range [  1, 1]. Usually, when the absolute values of the
+characteristic variable and the target variable in the correlation coefﬁcient are less than 0.2,
+the correlation can be considered as very low and directly excluded [ 59]. The Spearman
+correlation coefﬁcient measures the nonlinear relationship between two variables and is
+a nonparametric measure of rank correlation, which can be viewed as a nonparametric
+version of the Pearson correlation. What is observed is the strength of the monotonic
+relationship between the two, which, in layman’s terms, is the extent to which the two
+keep in step with each other in terms of their tendency to become larger or smaller. When
+the absolute value of the characteristic variable and the target variable in the correlation
+coefﬁcient is less than 0.2, the correlation can be considered low and directly excluded [ 60].
+The variance selection method ﬁrst calculates the variance of each feature, and then selects
+the features with variance greater than the threshold value according to the threshold value,
+and screens the features with a very high proportion of single values. Because when a
+feature does not diverge, for example, the variance is close to 0, which means that the
+sample basically does not differ in this feature, this feature is basically meaningless for
+the differentiation of the sample. Generally, when the variance is less than 0.1, it can be
+considered as an invalid feature and directly rejected [ 61]. The application of these methods
+helps to improve the accuracy and validity of feature selection and ensure that the selected
+features can better reﬂect the characteristics of the study object.
+The model construction work for different fault types was processed relatively in-
+dependently, so the feature screening process was also relatively independent. After
+feature screening, 70 features were retained and 15.66% of the features were rejected for the
+GENERATOR-type of unit T06. The GENERATOR_BEARING-type of the T07 unit retains
+66 features and rejects 20.48% of the features; the TRANSFORMER-type of the T07 unit
+retains 63 features and rejects 24.10% of the features. To ensure that features are selected
+to meet the modeling needs and high-performance requirements for different fault types,
+multiple target feature columns are also selected for each fault type in the SCADA data, as
+shown in Table 4.
+Table 4. Columns of target characteristics.
+Types of Faults Target Characteristics Column
+GENERATORGen_Phase1_Temp_Avg, Gen_Phase2_Temp_Avg,
+Gen_Phase3_Temp_Avg
+GENERATOR_BEARING Gen_Bear_Temp_Avg, Gen_Bear2_Temp_Avg
+TRANSFORMERHVTrafo_Phase1_Temp_Avg, HVTrafo_Phase2_Temp_Avg,
+HVTrafo_Phase3_Temp_Avg
+------------------------------End of the page -----------------------------------
+Sensors 2023 ,23, 6198 10 of 19
+3.4. Division of Data
+Based on the fault advance diagnosis time deﬁned by EDP , this study deﬁnes the
+data before 60 days from the occurrence of the fault as the normal operation data of the
+WTGs and sets their label as 0. The data 60 days before the occurrence of the fault is
+deﬁned as the potential fault data of the WTGs and their label is set as 1. The interquartile
+range (IQR) criterion was used to ﬁlter the target characteristics from the normal operating
+data to reduce the interference of outliers, thus improving the accuracy and robustness of
+the model.
+To meet the requirements, the datasets divided under the GENERATOR fault type
+for unit T06, GENERATOR_BEARING fault type for unit T07, and TRANSFORMER fault
+type for unit T07 were used to construct independent multi-objective regression models.
+The SCADA data in each unit were divided into three parts: training set, validation set
+and test set. Among them, the normal operation data were randomly divided into training
+and validation sets in the ratio of 8:2, and the potential fault data were set as the test
+set, as shown in Table 5. Each unit corresponds to a different fault type to ensure the
+generalization performance and reliability of the model.
+Table 5. Training set, validation set, and test set.
+T urbine_ID Fault Type Training Set Validation Set Test Set
+T06 GENERATOR (42,985, 70) (10,747, 70) (18,694, 70)
+T07 GENERATOR_BEARING (58,187, 66) (14,547, 66) (14,283, 66)
+T07 TRANSFORMER (53,965, 63) (13,492, 63) (13,054, 63)
+3.5. Construction of the Model
+Python 3.8 and its third-party libraries were used to implement the code runs and
+modeling. LightGBM, XGBoost, and SGDRegressor were integrated by stacking integrated
+algorithms and multi-objective regression models were built for the diagnosis of each fault
+type. To optimize the model performance, Bayesian tuning was applied and parameter
+tuning was performed in the form of ﬁve-fold cross-validation, with the number of calcu-
+lations for the optimal parameter set to 30 to ensure better performance and reliability of
+the model.
+In the training process of the LightGBM single model, the max_depth, learning_rate,
+and num_leaves parameters were tuned to ﬁnd their optimal values. In the training process
+of the XGBoost single model, max_depth, min_child_weight, learning_rate, gamma, and
+subsample parameters were tuned to ﬁnd their optimal values. In the training process of
+the SGDRegressor single model, the parameters of the l1_ratio were tuned to ﬁnd their
+optimal values. Meanwhile, to eliminate the interference of different magnitudes on the
+linear model training, the MinMaxScaler method was employed to normalize the entire
+data, and each feature was scaled to between 0 and 1. After completing the training of the
+three single models, the stacking integration framework was used, with LightGBM and
+XGBoost as the base learners and SGDRegressor as the meta-learner, to train the integrated
+model in the form of ﬁve-fold cross-validation.
+The results of the R2and RMSE evaluations of the multi-objective regression models
+for different fault types are detailed in Tables 6–8. Since the test set is potential fault data,
+the prediction effect is supposed to be poor, and its evaluation value should be signiﬁcantly
+lower than that of the training and validation sets. The evaluation results of the validation
+set show that the evaluated values of the four models corresponding to each fault type
+are not signiﬁcantly different between the training and validation sets, indicating that the
+overﬁtting degree of all models is small and meets the expected objectives. The stacking
+integrated model has the best R2and RMSE results on the validation set, indicating that
+the stacking integrated model has better prediction results compared to the single model.
+------------------------------End of the page -----------------------------------
+Sensors 2023 ,23, 6198 11 of 19
+Table 6. Model prediction results for unit T06 for the GENERATOR fault type.
+R2RMSE
+Train Validation Test Train Validation Test
+LightGBM 0.9956 0.9920 0.9030 1.1946 1.6048 8.7661
+XGBoost 0.9903 0.9887 0.8979 1.7636 1.9091 8.9972
+SGDRegressor 0.9707 0.9710 0.9052 3.0659 3.0621 8.6629
+Stacking 0.9975 0.9939 0.9046 0.8923 1.4009 8.6974
+Table 7. Model prediction results for unit T07 for the GENERATOR_BEARING fault type.
+R2RMSE
+Train Validation Test Train Validation Test
+LightGBM 0.9796 0.9682 0.9029 1.8681 2.3297 4.5260
+XGBoost 0.9707 0.9646 0.9087 2.2399 2.4564 4.3866
+SGDRegressor 0.9179 0.9170 0.9026 3.7477 3.7633 4.5198
+Stacking 0.9956 0.9787 0.9088 0.8691 1.9080 4.3831
+Table 8. Model prediction results for unit T07 for the TRANSFORMER fault type.
+R2RMSE
+Train Validation Test Train Validation Test
+LightGBM 0.9131 0.8903 0.6322 2.9524 3.3021 8.9349
+XGBoost 0.9234 0.8997 0.6574 2.7529 3.1548 8.6556
+SGDRegressor 0.7566 0.7553 0.6192 4.9123 4.9335 9.0760
+Stacking 0.9663 0.9197 0.6572 1.8332 2.8169 8.6679
+4. Troubleshooting of Wind T urbines
+The method of setting fault diagnosis thresholds for temperature varies in different
+application scenarios and detection objects. Generally, ﬁxed thresholds are obtained by
+calculating the mean and standard deviation of temperature data over a period of time
+based on the 3 criterion. However, with large temperature variations caused by the
+working environment, the ﬁxed-threshold method will not be able to make adaptive
+adjustments, which can easily lead to false alarms. This study proposes an adaptive
+thresholding method that fully integrates the idea of the 3 criterion and time-series sliding
+window to calculate the mean value of residuals within each window, and the standard
+deviation of residuals is obtained by the validation set calculation. The residual standard
+deviation is then obtained by subtracting the residual mean from the validation set for each
+sliding window.
+The fitted residual curves for the three temperature measurement points corresponding to
+GENERATOR (Gen_Phase1_Temp_Avg, Gen_Phase2_Temp_Avg, and Gen_Phase3_Temp_Avg)
+are shown in Figure 3. By ﬁtting the residual data, a ﬁxed threshold value of 14.0701
+is calculated. Obviously, the residual data of the validation set does not exceed this
+threshold value and no alarm phenomenon occurs. The ﬁtted residual curves for the
+three temperature measurement points (Gen_Phase1_Temp_Avg, Gen_Phase2_Temp_Avg,
+Gen_Phase3_Temp_Avg) of the GENERATOR test set are shown in Figure 4. Among them,
+compared with the other two measurement points, the ﬁtted residuals of the measurement
+point “Gen_Phase2_Temp_Avg” increased abnormally at around 10:00 pm on 23 July 2016.
+Based on this abnormal phenomenon, troubleshooting was performed for the abnormal
+time period of this measurement point.
+------------------------------End of the page -----------------------------------
+Sensors 2023 ,23, 6198 12 of 19
+Sensors 2023 , 23, x FOR PEER REVIEW 12 of 20 
+ 
+ 4. Troubleshooting of Wind Turbines 
+The method of setting fault diagnosis thresholds for temperature varies in different 
+application scenarios and detection objects. Generally, fixed thresholds are obtained by 
+calculating the mean and standard deviation of  temperature data over  a period of time 
+based on the 3 σ criterion. However, with large temperature variations caused by the 
+working environment, the fixed-threshold method  will not be able to make adaptive ad-
+justments, which can easily lead to false alarms. This study proposes an adaptive thresh-
+olding method that fully integrates the idea of the 3 σ criterion and time-series sliding 
+window to calculate the mean value of residuals within each window, and the standard 
+deviation of residuals is obtained by the valida tion set calculation. The residual standard 
+deviation is then obtained by subtracting th e residual mean from the validation set for 
+each sliding window. 
+The fitted residual curves for the three temperature measurement points correspond-
+ing to GENERATOR (Gen_Phase1_Temp_Avg, Gen_Phase2_Temp_Avg, and 
+Gen_Phase3_Temp_Avg) are shown in Figure 3. By fitting the residual data, a fixed 
+threshold value of 14.0701 is ca lculated. Obviously, the residual  data of the validation set 
+does not exceed this threshold value and no al arm phenomenon occurs. The fitted residual 
+curves for the three temperature meas urement points (Gen_Phase1_Temp_Avg, 
+Gen_Phase2_Temp_Avg, Gen_Phase3_Temp_ Avg) of the GENERATOR test set are 
+shown in Figure 4. Among them, compared with the other two measurement points, the 
+fitted residuals of the measurement poin t “Gen_Phase2_Temp_Avg” increased abnor-
+mally at around 10:00 pm on 23 July 2016. Based on this abnormal phenomenon, trouble-
+shooting was performed for the abnormal time period of this measurement point. 
+ 
+Figure 3. Fitting residual curves for unit T 06 for the GENERATOR validation set. 
+ 
+Figure 3. Fitting residual curves for unit T06 for the GENERATOR validation set.
+Sensors 2023 , 23, x FOR PEER REVIEW 12 of 20 
+ 
+ 4. Troubleshooting of Wind Turbines 
+The method of setting fault diagnosis thresholds for temperature varies in different 
+application scenarios and detection objects. Generally, fixed thresholds are obtained by 
+calculating the mean and standard deviation of  temperature data over  a period of time 
+based on the 3 σ criterion. However, with large temperature variations caused by the 
+working environment, the fixed-threshold method  will not be able to make adaptive ad-
+justments, which can easily lead to false alarms. This study proposes an adaptive thresh-
+olding method that fully integrates the idea of the 3 σ criterion and time-series sliding 
+window to calculate the mean value of residuals within each window, and the standard 
+deviation of residuals is obtained by the valida tion set calculation. The residual standard 
+deviation is then obtained by subtracting th e residual mean from the validation set for 
+each sliding window. 
+The fitted residual curves for the three temperature measurement points correspond-
+ing to GENERATOR (Gen_Phase1_Temp_Avg, Gen_Phase2_Temp_Avg, and 
+Gen_Phase3_Temp_Avg) are shown in Figure 3. By fitting the residual data, a fixed 
+threshold value of 14.0701 is ca lculated. Obviously, the residual  data of the validation set 
+does not exceed this threshold value and no al arm phenomenon occurs. The fitted residual 
+curves for the three temperature meas urement points (Gen_Phase1_Temp_Avg, 
+Gen_Phase2_Temp_Avg, Gen_Phase3_Temp_ Avg) of the GENERATOR test set are 
+shown in Figure 4. Among them, compared with the other two measurement points, the 
+fitted residuals of the measurement poin t “Gen_Phase2_Temp_Avg” increased abnor-
+mally at around 10:00 pm on 23 July 2016. Based on this abnormal phenomenon, trouble-
+shooting was performed for the abnormal time period of this measurement point. 
+ 
+Figure 3. Fitting residual curves for unit T 06 for the GENERATOR validation set. 
+ 
+Figure 4. Fitting residual curves for unit T06 for the GENERATOR test set.
+As shown in Table 2, unit T06 has a GENERATOR-type fault recorded at time point
+“24 July 2016 17:01”. The fault diagnosis result of “Gen_Phase2_Temp_Avg” is shown in
+Figure 5. The residuals (blue curve), ﬁxed-threshold line (gray horizontal line), adaptive-
+threshold curve (dark red curve), fault logging time point (blue vertical line), ﬁxed-
+threshold alarm time point (gray vertical line), and adaptive-threshold alarm time point
+(dark red vertical line) for the “Gen_Phase2_Temp_Avg” measurement point are displayed.
+In the fault diagnosis for the abnormal time period of this measurement point, the ﬁxed-
+threshold alarm time point is “23 July 2016 23:00” and the adaptive-threshold alarm time
+point is “23 July 2016 21:30”. Both threshold alarm time points are earlier than the fault
+record point “24 July 2016 17:01”, and the adaptive-threshold alarm time is 1.5 h earlier
+than the ﬁxed-threshold alarm time.
+------------------------------End of the page -----------------------------------
+Sensors 2023 ,23, 6198 13 of 19
+Sensors 2023 , 23, x FOR PEER REVIEW 13 of 20 
+ 
+ Figure 4. Fitting residual curves for unit T06 for the GENERATOR test set. 
+As shown in Table 2, unit T06 has a GENE RATOR-type fault recorded at time point 
+“24 July 2016 17:01”. The fault diagnosis result of “Gen_Phase2_Temp_Avg” is shown in 
+Figure 5. The residuals (blue curve), fixed-th reshold line (gray horizontal line), adaptive-
+threshold curve (dark red curve), fault logging time point (blue vertical line), fixed-thresh-old alarm time point (gray vertical line), and adaptive-threshold alarm time point (dark 
+red vertical line) for the “Gen_Phase2_Temp _Avg” measurement point are displayed. In 
+the fault diagnosis for the abnormal time period of this measurement point, the fixed-
+threshold alarm time point is “23 July 2016 23:00” and the adaptive-threshold alarm time 
+point is “23 July 2016 21:30”. Both threshold alarm time points are earlier than the fault 
+record point “24 July 2016 17:01”, and the adaptive-threshold alarm time is 1.5 h earlier 
+than the fixed-threshold alarm time. 
+ 
+Figure 5. Troubleshooting results of unit T06 in the abnormal time of the “Gen_Phase2_Temp_Avg” 
+measurement point. 
+The fitted residual curves for the two temperature measurement points 
+(Gen_Bear_Temp_Avg and Gen_Bear2_Temp_Avg ) corresponding to the T07 unit in the 
+GENERATOR_BEARING validation set are shown in Figure 6. A fixed threshold value of 
+14.7722 was calculated from the fitted residual data. The residual data in the validation 
+set did not exceed this threshold value and no alarm occurred. The fitted residual curves 
+of the two temperature measurement points (Gen_Bear_Temp_Avg and 
+Gen_Bear2_Temp_Avg) corresponding to the GENERATOR_BEARING test set of unit T07 are shown in Figure 7. Among them, th e fitted residuals of “Gen_Bear2_Temp_Avg” 
+show a significant abnormal fluctuation at the time point “16 August 2017 14:00”, which 
+is significantly different from another me asurement point. Troubleshooting was per-
+formed for the abnormal time peri od of this measurement point. 
+Figure 5. Troubleshooting results of unit T06 in the abnormal time of the “Gen_Phase2_Temp_Avg”
+measurement point.
+The fitted residual curves for the two temperature measurement points (Gen_Bear_Temp
+_Avg and Gen_Bear2_Temp_Avg) corresponding to the T07 unit in the GENERATOR_BEARING
+validation set are shown in Figure 6. A ﬁxed threshold value of 14.7722 was calculated
+from the ﬁtted residual data. The residual data in the validation set did not exceed this
+threshold value and no alarm occurred. The ﬁtted residual curves of the two temperature
+measurement points (Gen_Bear_Temp_Avg and Gen_Bear2_Temp_Avg) corresponding
+to the GENERATOR_BEARING test set of unit T07 are shown in Figure 7. Among them,
+the ﬁtted residuals of “Gen_Bear2_Temp_Avg” show a signiﬁcant abnormal ﬂuctuation
+at the time point “16 August 2017 14:00”, which is signiﬁcantly different from another
+measurement point. Troubleshooting was performed for the abnormal time period of this
+measurement point.
+Sensors 2023 , 23, x FOR PEER REVIEW 14 of 20 
+ 
+  
+Figure 6. Fitting residual curves for unit T07 fo r the GENERATOR_BEARING validation set. 
+ 
+Figure 7. Fitting residual curves for unit T07 for the GENERATOR_BEARING test set. 
+As shown in Table 2, unit T07 has a fa ult record of GENERATOR_BEARING-type at 
+time point “20 August 2017 06:08”. The fault diagnosis result of “Gen_Bear2_Temp_Avg” 
+is shown in Figure 8. In the fault diagnosis of the abnormal time of this measurement point, 
+the fixed-threshold alarm time point is “16 Au gust 2017 20:50” and the adaptive-threshold 
+alarm time point is “16 August 2017 15:00”. Both threshold alarm points are earlier than 
+the fault record point “20 August 2017 6:08”, and the adaptive-threshold alarm time is 
+about 5.8 h earlier than the fixed-threshold alarm time. 
+Figure 6. Fitting residual curves for unit T07 for the GENERATOR_BEARING validation set.
+------------------------------End of the page -----------------------------------
+Sensors 2023 ,23, 6198 14 of 19
+Sensors 2023 , 23, x FOR PEER REVIEW 14 of 20 
+ 
+  
+Figure 6. Fitting residual curves for unit T07 fo r the GENERATOR_BEARING validation set. 
+ 
+Figure 7. Fitting residual curves for unit T07 for the GENERATOR_BEARING test set. 
+As shown in Table 2, unit T07 has a fa ult record of GENERATOR_BEARING-type at 
+time point “20 August 2017 06:08”. The fault diagnosis result of “Gen_Bear2_Temp_Avg” 
+is shown in Figure 8. In the fault diagnosis of the abnormal time of this measurement point, 
+the fixed-threshold alarm time point is “16 Au gust 2017 20:50” and the adaptive-threshold 
+alarm time point is “16 August 2017 15:00”. Both threshold alarm points are earlier than 
+the fault record point “20 August 2017 6:08”, and the adaptive-threshold alarm time is 
+about 5.8 h earlier than the fixed-threshold alarm time. 
+Figure 7. Fitting residual curves for unit T07 for the GENERATOR_BEARING test set.
+As shown in Table 2, unit T07 has a fault record of GENERATOR_BEARING-type at
+time point “20 August 2017 06:08”. The fault diagnosis result of “Gen_Bear2_Temp_Avg”
+is shown in Figure 8. In the fault diagnosis of the abnormal time of this measurement point,
+the ﬁxed-threshold alarm time point is “16 August 2017 20:50” and the adaptive-threshold
+alarm time point is “16 August 2017 15:00”. Both threshold alarm points are earlier than the
+fault record point “20 August 2017 6:08”, and the adaptive-threshold alarm time is about
+5.8 h earlier than the ﬁxed-threshold alarm time.
+Sensors 2023 , 23, x FOR PEER REVIEW 15 of 20 
+ 
+  
+Figure 8. Troubleshooting results of unit T07 in th e abnormal time of the GENERATOR_BEARING 
+measurement point. 
+The fitted residual curves for unit T07 at  the three temperature measurement points 
+corresponding to the TRANSFORMER validation set (HVTrafo_Phase1_Temp_Avg, HVTrafo_Phase2_Temp_Avg, HVTrafo_Phase3_Temp_Avg) are shown in Figure 9. The 
+fixed threshold value of 21.5524 is calculated from the fitted residual data. It can be seen 
+that the residual data of the validation set does not exceed this threshold value and no 
+alarm phenomenon occurs. The fitted residual curves of unit T07 for the three temperature 
+measurement points corresponding to the TRANSFORMER test set 
+(HVTrafo_Phase1_Temp_Avg,HVTrafo_Pha se2_Temp_Avg,HVTrafo_Phase3_Temp_A
+vg) are shown in Figure 10. Among them, th e fitted residuals of the measurement point 
+“HVTrafo_Phase3_Temp_Avg” increased abnormally at the time point “28 June 2016 19:00”. Based on this abnormal phenomenon, troubleshooting was conducted for the ab-
+normal time period of this measurement point. 
+ 
+Figure 9. Fitting residual curves for unit T07 for the TRANSFORMER validation set. 
+Figure 8. Troubleshooting results of unit T07 in the abnormal time of the GENERATOR_BEARING
+measurement point.
+The ﬁtted residual curves for unit T07 at the three temperature measurement points
+corresponding to the TRANSFORMER validation set (HVTrafo_Phase1_Temp_Avg, HV-
+Trafo_Phase2_Temp_Avg, HVTrafo_Phase3_Temp_Avg) are shown in Figure 9. The ﬁxed
+threshold value of 21.5524 is calculated from the ﬁtted residual data. It can be seen that the
+residual data of the validation set does not exceed this threshold value and no alarm phe-
+nomenon occurs. The ﬁtted residual curves of unit T07 for the three temperature measure-
+ment points corresponding to the TRANSFORMER test set (HVTrafo_Phase1_Temp_Avg,
+HVTrafo_Phase2_Temp_Avg,HVTrafo_Phase3_Temp_Avg) are shown in Figure 10. Among
+them, the ﬁtted residuals of the measurement point “HVTrafo_Phase3_Temp_Avg” in-
+creased abnormally at the time point “28 June 2016 19:00”. Based on this abnormal phe-
+nomenon, troubleshooting was conducted for the abnormal time period of this measure-
+ment point.
+------------------------------End of the page -----------------------------------
+Sensors 2023 ,23, 6198 15 of 19
+Sensors 2023 , 23, x FOR PEER REVIEW 15 of 20 
+ 
+  
+Figure 8. Troubleshooting results of unit T07 in th e abnormal time of the GENERATOR_BEARING 
+measurement point. 
+The fitted residual curves for unit T07 at  the three temperature measurement points 
+corresponding to the TRANSFORMER validation set (HVTrafo_Phase1_Temp_Avg, HVTrafo_Phase2_Temp_Avg, HVTrafo_Phase3_Temp_Avg) are shown in Figure 9. The 
+fixed threshold value of 21.5524 is calculated from the fitted residual data. It can be seen 
+that the residual data of the validation set does not exceed this threshold value and no 
+alarm phenomenon occurs. The fitted residual curves of unit T07 for the three temperature 
+measurement points corresponding to the TRANSFORMER test set 
+(HVTrafo_Phase1_Temp_Avg,HVTrafo_Pha se2_Temp_Avg,HVTrafo_Phase3_Temp_A
+vg) are shown in Figure 10. Among them, th e fitted residuals of the measurement point 
+“HVTrafo_Phase3_Temp_Avg” increased abnormally at the time point “28 June 2016 19:00”. Based on this abnormal phenomenon, troubleshooting was conducted for the ab-
+normal time period of this measurement point. 
+ 
+Figure 9. Fitting residual curves for unit T07 for the TRANSFORMER validation set. 
+Figure 9. Fitting residual curves for unit T07 for the TRANSFORMER validation set.
+Sensors 2023 , 23, x FOR PEER REVIEW 16 of 20 
+ 
+  
+Figure 10. Residual curves for unit T07 for the TRANSFORMER test set. 
+As shown in Table 2, unit T07 has a TRAN SFORMER-type fault recorded at the time 
+point “10 July 2016 3:46”. Among them, the fault diagnosis results of unit T07 at the ab-
+normal time of the “HVTrafo_Phase3_Temp_Avg” measurement point are shown in Fig-
+ure 11. In the fault diagnosis for the abnormal time period of this measurement point, the fixed-threshold alarm time point is “28 June 2016 23:00” and the adaptive-threshold alarm 
+time point is “28 June 2016 20:00”. Both thre shold alarm time points are earlier than the 
+fault recording point, and the adaptive-threshold alarm time is 3.0 h earlier than the fixed-threshold alarm time. 
+ 
+Figure 11. Troubleshooting results of unit T07 for the TRANSFORMER measurement point abnor-
+mal time. 
+In summary, both fixed and adaptive thresholds advance the alarm ahead of the fault 
+recording time point, as shown in Table 9. However, adaptive-threshold diagnosis has 
+better results in terms of early alarms. Among them, the GENERATOR fault type is 1.5 h 
+ahead, the GENERATOR_BEARING fault type  is about 5.8 h ahead, and the TRANS-
+FORMER fault type is 3.0 h ahead. Therefore, it can be seen that the adaptive-threshold 
+diagnosis method proposed in this study has been effectively verified in practical appli-
+cations. 
+Table 9. Summary of troubles hooting results. 
+Turbine_ID Component Adaptive Record Fixed Threshold Adaptive Threshold Amount of 
+Lead Time 
+T06 GENERATOR 24 July 2016 17:01 23 July 2016 23:00 23 July 2016 21:30 1.5 h 
+T07 GENERA-
+TOR_BEARING 20 August 2017 06:08 16 August 2017 20:50 16 August 2017 15:00 5.8 h 
+Figure 10. Residual curves for unit T07 for the TRANSFORMER test set.
+As shown in Table 2, unit T07 has a TRANSFORMER-type fault recorded at the time
+point “10 July 2016 3:46”. Among them, the fault diagnosis results of unit T07 at the
+abnormal time of the “HVTrafo_Phase3_Temp_Avg” measurement point are shown in
+Figure 11. In the fault diagnosis for the abnormal time period of this measurement point,
+the ﬁxed-threshold alarm time point is “28 June 2016 23:00” and the adaptive-threshold
+alarm time point is “28 June 2016 20:00”. Both threshold alarm time points are earlier than
+the fault recording point, and the adaptive-threshold alarm time is 3.0 h earlier than the
+ﬁxed-threshold alarm time.
+In summary, both ﬁxed and adaptive thresholds advance the alarm ahead of the fault
+recording time point, as shown in Table 9. However, adaptive-threshold diagnosis has better
+results in terms of early alarms. Among them, the GENERATOR fault type is 1.5 h ahead,
+the GENERATOR_BEARING fault type is about 5.8 h ahead, and the TRANSFORMER
+fault type is 3.0 h ahead. Therefore, it can be seen that the adaptive-threshold diagnosis
+method proposed in this study has been effectively veriﬁed in practical applications.
+------------------------------End of the page -----------------------------------
+Sensors 2023 ,23, 6198 16 of 19
+Sensors 2023 , 23, x FOR PEER REVIEW 16 of 20 
+ 
+  
+Figure 10. Residual curves for unit T07 for the TRANSFORMER test set. 
+As shown in Table 2, unit T07 has a TRAN SFORMER-type fault recorded at the time 
+point “10 July 2016 3:46”. Among them, the fault diagnosis results of unit T07 at the ab-
+normal time of the “HVTrafo_Phase3_Temp_Avg” measurement point are shown in Fig-
+ure 11. In the fault diagnosis for the abnormal time period of this measurement point, the fixed-threshold alarm time point is “28 June 2016 23:00” and the adaptive-threshold alarm 
+time point is “28 June 2016 20:00”. Both thre shold alarm time points are earlier than the 
+fault recording point, and the adaptive-threshold alarm time is 3.0 h earlier than the fixed-threshold alarm time. 
+ 
+Figure 11. Troubleshooting results of unit T07 for the TRANSFORMER measurement point abnor-
+mal time. 
+In summary, both fixed and adaptive thresholds advance the alarm ahead of the fault 
+recording time point, as shown in Table 9. However, adaptive-threshold diagnosis has 
+better results in terms of early alarms. Among them, the GENERATOR fault type is 1.5 h 
+ahead, the GENERATOR_BEARING fault type  is about 5.8 h ahead, and the TRANS-
+FORMER fault type is 3.0 h ahead. Therefore, it can be seen that the adaptive-threshold 
+diagnosis method proposed in this study has been effectively verified in practical appli-
+cations. 
+Table 9. Summary of troubles hooting results. 
+Turbine_ID Component Adaptive Record Fixed Threshold Adaptive Threshold Amount of 
+Lead Time 
+T06 GENERATOR 24 July 2016 17:01 23 July 2016 23:00 23 July 2016 21:30 1.5 h 
+T07 GENERA-
+TOR_BEARING 20 August 2017 06:08 16 August 2017 20:50 16 August 2017 15:00 5.8 h 
+Figure 11. Troubleshooting results of unit T07 for the TRANSFORMER measurement point abnor-
+mal time.
+Table 9. Summary of troubleshooting results.
+T urbine_ID Component Adaptive Record Fixed Threshold Adaptive Threshold Amount of Lead Time
+T06 GENERATOR 24 July 2016 17:01 23 July 2016 23:00 23 July 2016 21:30 1.5 h
+T07 GENERATOR_BEARING 20 August 2017 06:08 16 August 2017 20:50 16 August 2017 15:00 5.8 h
+T07 TRANSFORMER 10 July 2016 03:46 28 June 2016 23:00 28 June 2016 20:00 3.0 h
+5. Conclusions
+In this study, a multi-objective regression method based on SCADA temperature data
+is proposed, aiming at scientiﬁc diagnosis and accurate alarm of wind turbine problems.
+The method employs the LightGBM, XGBoost, SGDRegressor, and stacking integrated
+algorithms to construct multiple regression models and perform fault diagnosis by ﬁtting
+the variation trend of residuals. The Pearson correlation coefﬁcient, Spearman correlation
+coefﬁcient, and variance selection were adopted to achieve data feature screening, and
+multiple target temperature features corresponding to the actual needs of different com-
+ponents were selected. To further optimize the model performance, the Bayesian tuning
+method was introduced in this study to improve the generalization ability and prediction
+performance of the model. In addition, the 3 criterion and the temporal sliding window
+were applied to propose an adaptive-threshold fault precision diagnosis and alarm method.
+The application of this method for fault diagnosis ﬁnds that this aspect achieves good
+results in the fault diagnosis of three components, i.e., the generator, generator bearing,
+and transformer, showing certain applicability.
+In addition, a WTG is a nonlinear multi-coupled system with complex interactions
+between different components. Therefore, how to use SCADA data to improve the compre-
+hensive fault diagnosis of multiple components of WTGs is still a topic worthy of in-depth
+research. Optimization of the model’s performance and improvement of the training
+speed are the key points of future research. How to further analyze the fault correlation
+among wind turbine components and how to improve the accuracy and robustness of fault
+diagnosis methods need to be further explored.
+Author Contributions: Conceptualization, X.S. and Y.Z. (Yuting Zhu); methodology, X.S., Y.Y. and
+H.Z.; software, X.S., H.Z. and Y.Z. (Yajia Zhang); resources, Z.T.; writing—original draft preparation,
+X.S.; writing—review and editing, Y.Z. (Yuting Zhu) and Y.Y.; funding acquisition, Z.T. and J.H. All
+authors have read and agreed to the published version of the manuscript.
+Funding: The National Natural Science Foundation of China (82160347).
+Institutional Review Board Statement: Not applicable.
+Informed Consent Statement: Not applicable.
+------------------------------End of the page -----------------------------------
+Sensors 2023 ,23, 6198 17 of 19
+Data Availability Statement: The data used in this study are publicly available and can be accessed
+from https://opendata.edp.com/ without restrictions. For any additional enquiries regarding the
+data or requests for collaboration, please contact the corresponding author.
+Acknowledgments: The authors thank the editor and the anonymous reviewers for their valuable
+suggestions.
+Conﬂicts of Interest: The authors declare no conﬂict of interest.
+Abbreviations
+The following abbreviations are used in this manuscript:
+WTG Wind turbine generator
+LightGBM Light gradient boosting machine
+XGBoost eXtreme Gradient boosting
+SGDRegressor Stochastic gradient descent regressor
+EDP Energias De Portugal
+R2Coefﬁcient of determination
+RMSE Root mean square error
+GWEC Global Wind Energy Council
+NDT Non-destructive testing
+SCADA Supervisory control and data acquisition
+NN Neural network
+SVM Support vector machine
+RF Random forest
+KNN K-nearest neighbors
+GBDT Gradient boosting decision tree
+SGD Stochastic gradient descent
+PI Probability of improvement
+3 Pauta criterion
+References
+1. Nadour, M.; Essadki, A.; Nasser, T. Improving low-voltage ride-through capability of a multimegawatt DFIG based wind turbine
+under grid faults. Prot. Control Mod. Power Syst. 2020 ,5, 33. [CrossRef]
+2. Liu, Y.; Wu, Z.; Wang, X. Research on fault diagnosis of wind turbine based on SCADA data. IEEE Access 2020 ,8, 185557–185569.
+[CrossRef]
+3. Zhang, G.; Li, Y.; Jiang, W.; Shu, L. A fault diagnosis method for wind turbines with limited labeled data based on balanced joint
+adaptive network. Neurocomputing 2022 ,481, 133–153. [CrossRef]
+4. Dai, J.; Yang, X.; Wen, L. Development of wind power industry in China: A comprehensive assessment. Renew. Sustain. Energy
+Rev. 2018 ,97, 156–164. [CrossRef]
+5. Global Wind Energy Council. GWEC Global Wind Report 2023. Available online: https://gwec.net/globalwindreport2023/
+(accessed on 10 April 2023).
+6. Szumilas-Kowalczyk, H.; Pevzner, N.; Giedych, R. Long-term visual impacts of aging infrastructure: Challenges of decommis-
+sioning wind power infrastructure and a survey of alternative strategies. Renew. Energy 2020 ,150, 550–560. [CrossRef]
+7. Yi, C.; Qin, J.; Xiao, H.; Zhou, T. Second-order Synchrosqueezing Modiﬁed S Transform for wind turbine fault diagnosis. Appl.
+Acoust. 2022 ,189, 108614. [CrossRef]
+8. Wu, P .; Liu, Y.; Ferrari, R.M.; van Wingerden, J.W. Floating offshore wind turbine fault diagnosis via regularized dynamic
+canonical correlation and ﬁsher discriminant analysis. IET Renew. Power Gener. 2021 ,15, 4006–4018. [CrossRef]
+9. Zhang, P .; Lu, D. A survey of condition monitoring and fault diagnosis toward integrated O&M for wind turbines. Energies 2019 ,
+12, 2801.
+10. Chen, J.; Pan, J.; Li, Z.; Zi, Y.; Chen, X. Generator bearing fault diagnosis for wind turbine via empirical wavelet transform using
+measured vibration signals. Renew. Energy 2016 ,89, 80–92. [CrossRef]
+11. Dai, X.; Gao, Z. From model, signal to knowledge: A data-driven perspective of fault detection and diagnosis. IEEE Trans. Ind.
+Inform. 2013 ,9, 2226–2238. [CrossRef]
+12. Gao, Z.; Cecati, C.; Ding, S.X. A survey of fault diagnosis and fault-tolerant techniques—Part I: Fault diagnosis with model-based
+and signal-based approaches. IEEE Trans. Ind. Electron. 2015 ,62, 3757–3767. [CrossRef]
+13. Bakdi, A.; Kouadri, A.; Mekhilef, S. A data-driven algorithm for online detection of component and system faults in modern
+wind turbines at different operating zones. Renew. Sustain. Energy Rev. 2019 ,103, 546–555. [CrossRef]
+14. Wang, J.; Liang, Y.; Zheng, Y.; Gao, R.X.; Zhang, F. An integrated fault diagnosis and prognosis approach for predictive
+maintenance of wind turbine bearing with limited samples. Renew. Energy 2020 ,145, 642–650. [CrossRef]
+------------------------------End of the page -----------------------------------
+Sensors 2023 ,23, 6198 18 of 19
+15. Dey, S.; Pisu, P .; Ayalew, B. A comparative study of three fault diagnosis schemes for wind turbines. IEEE Trans. Control Syst.
+Technol. 2015 ,23, 1853–1868. [CrossRef]
+16. Jlassi, I.; Estima, J.O.; El Khil, S.K.; Bellaaj, N.M.; Cardoso, A.J.M. Multiple open-circuit faults diagnosis in back-to-back converters
+of PMSG drives for wind turbine systems. IEEE Trans. Power Electron. 2014 ,30, 2689–2702. [CrossRef]
+17. Li, Y.; Liu, S.; Shu, L. Wind turbine fault diagnosis based on Gaussian process classiﬁers applied to operational data. Renew.
+Energy 2019 ,134, 357–366. [CrossRef]
+18. Xu, Z.; Mei, X.; Wang, X.; Yue, M.; Jin, J.; Yang, Y.; Li, C. Fault diagnosis of wind turbine bearing using a multi-scale convolutional
+neural network with bidirectional long short term memory and weighted majority voting for multi-sensors. Renew. Energy 2022 ,
+182, 615–626. [CrossRef]
+19. Miao, Y.; Zhao, M.; Liang, K.; Lin, J. Application of an improved MCKDA for fault detection of wind turbine gear based on
+encoder signal. Renew. Energy 2020 ,151, 192–203. [CrossRef]
+20. Zhang, C.; Wen, C.; Liu, J. Mask-MRNet: A deep neural network for wind turbine blade fault detection. J. Renew. Sustain. Energy
+2020 ,12, 053302. [CrossRef]
+21. Lin, D.F.; Chen, P .H.; Williams, M. Measurement and analysis of current signals for gearbox fault recognition of wind turbine.
+Meas. Sci. Rev. 2013 ,13, 89–93. [CrossRef]
+22. Zhao, Q.; Yuan, Y.; Sun, W.; Fan, X.; Fan, P .; Ma, Z. Reliability analysis of wind turbine blades based on non-Gaussian wind load
+impact competition failure model. Measurement 2020 ,164, 107950. [CrossRef]
+23. Rezamand, M.; Kordestani, M.; Carriveau, R.; Ting, D.S.; Saif, M. An integrated feature-based failure prognosis method for wind
+turbine bearings. IEEE/ASME Trans. Mechatron. 2020 ,25, 1468–1478. [CrossRef]
+24. Sun, T.; Yu, G.; Gao, M.; Zhao, L.; Bai, C.; Yang, W. Fault diagnosis methods based on machine learning and its applications for
+wind turbines: A review. IEEE Access 2021 ,9, 147481–147511. [CrossRef]
+25. Gao, Z.; Liu, X. An overview on fault diagnosis, prognosis and resilient control for wind turbine systems. Processes 2021 ,9, 300.
+[CrossRef]
+26. Murgia, A.; Verbeke, R.; Tsiporkova, E.; Terzi, L.; Astolﬁ, D. Discussion on the Suitability of SCADA-Based Condition Monitoring
+for Wind Turbine Fault Diagnosis through Temperature Data Analysis. Energies 2023 ,16, 620. [CrossRef]
+27. Vidal, Y.; Pozo, F.; Tutiv én, C. Wind turbine multi-fault detection and classiﬁcation based on SCADA data. Energies 2018 ,11, 3018.
+[CrossRef]
+28. He, Q.; Pang, Y.; Jiang, G.; Xie, P . A spatio-temporal multiscale neural network approach for wind turbine fault diagnosis with
+imbalanced SCADA data. IEEE Trans. Ind. Inform. 2020 ,17, 6875–6884. [CrossRef]
+29. Qiu, Y.; Feng, Y.; Inﬁeld, D. Fault diagnosis of wind turbine with SCADA alarms based multidimensional information processing
+method. Renew. Energy 2020 ,145, 1923–1931. [CrossRef]
+30. Li, Y.; Jiang, W.; Zhang, G.; Shu, L. Wind turbine fault diagnosis based on transfer learning and convolutional autoencoder with
+small-scale data. Renew. Energy 2021 ,171, 103–115. [CrossRef]
+31. Wang, D.; Cao, C.; Chen, N.; Pan, W.; Li, H.; Wang, X. A correlation-graph-CNN method for fault diagnosis of wind turbine based
+on state tracking and data driving model. Sustain. Energy Technol. Assess. 2023 ,56, 102995. [CrossRef]
+32. Wang, H.; Wang, H.; Jiang, G.; Wang, Y.; Ren, S. A multiscale spatio-temporal convolutional deep belief network for sensor fault
+detection of wind turbine. Sensors 2020 ,20, 3580. [CrossRef] [PubMed]
+33. Li, Z.; Jiang, Y.; Guo, Q.; Hu, C.; Peng, Z. Multi-dimensional variational mode decomposition for bearing-crack detection in wind
+turbines with large driving-speed variations. Renew. Energy 2018 ,116, 55–73. [CrossRef]
+34. Gao, Q.W.; Liu, W.Y.; Tang, B.P .; Li, G.J. A novel wind turbine fault diagnosis method based on intergral extension load mean
+decomposition multiscale entropy and least squares support vector machine. Renew. Energy 2018 ,116, 169–175. [CrossRef]
+35. Li, G.; Wang, C.; Zhang, D.; Yang, G. An improved feature selection method based on random forest algorithm for wind turbine
+condition monitoring. Sensors 2021 ,21, 5654. [CrossRef]
+36. Malik, H. Wavelet and Hilbert Huang transform based wind turbine imbalance fault classiﬁcation model using k-nearest
+neighbour algorithm. Int. J. Renew. Energy Technol. 2018 ,9, 66–83. [CrossRef]
+37. Zhang, D.; Qian, L.; Mao, B.; Huang, C.; Huang, B.; Si, Y. A data-driven design for fault detection of wind turbines using random
+forests and XGboost. IEEE Access 2018 ,6, 21020–21031. [CrossRef]
+38. Peng, C.; Chen, Q.; Zhang, L.; Wan, L.; Yuan, X. Research on fault diagnosis of wind power generator blade based on SC-SMOTE
+and kNN. J. Inf. Process. Syst. 2020 ,16, 870–881.
+39. Santolamazza, A.; Dadi, D.; Introna, V . A data-mining approach for wind turbine fault detection based on SCADA data analysis
+using artiﬁcial neural networks. Energies 2021 ,14, 1845. [CrossRef]
+40. Wumaier, T.; Xu, C.; Guo, H.; Jin, Z.; Zhou, H. Fault diagnosis of wind turbines based on a support vector machine optimized by
+the sparrow search algorithm. IEEE Access 2021 ,9, 69307–69315.
+41. Mengshi, L.; Da, Y.; Ziming, C. Fault Diagnosis Method of Wind Turbine Based on Deep Belief Network. J. Electr. Mach. Control
+2019 ,23, 114–122.
+42. Waqas Khan, P .; Byun, Y.C. Multi-Fault Detection and Classiﬁcation of Wind Turbines Using Stacking Classiﬁer. Sensors 2022 ,
+22, 6955. [CrossRef] [PubMed]
+43. Fan, C.; Li, X.; Zhao, Y.; Wang, J. Quantitative assessments on advanced data synthesis strategies for enhancing imbalanced AHU
+fault diagnosis performance. Energy Build. 2021 ,252, 111423. [CrossRef]
+------------------------------End of the page -----------------------------------
+Sensors 2023 ,23, 6198 19 of 19
+44. Chen, T.; Guestrin, C. Xgboost: A scalable tree boosting system. In Proceedings of the KDD ‘16: The 22nd ACM Sigkdd
+International Conference on Knowledge Discovery and Data Mining, San Francisco, CA, USA, 13–17 August 2016; pp. 785–794.
+45. Rakholia, R.; Le, Q.; Vu, K.; Ho, B.Q.; Carbajo, R.S. AI-based air quality PM2. 5 forecasting models for developing countries: A
+case study of Ho Chi Minh City, Vietnam. Urban Clim. 2022 ,46, 101315. [CrossRef]
+46. Polikar, R. Ensemble learning. In Ensemble Machine Learning ; Springer: Berlin/Heidelberg, Germany, 2012; pp. 1–34.
+47. Li, X.; Jiang, H.; Niu, M.; Wang, R. An enhanced selective ensemble deep learning method for rolling bearing fault diagnosis with
+beetle antennae search algorithm. Mech. Syst. Signal Process. 2020 ,142, 106752. [CrossRef]
+48. Li, Z.; Wu, D.; Hu, C.; Terpenny, J. An ensemble learning-based prognostic approach with degradation-dependent weights for
+remaining useful life prediction. Reliab. Eng. Syst. Saf. 2019 ,184, 110–122. [CrossRef]
+49. Tang, J.; Zheng, G.; He, D.; Ding, X.; Huang, W.; Shao, Y.; Wang, L. Rolling bearing remaining useful life prediction via weight
+tracking relevance vector machine. Meas. Sci. Technol. 2020 ,32, 024006. [CrossRef]
+50. Wang, X.; Han, T. Transformer fault diagnosis based on stacking ensemble learning. IEEJ Trans. Electr. Electron. Eng. 2020 ,15,
+1734–1739. [CrossRef]
+51. Breiman, L. Stacked regressions. Mach. Learn. 1996 ,24, 49–64. [CrossRef]
+52. Bergstra, J.; Bengio, Y. Random search for hyper-parameter optimization. J. Mach. Learn. Res. 2012 ,13, 281–305.
+53. Ding, Z.; Zhang, W.; Zhu, D. Neural-network based wind pressure prediction for low-rise buildings with genetic algorithm and
+Bayesian optimization. Eng. Struct. 2022 ,260, 114203. [CrossRef]
+54. Kushner, H.J. A new method of locating the maximum point of an arbitrary multipeak curve in the presence of noise. J. Basic Eng.
+1964 ,86, 97–106. [CrossRef]
+55. Nagelkerke, N.J.D. A note on a general deﬁnition of the coefﬁcient of determination. Biometrika 1991 ,78, 691–692. [CrossRef]
+56. Chai, T.; Draxler, R.R. Root mean square error (RMSE) or mean absolute error (MAE)–Arguments against avoiding RMSE in the
+literature. Geosci. Model Dev. 2014 ,7, 1247–1250. [CrossRef]
+57. Yao, Q.; Song, D.; Xu, X. Robust ﬁnger-vein ROI localization based on the 3 criterion dynamic threshold strategy. Sensors 2020 ,
+20, 3997. [CrossRef]
+58. EDP OpenData. Available online: https://opendata.edp.com/ (accessed on 20 September 2022).
+59. Cohen, I.; Huang, Y.; Chen, J.; Benesty, J.; Benesty, J.; Chen, J.; Cohen, I. Pearson correlation coefﬁcient. In Noise Reduction in Speech
+Processing ; Springer: Berlin/Heidelberg, Germany, 2009; pp. 1–4.
+60. Myers, L.; Sirois, M.J. Spearman correlation coefﬁcients, differences between. In Encyclopedia of Statistical Sciences ; Wiley: Hoboken,
+NJ, USA, 2004; Volume 12.
+61. Larson, M.G. Analysis of variance. Circulation 2008 ,117, 115–121. [CrossRef]
+Disclaimer/Publisher’s Note: The statements, opinions and data contained in all publications are solely those of the individual
+author(s) and contributor(s) and not of MDPI and/or the editor(s). MDPI and/or the editor(s) disclaim responsibility for any injury to
+people or property resulting from any ideas, methods, instructions or products referred to in the content.
+------------------------------End of the page -----------------------------------

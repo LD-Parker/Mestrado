@@ -1,0 +1,1578 @@
+machines
+Review
+Fault Detection and Condition Monitoring of PMSGs in
+Offshore Wind T urbines
+Nuno M. A. Freire1,*
+and Antonio J. Marques Cardoso2
+/gid00030/gid00035/gid00032/gid00030/gid00038/gid00001/gid00033/gid00042/gid00045 /gid00001
+/gid00048/gid00043/gid00031/gid00028/gid00047/gid00032/gid00046
+Citation: Freire, N.M.A.; Cardoso,
+A.J.M. Fault Detection and Condition
+Monitoring of PMSGs in Offshore
+Wind Turbines. Machines 2021 ,9, 260.
+https://doi.org/10.3390/
+machines9110260
+Academic Editor: Davide Astolﬁ
+Received: 30 September 2021
+Accepted: 25 October 2021
+Published: 30 October 2021
+Publisher’s Note: MDPI stays neutral
+with regard to jurisdictional claims in
+published maps and institutional afﬁl-
+iations.
+Copyright: © 2021 by the authors.
+Licensee MDPI, Basel, Switzerland.
+This article is an open access article
+distributed under the terms and
+conditions of the Creative Commons
+Attribution (CC BY) license (https://
+creativecommons.org/licenses/by/
+4.0/).1Siemens Gamesa Renewable Energy A/S, 7330 Brande, Denmark
+2CISE—Electromechatronic Systems Research Centre, University of Beira Interior, 6201-001 Covilha, Portugal;
+ajmcardoso@ieee.org
+*Correspondence: nunofr@ieee.org
+Abstract: Research on fault detection (FD) and condition monitoring (CM) of rotating electrical
+generators for modern wind turbines has addressed a wide variety of technologies. Among these,
+permanent magnet synchronous generators (PMSGs) and the analysis of their electromagnetic
+signatures in the presence of faults deserve emphasis in this paper. PMSGs are prominent in
+the offshore wind industry, and methods for FD and CM of PMSGs based on electromagnetic
+measurements are extensively discussed in academia. This paper is a concise review of FD and CM in
+wind turbines and PMSGs. Terminology and fundamentals of PMSG’s operation are introduced ﬁrst,
+aiming to offer an easy read and good reference to a broad audience of engineers and data scientists.
+Experience and research challenges with stator winding failures are also discussed.
+Keywords: permanent magnet synchronous generator; fault detection; condition monitoring; wind
+turbine; failure; fault analysis; stator winding; fault-tolerance
+1. Introduction
+The reduction of energy prices and carbon emissions is vital for the modern world
+that needs to cut poverty and stop global warming. Wind turbines (WTs) are an important
+contributor towards energy production free of CO 2, and associated condition monitoring
+systems have a key role in their availability, ultimately, driving the reduction of the cost of
+energy.
+Since the 1990s, various wind turbine concepts and control techniques have been
+developed for maximizing the reliability and efﬁciency while reducing overall cost. State-
+of-the art and emerging technologies towards more efﬁcient wind turbines are reviewed
+in [1–5]. Among these, the direct drive technology has assumed an important role in the
+wind offshore industry with low speed and high torque permanent magnet synchronous
+generators (PMSGs).
+Condition monitoring and fault diagnosis are considered effective tools to detect
+incipient failures and generate early fault alarms, assuming a paramount importance
+in reducing operational and maintenance (O&M) costs. O&M costs have a signiﬁcant
+contribution from unforeseen drive train failures and account for up to 25% of the total
+levelized cost of electricity [ 6]. The generator is a reliable component of a wind turbine, but
+its failure causes long downtimes and high economic losses, which serves as motivation
+for developing CM methods.
+This paper reviews the state-of-the-art in ﬁelds of fault detection (FD) and condition
+monitoring (CM) of PMSGs for wind turbine applications. Stator insulation failures are
+found as the most critical ones without mature methods to meet wind industry’s needs.
+Accordingly, insulation failures are emphasized the most throughout this review, whereas
+others are discussed more lightly—high resistance connection of stator windings, airgap
+eccentricity, and demagnetization of permanent magnets.
+Machines 2021 ,9, 260. https://doi.org/10.3390/machines9110260 https://www.mdpi.com/journal/machines
+------------------------------End of the page -----------------------------------
+Machines 2021 ,9, 260 2 of 26
+The paper is divided into ten sections: Section 2—FD and CM terminology; Section 3 —
+methods adopted and proposed for CM of WTs; Section 4—direct drive technology for
+WTs; Section 5—analysis of PMSG faults; Section 6—ofﬂine testing of PMSGs; Section 7 —
+online fault detection for PMSGs; Section 8—condition monitoring of PMSGs; Section 9 —
+experience with stator winding faults; Section 10—fault-tolerant PMSGs; and Section 11 —
+conclusions and research directions.
+2. Fault Detection and Condition Monitoring
+In depth explanation of condition monitoring related concepts and terminology for
+rotating electrical machines can be found in [ 7,8]. A brief introduction is given here for
+the beneﬁt of the reader. In fact, terms like failure, fault, fault detection, and condition
+monitoring are commonly (mis-)used in the wind industry across teams of data scientists,
+mechanical, electrical, and system engineers.
+Failure is deﬁned as the time/event when the electrical generator stops to perform its
+function of energy conversion. Failure is complete and does not imply partial functionality.
+Failure mode is how generator failure occurred (e.g., stator winding insulation failure).
+Failure root cause is how the failure mode was initiated (e.g., production defect). Fault is
+an abnormal condition or defect that may lead to a failure.
+Fault detection (protection) is designed to detect faults as they occur and to initiate
+executive action that minimizes damage before failure. The executive action may be
+disconnection from the power supply or switch to a safe operating mode. Electrical faults
+and failures may coincide in time (e.g., phase-to-ground short-circuit fault and winding
+failure) making these terms interchangeable (sometimes confused by electrical engineers),
+whereas a mechanical fault may precede failure by months or years (e.g., a broken tooth is
+a gearbox fault that progressively leads to its complete failure).
+Condition monitoring (CM) aims to derive methods to measure and assess continu-
+ously parameters (features) that indicate degradation and provide early warning of future
+failure. Ideally, selected parameters develop slowly over time and address the failure
+root cause as closely as possible. Accordingly, CM focus on predicting failures, enabling
+estimation of the remaining useful life (RUL) and condition-based maintenance of wind
+turbine components.
+Both FD and CM are intended for continuous evaluation of equipment throughout
+its serviceable life. Fault detection is important to stop infant failures (e.g., production
+errors, foreign objects, contamination, etc.), whereas condition monitoring is most relevant
+for machines approaching the design lifetime or under accelerated ageing conditions
+(high capacity factors, temperatures and vibrations). Even though CM, FD and protection
+functions are closely related, implementation approaches may differ considerably. If the
+same method is employed for fault detection and condition monitoring, caution is required
+to ensure robustness against false alarms. Many methods traditionally adopted for fault
+protection prove unﬁt for condition monitoring. Successful CM provides failure prognosis
+(as early as possible) that is used to plan service interventions and minimize unscheduled
+stops and downtime, thus, improving availability and proﬁtability. Concerning generator
+electrical failures, a large number of published methods fail to meet this success criteria. In
+addition to increasing availability, condition-based maintenance spares the investment in
+stock of spare components with long lead times.
+Figure 1 shows that CM and FD start at the turbine level with a conceptually similar
+process ﬂow, where health indicators are derived from various sources (sensors, controllers,
+and CM system) at relatively high sampling rates. CM continues at supervisory control
+and data acquisition (SCADA)/cloud servers and diagnostics centers, where methods
+are deployed for failure prognosis. As a result, service actions are planned as per the
+predicted time of failure, preventing unscheduled stops and reducing downtime. FD
+runs at the turbine for fast executive actions—in parallel with CM, triggering either a
+stop or a fault-tolerant operating mode. Thus, downtime can be avoided only if the drive
+train component being monitored is endowed with fault-tolerant capabilities, which may
+------------------------------End of the page -----------------------------------
+Machines 2021 ,9, 260 3 of 26
+allow uninterrupted operation or an unscheduled stop of short duration. Fault-tolerant
+operation may be initiated automatically by means of software reconﬁgurations (e.g.,
+changing operating limits), or manually after corrective maintenance takes places (e.g.,
+disconnections of faulty circuits). However, the design of fault-tolerant systems may impact
+cost and performance of a wind turbine, making these approaches less attractive.
+Machines  2021 , 9, 260 3 of 26 
+ 
+ uninterrupted operation or an unscheduled st op of short duration. Fault-tolerant opera-
+tion may be initiated automatically by means of software reconfigurations (e.g., changing 
+operating limits), or manually after correcti ve maintenance takes places (e.g., disconnec-
+tions of faulty circuits). However, the design  of fault-tolerant systems may impact cost 
+and performance of a wind turbine, making these approaches less attractive. 
+With the aid of Figure 1, it must have beco me evident to the reader that requirements 
+and benefits differ between CM and FD. The ef fort spent in CM to recognize fault devel-
+opment as  e arly  as  poss ible is  motivate d by  the need for cost-effective preventive and 
+condition-based maintenance approaches, having the potential to eliminate unscheduled service/stops—obviously more valuable than  emergency shutdowns just before cata-
+strophic failure. Condition-based maintenance is a process of planning optimal and timely 
+maintenance based on machine condition info rmation obtained through CM. As an exam-
+ple, operators may choose to run a faulty genera tor till failure to reduce production losses, 
+while a replacement is manufactured and shi pped to site. A major offshore repair—gen-
+erator replacement—often takes several weeks from planning to execution. 
+Ideally, CM is deployed by exploiting ex isting sensors (used for control and protec-
+tion) and data (dark data) for minimum cost of implementation. However, this is often 
+unfeasible, and the CM system operates in standalone. Better integration of CM systems 
+with turbines controllers may improve perfor mance and reduce costs. The cost of CM 
+hardware becomes the first barrier to the adop tion of innovative technologies. An assess-
+ment of the business case is required to justify the investment in CM, taking into consid-
+eration costs of repair or replacement and do wntime. An attractive business case is much 
+more likely to be found for large MW generato rs with long lifetime  expectancy. Thus, new 
+offshore turbines and their generators are g ood candidates due to difficult access, long 
+lead times, and costly operations (logistics— Several thousands of EUR /hour, repair, re-
+placement, loss of production— Several thousand s of EUR /day, financial penalties, etc.). 
+However, the economic value added by the CM system strongly depends on its per-
+formance. The study in [9] quantifies the ec onomics of an imperfectly performing CM 
+system for wind turbine gearboxes. A poor performing CM system—high rate of false 
+alarms—will be ignored, thus the investment in CM will be an additional loss on top of 
+the unforeseen failures. 
+Even though the potential of condition-based maintenance for offshore turbines is 
+widely recognized by academia and industry, it is seldomly used. Condition monitoring 
+of bearings and gearboxes are success examples, whereas CM of generators lacks mature 
+and robust methods. Therefore, more research efforts/contributions are needed if the wind 
+industry should switch from corrective main tenance (remedying of failures) to predic-
+tive/condition-based maintenance (repair just be fore failure) in orde r to maximize availa-
+bility. 
+ 
+Figure 1. Condition monitoring and fault detect ion for wind turbines’ drive train. Data Acquisition
+Signal Processing
+Feature Extraction
+Condition Monitoring
+Scheduled Stop
+Condition-based 
+MaintenanceFault Detection
+Unscheduled Stop
+Corrective 
+MaintenanceFault-Tolerant 
+Operation
+Scheduled StopExecutive ActionHealth Indicators
+Planned Action
+Downtime
+Planned Action@SCADA Servers & Diagnostic Centers@Wind Turbine
+Figure 1. Condition monitoring and fault detection for wind turbines’ drive train.
+With the aid of Figure 1, it must have become evident to the reader that requirements
+and beneﬁts differ between CM and FD. The effort spent in CM to recognize fault devel-
+opment as early as possible is motivated by the need for cost-effective preventive and
+condition-based maintenance approaches, having the potential to eliminate unscheduled
+service/stops—obviously more valuable than emergency shutdowns just before catas-
+trophic failure. Condition-based maintenance is a process of planning optimal and timely
+maintenance based on machine condition information obtained through CM. As an ex-
+ample, operators may choose to run a faulty generator till failure to reduce production
+losses, while a replacement is manufactured and shipped to site. A major offshore repair—
+generator replacement—often takes several weeks from planning to execution.
+Ideally, CM is deployed by exploiting existing sensors (used for control and protection)
+and data (dark data) for minimum cost of implementation. However, this is often unfeasible,
+and the CM system operates in standalone. Better integration of CM systems with turbines
+controllers may improve performance and reduce costs. The cost of CM hardware becomes
+the ﬁrst barrier to the adoption of innovative technologies. An assessment of the business
+case is required to justify the investment in CM, taking into consideration costs of repair
+or replacement and downtime. An attractive business case is much more likely to be
+found for large MW generators with long lifetime expectancy. Thus, new offshore turbines
+and their generators are good candidates due to difﬁcult access, long lead times, and
+costly operations (logistics— Several thousands of EUR /hour, repair, replacement, loss of
+production— Several thousands of EUR /day, ﬁnancial penalties, etc.).
+However, the economic value added by the CM system strongly depends on its
+performance. The study in [ 9] quantiﬁes the economics of an imperfectly performing CM
+system for wind turbine gearboxes. A poor performing CM system—high rate of false
+alarms—will be ignored, thus the investment in CM will be an additional loss on top of the
+unforeseen failures.
+Even though the potential of condition-based maintenance for offshore turbines is
+widely recognized by academia and industry, it is seldomly used. Condition monitoring
+of bearings and gearboxes are success examples, whereas CM of generators lacks mature
+and robust methods. Therefore, more research efforts/contributions are needed if the
+wind industry should switch from corrective maintenance (remedying of failures) to
+------------------------------End of the page -----------------------------------
+Machines 2021 ,9, 260 4 of 26
+predictive/condition-based maintenance (repair just before failure) in order to maximize
+availability.
+Mechanical faults tend to take signiﬁcant periods of time to develop, and the root
+cause can be detected months in advance by vibration measurements [ 10]. On the other
+hand, electrical and electronic components may not show measurable signs of degraded
+performance until failure happens (or just seconds before), thus CM fails to provide early
+warning of failure and corrective maintenance is the only option left. Therefore, mechanical
+and electrical engineers may have very different views on CM. Mechanical engineers tend to
+look for faults via the vibration spectrum, whereas electrical engineers via the current, ﬂux
+or power. In fact, there is commonality between the two approaches—same characteristic
+frequency components [ 7]. The best monitoring may be devised from choosing either
+one or a combination of these quantities. Multi-parameter monitoring and sensor fusion
+methods may offer improved detection conﬁdence. Among many factors, instrumentation
+sensitivity and signal-to-noise ratio play a major role in the selection of variables for
+condition monitoring.
+3. Wind T urbine Condition Monitoring Methods
+CM of electrical machines emerged in the 1980s and was later adopted for wind
+turbines. This section addresses methods and trends for wind turbines. Broad categories
+are ofﬂine and online CM, and intrusive and non-intrusive methods. Traditional ofﬂine CM
+is not suitable for offshore WTs because it requires periodic visits and stops to allow instal-
+lation of equipment and acquisition of measurements. Methods suited for ofﬂine CM are
+instead used in factory tests and onsite troubleshooting. Intrusive methods are associated
+with demanding installation requirements (e.g., oil debris detectors, accelerometers, search
+coils), whereas non-intrusive are contactless or use existing sensors (e.g., thermography,
+acoustic emission (AE), electrical signals for control).
+Data used for CM is mostly from SCADA and dedicated CM systems. Raw data
+from WT sensors may be sampled at high frequencies, but down sampled for SCADA
+systems to provide average or instantaneous values at given intervals. Data resolution
+as low as 10 min is common for statistical data. Most modern CM systems are designed
+for vibration monitoring, being capable of acquiring and post-processing signals at high
+sampling rates. Although SCADA signals are available in all modern wind turbines, these
+are not extensively exploited for turbine health monitoring. Performance monitoring that
+uses SCADA data to establish relationships between various parameters such as power,
+wind speed, pitch angle, rotor speed and more may also be used for condition monitoring.
+Industry and academia have increased their efforts to extract useful information from the
+so-called “dark data”. Integration of the multiple systems and signals useful for CM also
+deserve attention to achieve superior results at lower costs.
+Most studies in the literature deal with the use of SCADA data concerning condition
+monitoring for mechanical faults, which were reviewed in [ 11,12]. An example of model-
+based diagnostic for generator electrical faults is given in [ 13] by using SCADA data for
+electrical signals (power, voltages and currents), principal component analysis and support
+vector regression. The authors stated that fault detection was possible two weeks before
+failure, but the type of generator failure is not disclosed. It is also pointed out that sampling
+times of SCADA data are not ideal for the dynamics of interest. Another study in [ 14] states
+that generator failure can be predicted 18 days in advance with 80% accuracy.
+Condition monitoring techniques and signal processing methods are reviewed in [ 15].
+A large variety of methods have been proposed, but only a few are widely used by the
+wind industry for fault detection and CM—detection of smoke and analysis of vibrations,
+oil, and temperatures.
+Smoke (or dust) detection appears as the simplest and most general of all techniques,
+for example to detect degrading insulation and excessive heat dissipation. At the time of
+smoke detection, failure is most likely inevitable, and emergency stop mandatory. Thus,
+even though key for turbine protection, such detection technique is of little interest for CM.
+------------------------------End of the page -----------------------------------
+Machines 2021 ,9, 260 5 of 26
+Vibration analysis is the most popular technology, and accelerometers are widely
+employed for CM of gearboxes and bearings. For instance, the characteristic frequencies
+of rolling element bearings depend on the geometrical size of the various elements [ 7]
+and can be measured by accelerometers mounted on the bearing housing. Other faults
+detectable by vibration measurement are static and dynamic eccentricity, unbalanced rotor
+mass, and winding faults. Vibration monitoring has gained wide acceptance throughout
+the industry. A survey of commercially available solutions identiﬁed 36 CM systems for
+wind turbine applications [ 16] with a strong emphasis on vibration monitoring of rotating
+electrical machines and gearboxes. Gram & Jul and Bruel & Kjær Vibro appear to have
+the largest track records as suppliers of SGRE and Vestas, respectively. SGRE deploys
+vibration diagnostics as a tool for predictive maintenance [ 17], enabling the early detection
+of anomalies, optimal service planning, and repairs before failure.
+Temperature measurements are well suited for SCADA systems due to their slow
+dynamics, and widely used for hardware protection and control of operational limits. As
+opposed to low power applications of electrical machines, MW generators are commonly
+equipped with point temperature measurements that can be used for CM. Several issues
+and inaccuracies arise with winding temperature point measurements because: (1) sensors
+need to be insulated and located at a given distance from the copper; (2) sensors’ placement
+varies due to production and installation tolerances, resulting in signiﬁcant measurement
+differences between multiple sensors; (3) sensors’ locations chosen to measure hotspots
+in healthy state operation may fail to spot local temperature changes due to faults in
+large size generators. Bulk temperature measurements—to obtain a thermal image or
+equivalent—are difﬁcult and expensive (thermography, arrays of infrared sensors, ﬁber
+optics, etc.), thus rarely attempted for serial turbines. Thermography is not well-established
+for online CM due to price and complexity. Moreover, low sensitivity of infra-red cameras
+may prevent detection of incipient winding faults. Modern sensors allow the temperature
+measurements to be made closer to the active parts of a machine and in a more distributed
+manner (ﬁber optics, FBG). As health indicators, temperature rise (dT/dt) and deviation
+between multiple sensors may be more valuable than absolute temperature values. It is
+worth noting that the temperature of generator components depends on many factors
+(ambient temperature, generator electrical load, cooling system, and health condition of
+sub-components) and thermal steady-state may be a rare operating condition for a wind
+turbine due to varying wind conditions. Accordingly, it is challenging to deploy model-
+based diagnostics based on temperature measurements with the required robustness for
+CM. A regression model based on SCADA data predicts temperatures of wind turbine
+components in [ 18], and residuals between predicted and actual values are used to generate
+fault warning.
+Oil analysis in WTs concerns mostly debris detection in gearbox and bearing lubricant.
+In a debris detector, ﬂuid ﬂows continuously through a transducer that identiﬁes changes
+in the ﬂuid characteristics. Such devices have been deployed in wind turbines, and one
+example is the MetalScan by Gastops for real-time detection of gearbox damage installed
+on Siemens SWT-3.6 [ 19]. In a direct liquid cooled transformer or machine, coolant may
+be contaminated with insulation particles resulting from its degradation and discharge
+activity.
+Many other methods have found little acceptance from the wind industry yet. Ex-
+amples are monitoring of acoustic emission, radio-frequency emission, electromagnetic
+and electrical signals. The primary sources of acoustic emission in WTs are the generation
+and propagation of cracks. Acoustic monitoring has been proposed for CM of bearings,
+gearboxes, and blades with acoustic sensors recording sound directly. Vibrations and
+acoustic emission are combined in [20] for CM of gearbox and generator shaft.
+Electromagnetic and electrical signals measured by search coils, ﬂux, current and volt-
+age sensors have been addressed mostly by other drives’ industries. The use of an electrical
+signal—generator power—is proposed for cost-effective condition monitoring of wind
+turbines [ 21] as an alternative to conventional techniques based on analysis of vibration
+------------------------------End of the page -----------------------------------
+Machines 2021 ,9, 260 6 of 26
+and lubrication oil. Although the use of electrical signals instead of vibrations for detection
+of mechanical fault has been criticized due to lack of sensitivity—for instance concerning
+bearing faults [ 22], various recent publications address this topic. Fault prognosis and RUL
+prediction for WT gearboxes uses current signal analysis in [ 23]. The healthy condition of
+PMSGs is evaluated in the presence of rotor eccentricity and bearing cage faults in [ 24].
+Current signature analysis is used as an alternative to vibration analysis for monitoring of
+mechanical faults in [25] with application in industrial motors.
+A trend in recent CM developments is the adoption of machine learning and artiﬁcial
+intelligence techniques as tools for improving the capabilities of existing and new tech-
+nologies. Machine learning is the process of building a model that learns from a limited
+amount of data without specialist intervention. In this context, learning means ﬁtting
+model’s parameters to a speciﬁc dataset. Most adopted models are regression models that
+predict a numeric value, and classiﬁers that predict a categorical variable. A comprehensive
+review of machine learning methods for wind turbine condition monitoring is given in [ 26].
+Applications of machine learning for detection of electrical faults in PM machines are
+scarce, some examples are found in [27–29].
+Modeling developments for the RUL prediction of critical WT components are re-
+viewed in [ 30,31], including physics-based and data-driven models (e.g., artiﬁcial
+intelligence—neural networks and machine learning, stochastic, and hybrid) for prognos-
+tics. Very few are employed for predicting the time of generator electrical failures. Physics-
+based models require knowledge and modeling of the degradation process, whereas
+data-driven models transform data into models without necessarily providing understand-
+ing of the failure mechanism. It is concluded in [ 30] that hybrid methods are the most
+accurate tools. Such an approach is proposed that uses SCADA data to provide information
+on operating and environmental conditions, physics- and regression-based methods to
+estimate the current state of the component’s condition, and a Bayesian algorithm for
+estimation of the RUL.
+4. Direct Drive PMSGs for Wind T urbines
+The most common conﬁguration of wind energy conversion systems (WECS) for
+offshore installation is called Type 4 in the literature [ 32] and composed of a transformer,
+full scale power converter, electrical generator, an optional gearbox, and a rotor with three
+blades. Direct drive wind turbines avoid gearboxes by means of synchronous generators
+with high torque and high pole numbers. Permanent magnet synchronous generators
+are preferred and currently deployed by various manufacturers—SGRE, Vestas, and GE.
+Back-to-back voltage source power converters are standard, providing variable speed
+operation and decoupled control of grid and generator sides. Digital control systems are
+complex—turbine and converter controllers—and their numerous sensors and control
+signals provide opportunities for condition monitoring and fault detection. Moreover,
+closed-loop control systems can alter fault signatures, and they must be addressed for
+developing CM methods. SCADA systems are present in all wind farms and data may be
+exploited for CM. Even though SCADA data can be used for anomaly detection by training
+models of normal operating conditions of a wind turbine (performance monitoring), it
+is unable to capture fast dynamics and provide fault discrimination to the required level.
+Additionally, dedicated condition monitoring systems are installed, typically vibration or
+oil analysis is carried out with additional sensors and digital signal processors (DSPs).
+Direct drive (DD) turbines are the ones from Type 4 WECS of interest in this paper,
+which drive train has one fewer component—the gearbox-always on the spotlight of CM.
+Their largest and most expensive components are the generator and the rotor blades, thus
+deserving the attention of CM efforts. In other words, the design choice of removing the
+gearbox is expected to increase availability, assuming a DD generator is more reliable
+than a conventional generator with gearbox. However, less mature CM methods for DD
+generators may compromise availability and service costs, if detection happens at late
+stages of fault development.
+------------------------------End of the page -----------------------------------
+Machines 2021 ,9, 260 7 of 26
+A brief introduction to PMSGs and their control system under healthy operating
+conditions is given next. These fundamentals are trivial for many electrical engineers, but
+they aid other readers understanding later discussions about the drive’s faulty operation.
+High torque density PMSGs are desired for compact wind turbines, and they are
+usually designed to operate close to the nonlinear region for better usage of the electro-
+magnetic materials. This makes sinusoidal ﬂux linkages difﬁcult to achieve by means of
+machine design optimization techniques [ 33], resulting inevitably in torque, current and
+voltage harmonics. Typically, torque ripples varying periodically with the rotor position
+at six times the electrical frequency (6th order harmonic) result from dominant 5th and
+7th harmonics in the back-emf. Additional torque ripples may appear due to manufactur-
+ing imperfections [ 34]-2nd order harmonic—and in fault-tolerant modes, for instance, a
+multi-phase machines operating with a reduced number of phases [35].
+Control of the generator-side converter is typically based on vector control as described
+in textbooks [ 32] but may include additional features. As an example, control solutions for
+torque ripple minimization are mandatory in wind turbine applications to reduce acoustic
+noise and fatigue, allowing manufacturers to meet noise standards and component life-
+time targets. Torque ripple minimization is achieved by means of stator current injection,
+producing a counteracting torque ripple component. For the desired harmonic current
+injection, closed-loop harmonic current controllers can be speciﬁcally designed to achieve
+zero steady-state errors and satisfactory dynamic performance [ 36–38]. These remarks
+regarding generator current control are relevant for fault diagnosis because fault signatures
+based on harmonic analysis of electrical signals (current, voltage, power) can be altered by
+the chosen control algorithms and parameters.
+Standard PMSG drives include current and voltage transducers for measurements
+of generator phase currents and DC link voltage, respectively. Other relevant feedback
+signals are obtained in closed-loop operation by means of controller’s outputs—reference
+converter voltages—and observers—rotor position and speed. Therefore, the requirement
+for direct measurement of any other quantities is expected to increase complexity and cost
+of the system. Although control signals are continuously measured and contain useful
+information about the health condition of the wind turbine and the drivetrain components,
+they are seldom used for CM.
+Advanced digital control schemes greatly rely on the reference frame theory to simplify
+the design of algorithms. Reference frame theory uses mathematical transformations to
+simplify the analysis of three-phase systems. Starting with the example of a balanced
+and harmonic free three-phase system for simplicity of illustration: (1) in the natural ( abc)
+reference frame—as measured by sensors, three-phase variables are time-varying ( AC) and
+phase displaced by 120; (2) in the stationary ( ab) reference frame, two-phase variables are
+time-varying ( AC) and phase displaced by 90; and (3) in the synchronous ( dq) reference
+frame, two-phase variables are time-invariant ( DC). In the presence of harmonics, analysis
+is also simpliﬁed by employing dqframe instead of abcframe. For example, 5th and 7th
+harmonics in abc appear as 6th harmonic in dq, matching the harmonic order of torque
+ripple and vibration. Naturally, reference frame theory is also used for fault detection.
+A few of the characteristic frequencies of a healthy drive PMSG as mentioned above
+are results of generator non-idealities (2f, 6f and their multiples: 4f, 8f, 12f, 18f, etc, where f
+stands for the fundamental electrical frequency), others result from the power converter
+operation and are found in a higher frequency range—integer multiples of the PWM
+frequency and sidebands [39].
+The harmonics components present in dqcurrents ( id,iq) and ﬂux linkages ( yd,yq)
+generate harmonics in electromagnetic torque:
+Te=1.5p 
+ydiq yqid
+(1)
+where pis the PMSG number of pole pairs. Accordingly, torque harmonics may excite
+structural eigen modes and result in large acceleration levels.
+------------------------------End of the page -----------------------------------
+Machines 2021 ,9, 260 8 of 26
+The various components of a generator are listed in Table 1, including mechanical,
+electrical and electronic components prone to failure. Among the most common generator
+failure modes are cooling system failures (heat exchanger pipework, hoses, and motor
+failures), winding failures (insulation and connections failures, and contamination), bearing
+failures (loss of lubrication, wear and failure of mechanical elements, electrically induced
+failure), stator core failures (vibration, circulating current, hot spot), and demagnetization.
+Table 1. List of components prone to fail in a DD PMSG.
+Stator Rotor Support Structures Cooling Instrumentation
+Winding insulation
+(groundwall, interturn)
+End windings
+Core
+WedgesPermanent magnetsBearings
+Shaft
+Stator support structure
+Rotor houseHeat exchangers
+Pipework
+Fans
+MotorsSensors
+Acquisition systems
+Controllers
+High power generators tend to employ liquid cooling of stator windings, hence the
+risk of leakages and consequent insulation deterioration exists. A well-known consequence
+of water ingress in the ground-wall insulation is the drop of insulation resistance measured
+between phase terminal and ground/frame.
+A stator core fault is a rare event, most likely due to mechanical damage during
+manufacturing and assembly.
+Bearing faults may result from mechanical (radial and axial forces) and electrical
+(bearing currents) stresses. Shaft induced voltages can lead to discharge and HF currents
+across the bearing and later damages [ 40]. The rotor of a generator becomes eccentric
+in the presence of bearing faults (static and/or dynamic eccentricity), causing unbalance
+magnetic pull and increasing the bearing load and vibrations. Bearing health indicators
+frequently used are derived from vibration, noise, temperatures, chemical characteristics of
+the grease, and stator currents.
+Rotor faults in PMSGs can be categorized in airgap eccentricity and demagnetization.
+Eccentricity due to manufacturing errors (oval stator or misalignment between stator,
+bearing and rotor), worn bearings, bent shaft, and asymmetric thermal expansion (rotor
+or stator) results in non-uniform length of the radial airgap (between stator and rotor).
+The stator position of minimum airgap length may be ﬁxed—static eccentricity—or vary
+with rotor position—dynamic eccentricity. Unacceptable levels of eccentricity may end
+up with stator-rotor rub, damaging PMs, stator insulation and core. Demagnetization
+may occur due to manufacturing defects and operational stresses. It is worth noting that
+PMs are sensitive to rotor temperature and stator current. An example of an operating
+condition at risk of irreversible demagnetization is the occurrence of a short-circuit (SC)
+fault at the highest allowable rotor temperature. This effect is commonly illustrated using
+the BH curve at the temperature of concern—with the knee of the demagnetization curve
+to be avoided to prevent irreversible demagnetization. Demagnetization can be partial or
+uniform.
+Winding failures are pointed out as major contributors for generators in wind turbines
+to fail more often than anticipated [ 41]. A comparison of DFIG and PMG drives trains
+in [42]—1800 DFIGs and 400 PMGs–shows that the PMSG has a lower failure rate. Perhaps
+based on outdate information, in [ 43] is stated that DD generators are found to fail twice as
+much than the geared counterparts, contradicting [ 11] as well as the authors’ experience.
+From a sample of more than 1200 wind turbine generators [ 44], most winding insulation
+failures were attributed to mechanical failure of the support structure. The effects of
+humidity, salinity and water droplets on the generator winding insulation offshore WTs
+are reviewed in [ 45]. These can increase the occurrence of partial discharges that can be
+the reason and result of insulation degradation. Naturally, it is key to ensure dry air inside
+the wind turbine nacelle, which can be achieved efﬁciently by means of dehumidiﬁers.
+Premature failure is often attributed to production errors and/or harsh environmental
+------------------------------End of the page -----------------------------------
+Machines 2021 ,9, 260 9 of 26
+and operating conditions. Design defects must not be excluded when new products and
+technologies are introduced.
+5. Analysis of PMSG Faults
+The health condition of a generator is ultimately related to the materials, design,
+and stress/ageing mechanisms (thermal, electrical, ambient, and mechanical). Generator
+components and their failure modes were introduced in the previous section, and the major
+fault types of PMSGs can be summarized as:
+ Stator insulation faults resulting in open-circuit or short-circuit faults;
+ Abnormal connection of the stator windings;
+ Static and/or dynamic airgap eccentricity due to damaged support structures (bearing,
+shaft, stator support structures);
+ Demagnetization of permanent magnets.
+Analysis of these faults has shown a combination of the symptoms listed below:
+ Increased discharged activity (partial discharges);
+ Stray ﬂux or leakage currents;
+ Unbalanced/asymmetric terminal voltages and currents;
+ Harmonics in electrical power;
+ Increased torque pulsations;
+ Increased noise and vibration;
+ Increased losses and reduction in efﬁciency, and decrease of average torque;
+ Excessive heating;
+ Smoke.
+Examples of electrical and magnetic faults with high importance for PMSGs are de-
+scribed in detail with the aid of Figures 2–4. Core faults are the rarest events, which
+typically result from mechanical damage and shorted lamination sheets that allow circulat-
+ing currents in the stator core. Subsequently, the core may heat up to temperatures that
+cause materials to expand and melt till ground-wall insulation failure and earth fault occur.
+Core faults are not addressed further in this paper.
+Machines  2021 , 9, 260 10 of 26 
+ 
+ Increase of discharge activity is common to insu lation ageing and local/isolated faults that 
+precede insulation puncture. 
+In short, generator failure by simply ageing of insulation (lifetime exceed) is a rare 
+event, instead it occurs due to a variety of defects and stress mechanisms described above. 
+Insulation degradation changes chemical and dielectric characteristics of insulating 
+materials till conductors are no longer insula ted, which causes short-circuit faults: inter-
+turn faults and ground faults (Figure 2). An interturn fault due to breakdown of turn in-
+sulation leads to circulating currents, excessive  heating if rated turn current is exceeded, 
+and further degradation of the insulation. Accordingly, an interturn fault may evolve quickly to a phase-ground fault and result in  generator breakdown. Timely short-circuit 
+fault detection aims to prevent local temperat ure increase, loss of material due to exces-
+sively high temperatures (insulation, copper, iron), smoke and potential fire. Symptoms 
+prior to short-circuit fault are difficult to mo nitor, such as partial discharges, leakage cur-
+rents, and local temperature increase. Literature most widely addressed signatures appear only after short-circuit fault: electrical an d magnetic asymmetry, vibrations, etc. There-
+fore, the latter ones are in general unsuited for insulation condition monitoring and per-
+haps of limited value for the wind industry. Fault tolerant generato rs present themselves 
+as an exception, making use of FD to  trigger post-fault  operating modes. 
+ 
+Figure 2. Illustration of stator winding insulation failure mechanism. 
+The circulating current is an important para meter for the analysis of interturn faults, 
+depending on the fault severity (number of shorted tuns) and loca tion, generator param-
+eters, and operating conditions. Its amplitude is  calculated analytically in [46]. Analysis 
+of inter-turn short-circuit (SC) faults in [47] shows how the fault/circulating current 
+changes significantly with the number of sh orted turns and predicts  hotspot temperature 
+by means of electromagnetic-thermal coupled model. One turn shorted is the worst-case 
+scenario with the highest fault current, which decreases as the number of shorted turns increases. The coupling effect—electro-ther mal—is found important because the high 
+temperature rise results in the increase of the fault resistance, which reduces predicted 
+fault current and hotspot temperature. The vari ous factors that affect the amplitude of the 
+SC current in PMSMs are investigated in [48]  based on an FEM model, namely load, speed, 
+fault location and branch inductance. Remarks are made with regards to current and volt-
+age harmonics, current differences between pa rallel branches, and torque ripples (2nd, 
+4th and 8th harmonics). It is concluded that inductances of the short-circuit turns depend 
+strongly on the fault location (e.g., top versus bottom of the tooth), and a large branch inductance reduces SC current. 
+Reviews of modeling approaches for interturn faults in PMSMs are found in [49,50], 
+which are categorizes as: electrical equivalent circuit based methods (consider machine Phase-to-Ground 
+Short-Circ uit Fault
+HotspotPartial discharges
+Le akage cur rentsThermal asymmetryInsulation
+Degradation
+Interturn
+Short-Circuit Fault
+Circulating Current Ground Current
+Smoke
+Loss of MaterialElectromagnetic asymmetry
+Thermal asymmetryVibrations
+Figure 2. Illustration of stator winding insulation failure mechanism.
+------------------------------End of the page -----------------------------------
+Machines 2021 ,9, 260 10 of 26
+Machines  2021 , 9, 260 11 of 26 
+ 
+ geometry: winding function theory [51]), magn etic equivalent circuit based methods (con-
+sider geometry, magnetic materials, and wi nding distribution), and numerical methods 
+(solve Maxwell’s equations: FEM [52,53]). FEM are the most accurate and computational 
+demanding. Concerning fault-tolerant PMSMs, analytical models for prediction of induct-ances and short-circuit current are presented in [54,55]. Modeling of surface mounted 
+PMSMs with stator interturn faults is addressed analytically in [56,57] in abc and dq0 
+frame. A magnetic equivalent model is proposed in [58] for high accuracy and real time 
+simulations. An equivalent circuit model in [59] employs inductance matrices from FE 
+simulations to conclude that interturn fault severity must consider both number of shorted turns and fault resistance. 
+Connection faults also called high resistance  or loose connections are found at termi-
+nal connections as well as internal generator connections (e.g., parallel branches and/or 
+segments). The connection failure mechanism is illustrated in Figure 3, often initiated with 
+production errors (e.g., a poorly torqued bolted connection). At the nacelle of a wind tur-bine, environmental and operating conditions  accelerate fault development. In other 
+words, vibration and heat facilitate the increase of contact resistance and connection tem-
+perature. Failure causes an op en-circuit fault and electrical asymmetry. The debris from 
+burnt insulation and metal may create a conducting path between phases or between 
+phase and ground, thus a short-circuit fault ma y be detected too. Early detection of con-
+nection faults is attempted with visual and physical inspection, PD measurements and 
+thermography. Fault signatures are to some exte nt the same as for insulation faults, thus 
+similarly challenging to detect at an early st age of fault development. However, fault de-
+tection is perhaps good enough in this scenario (e.g., based on electrical asymmetry), pro-
+vided that a minor connection repair can be carried out on site as opposed to a major 
+repair following insulation failure. 
+Demagnetization is another important type of faults for PMGs, which failure mech-
+anism is shown in Figure 4. Having insured high production quality, operational stresses are of extreme importance for the performanc e of PMGs, since exceeding temperature and 
+current limits can cause irreversible demagnetization. Demagnetization can be partial or 
+uniform, each showing distinct fault signatures due to changes in back-emf harmonics 
+and fundamental amplitude, respectively. The variation of the magnetic saturation of the 
+stator core is the signature exploited in [60,61]. 
+ 
+Figure 3. Illustration of stator connection failure mechanism. Contact Resistance ↑ Poor Stator
+Connections
+Temperature ↑ 
+Open-Circuit Fault
+Figure 3. Illustration of stator connection failure mechanism.
+Machines  2021 , 9, 260 12 of 26 
+ 
+  
+Figure 4. Illustration of demagnetization failure mechanism. 
+6. Offline Testing of PMSGs 
+Offline methods have been developed for accurate measurements, and their applica-
+tion is twofold: (1) factory testing ensures ge nerators at the end of the production line are 
+fit for purpose; and (2) periodic monitoring assesses health condition throughout the gen-
+erator design lifetime. 
+In service offline tests require at least a short outage of the wind turbine, and often 
+require technicians to isolate the machine, install measurement equipment, and carry out 
+the test. This monitoring approach is obviousl y undesired for offshore WTs. Alternatively, 
+offline testing is done when online monitoring indicates the need for extra data for health 
+assessment, or by equipment permanently installed in the WT for automatic offline test-ing. This is justified by the fact that degradation symptoms are difficult to measure in real-
+time during generator operation and remain undetected by conventional protection sys-
+tems till catastrophic failure. 
+In addition to the obvious disadvantage that  offline tests must be done at discrete 
+times by forcing or waiting for a stop of the WT, offline tests are also carried at operating 
+conditions that differ from no rmal operation (temperature, vibration, current, etc.), thus 
+under different stress mechanisms that ma y contribute to erroneous assessment. 
+Various methods for offline testing are described extensively in [62]. Many of those 
+are described in IEEE and IEC standards [63–65], and a review of IEEE standards for gen-
+erator winding insulation diagnostic testing is found in [66]. The petrochemical industry is given as an application example of both offline and online methods for condition mon-
+itoring of stator insulation in [67]. 
+In this section, the most commonly used offline tests for evaluation of stator winding 
+insulation are introduced shortly. On the one hand, concerning testing of ground wall 
+insulation, there are several options: insulation  resistance (IR) and polarization index (PI), 
+DC and AC high potential (Hipot) tests, capacitance, dissipation factor, and partial dis-
+charges (PD). On the other hand, concerning testing of turn and phase insulation, there 
+are fewer options and the surge test is the only  reliable one [68]. Additionally, poor stator 
+connections may be identified by means of th ermal imaging. Examples of offline tests car-
+ried out by the converter controller are also included. 
+6.1. Insulation Resistan ce and Polarization Index 
+The first offline test of stator windings to be undertaken is probably always the meas-
+urement of insulation resistance (IR), i.e., the resistance between the conductors and the 
+stator core, often known as Megger™ test (p opular vendor of me asurement instrumenta-
+tion). The test is performed by applying high voltage be tween generator winding termi-
+nals and stator core (or frame) and measuring current to calculate resistance. High re-
+sistance values are expected for a healthy ground wall insulation system able to perform 
+its basic function of blocking current flow  between winding and core. The polarization Local 
+DemagnetizationPerman en t Magnet 
+Degradation
+Uniform 
+Demagnetization
+Elec tromagne tic asymmetry
+Thermal asymmetry
+VibrationsBEMF ↓ 
+Current ↑
+Tem perat ure ↑
+Figure 4. Illustration of demagnetization failure mechanism.
+Starting with insulation failure as an example of generator failure mode, various
+mechanisms can drive electrical breakdown of a dielectric component. It is well known
+that insulating materials deteriorate faster at higher temperatures. The chemical reaction
+governed by the Arrhenius rate law is often approximated by the rule of thumb that
+says insulation lifetime decreases 50% for every temperature rise of 10C above rated
+temperature. Design and production defects, and winding contamination can create
+hotspots that accelerate insulation degradation locally. Contamination may hinder cooling
+or make insulation surface conducting. High vibration levels can crack insulation materials.
+Mechanical ageing is particularly prevalent in the stator end windings. The end-windings
+of rotating machines are particularly prone to failure due mechanical (resonances, impact
+by foreign objects), environmental (contamination), and electrical ageing. Electrical stress
+as transient or surge voltages can result from switching of power converters and lightning
+strikes. In PWM converter-fed machines, interturn fault tends to occur in the ﬁrst few turns
+of the phase winding. Operation at high current, temperature and humidity accelerate
+insulation ageing, therefore, all these variables must be controlled continuously for a
+generator to remain within safe operating limits and reach design lifetime. Foreign objects
+inside a generator are also a possible root cause of insulation damage by impact.
+Partial discharge (PD) is a gas breakdown that occurs in insulation that has voids
+from the manufacturing process and/or operating stresses, resulting in the emission of
+heat, light, and sound. High energy discharges can erode insulation materials over time.
+Slot discharge occurs between the surface of the stator coil and the grounded core steel,
+when good electrical contact between the insulated coil surface and the stator core is lost.
+Increase of discharge activity is common to insulation ageing and local/isolated faults that
+precede insulation puncture.
+In short, generator failure by simply ageing of insulation (lifetime exceed) is a rare
+event, instead it occurs due to a variety of defects and stress mechanisms described above.
+------------------------------End of the page -----------------------------------
+Machines 2021 ,9, 260 11 of 26
+Insulation degradation changes chemical and dielectric characteristics of insulating
+materials till conductors are no longer insulated, which causes short-circuit faults: interturn
+faults and ground faults (Figure 2). An interturn fault due to breakdown of turn insulation
+leads to circulating currents, excessive heating if rated turn current is exceeded, and further
+degradation of the insulation. Accordingly, an interturn fault may evolve quickly to a phase-
+ground fault and result in generator breakdown. Timely short-circuit fault detection aims
+to prevent local temperature increase, loss of material due to excessively high temperatures
+(insulation, copper, iron), smoke and potential ﬁre. Symptoms prior to short-circuit fault
+are difﬁcult to monitor, such as partial discharges, leakage currents, and local temperature
+increase. Literature most widely addressed signatures appear only after short-circuit fault:
+electrical and magnetic asymmetry, vibrations, etc. Therefore, the latter ones are in general
+unsuited for insulation condition monitoring and perhaps of limited value for the wind
+industry. Fault tolerant generators present themselves as an exception, making use of FD
+to trigger post-fault operating modes.
+The circulating current is an important parameter for the analysis of interturn faults,
+depending on the fault severity (number of shorted tuns) and location, generator parame-
+ters, and operating conditions. Its amplitude is calculated analytically in [ 46]. Analysis of
+inter-turn short-circuit (SC) faults in [ 47] shows how the fault/circulating current changes
+signiﬁcantly with the number of shorted turns and predicts hotspot temperature by means
+of electromagnetic-thermal coupled model. One turn shorted is the worst-case scenario
+with the highest fault current, which decreases as the number of shorted turns increases.
+The coupling effect—electro-thermal—is found important because the high temperature
+rise results in the increase of the fault resistance, which reduces predicted fault current
+and hotspot temperature. The various factors that affect the amplitude of the SC current
+in PMSMs are investigated in [ 48] based on an FEM model, namely load, speed, fault
+location and branch inductance. Remarks are made with regards to current and voltage
+harmonics, current differences between parallel branches, and torque ripples (2nd, 4th and
+8th harmonics). It is concluded that inductances of the short-circuit turns depend strongly
+on the fault location (e.g., top versus bottom of the tooth), and a large branch inductance
+reduces SC current.
+Reviews of modeling approaches for interturn faults in PMSMs are found in [ 49,50],
+which are categorizes as: electrical equivalent circuit based methods (consider machine
+geometry: winding function theory [ 51]), magnetic equivalent circuit based methods (con-
+sider geometry, magnetic materials, and winding distribution), and numerical methods
+(solve Maxwell’s equations: FEM [ 52,53]). FEM are the most accurate and computational
+demanding. Concerning fault-tolerant PMSMs, analytical models for prediction of induc-
+tances and short-circuit current are presented in [ 54,55]. Modeling of surface mounted
+PMSMs with stator interturn faults is addressed analytically in [ 56,57] in abcand dq0
+frame. A magnetic equivalent model is proposed in [ 58] for high accuracy and real time
+simulations. An equivalent circuit model in [ 59] employs inductance matrices from FE
+simulations to conclude that interturn fault severity must consider both number of shorted
+turns and fault resistance.
+Connection faults also called high resistance or loose connections are found at termi-
+nal connections as well as internal generator connections (e.g., parallel branches and/or
+segments). The connection failure mechanism is illustrated in Figure 3, often initiated
+with production errors (e.g., a poorly torqued bolted connection). At the nacelle of a
+wind turbine, environmental and operating conditions accelerate fault development. In
+other words, vibration and heat facilitate the increase of contact resistance and connection
+temperature. Failure causes an open-circuit fault and electrical asymmetry. The debris from
+burnt insulation and metal may create a conducting path between phases or between phase
+and ground, thus a short-circuit fault may be detected too. Early detection of connection
+faults is attempted with visual and physical inspection, PD measurements and thermogra-
+phy. Fault signatures are to some extent the same as for insulation faults, thus similarly
+challenging to detect at an early stage of fault development. However, fault detection is
+------------------------------End of the page -----------------------------------
+Machines 2021 ,9, 260 12 of 26
+perhaps good enough in this scenario (e.g., based on electrical asymmetry), provided that a
+minor connection repair can be carried out on site as opposed to a major repair following
+insulation failure.
+Demagnetization is another important type of faults for PMGs, which failure mecha-
+nism is shown in Figure 4. Having insured high production quality, operational stresses
+are of extreme importance for the performance of PMGs, since exceeding temperature and
+current limits can cause irreversible demagnetization. Demagnetization can be partial or
+uniform, each showing distinct fault signatures due to changes in back-emf harmonics and
+fundamental amplitude, respectively. The variation of the magnetic saturation of the stator
+core is the signature exploited in [60,61].
+6. Ofﬂine Testing of PMSGs
+Ofﬂine methods have been developed for accurate measurements, and their appli-
+cation is twofold: (1) factory testing ensures generators at the end of the production line
+are ﬁt for purpose; and (2) periodic monitoring assesses health condition throughout the
+generator design lifetime.
+In service ofﬂine tests require at least a short outage of the wind turbine, and often
+require technicians to isolate the machine, install measurement equipment, and carry out
+the test. This monitoring approach is obviously undesired for offshore WTs. Alternatively,
+ofﬂine testing is done when online monitoring indicates the need for extra data for health
+assessment, or by equipment permanently installed in the WT for automatic ofﬂine testing.
+This is justiﬁed by the fact that degradation symptoms are difﬁcult to measure in real-time
+during generator operation and remain undetected by conventional protection systems till
+catastrophic failure.
+In addition to the obvious disadvantage that ofﬂine tests must be done at discrete
+times by forcing or waiting for a stop of the WT, ofﬂine tests are also carried at operating
+conditions that differ from normal operation (temperature, vibration, current, etc.), thus
+under different stress mechanisms that may contribute to erroneous assessment.
+Various methods for ofﬂine testing are described extensively in [ 62]. Many of those are
+described in IEEE and IEC standards [ 63–65], and a review of IEEE standards for generator
+winding insulation diagnostic testing is found in [ 66]. The petrochemical industry is given
+as an application example of both ofﬂine and online methods for condition monitoring of
+stator insulation in [67].
+In this section, the most commonly used ofﬂine tests for evaluation of stator winding
+insulation are introduced shortly. On the one hand, concerning testing of ground wall
+insulation, there are several options: insulation resistance (IR) and polarization index
+(PI), DC and AC high potential (Hipot) tests, capacitance, dissipation factor, and partial
+discharges (PD). On the other hand, concerning testing of turn and phase insulation, there
+are fewer options and the surge test is the only reliable one [68]. Additionally, poor stator
+connections may be identiﬁed by means of thermal imaging. Examples of ofﬂine tests
+carried out by the converter controller are also included.
+6.1. Insulation Resistance and Polarization Index
+The ﬁrst ofﬂine test of stator windings to be undertaken is probably always the
+measurement of insulation resistance (IR), i.e., the resistance between the conductors
+and the stator core, often known as Megger ™test (popular vendor of measurement
+instrumentation). The test is performed by applying high voltage between generator
+winding terminals and stator core (or frame) and measuring current to calculate resistance.
+High resistance values are expected for a healthy ground wall insulation system able
+to perform its basic function of blocking current ﬂow between winding and core. The
+polarization index (PI) test is a variation of the IR test, calculating the ratio of the IR
+measured for 10 min to the IR measured for 1 min. IR and PI tests can provide the
+indications of moisture absorption, contamination, or severe damage in the GW insulation.
+------------------------------End of the page -----------------------------------
+Machines 2021 ,9, 260 13 of 26
+6.2. DC and AC Hipot Test
+In a DC high potential (Hipot) test, DC voltage substantially higher than the rated peak
+AC voltage is applied at the winding terminals. If the winding fails the test, ground wall
+insulation has been punctured and repair is mandatory. As Hipot tests can be destructive,
+they are used as factory test for new windings only. The DC Hipot test does not cause PD
+nor age the winding insulation. In an AC Hipot test, AC voltage is used, which results in a
+more uniform voltage distribution and stress across the insulation thickness. Accordingly,
+major ﬂaws in the ground wall insulation are more likely detectable by AC Hipot.
+6.3. Capacitance
+Variation of the winding capacitance over time may serve as indicator of several
+insulation issues, such as thermal ageing, humidity, and contamination. However, the
+change of capacitance depends strongly on the stress mechanism, potentially increasing or
+decreasing, which makes the analysis in presence of multiple issues difﬁcult. Capacitance
+tends to decrease due to thermal ageing because solid insulation delaminates, which is
+replaced with gas with a lower dielectric constant. Differently, capacitance increases if
+insulation is saturated by moisture or end windings are contaminated by conductive
+particles (e.g., dust). Moreover, the stress factor must affect the bulk of the insulation,
+leaving localized issues undetected. The sensitivity of this test makes it best suited to assess
+the average condition of the insulation.
+6.4. Dissipation Factor
+The dissipation factor provides a measure of the insulation dielectric loss, calculated as
+the tangent of the phase angle between voltage and current measured across the insulation.
+The phase angle differs from 90 degrees—a pure capacitor—and varies with the change of
+dielectric loss. Dielectric loss increases with ageing and humidity.
+6.5. Ofﬂine Partial Discharge
+A partial discharge (PD) is a dielectric effect that causes short duration perturbations
+of generator current and voltage waveforms. PD radiate electromagnetic, optical, acoustic
+and thermal energy. PD can occur in voids anywhere in the winding insulation, couple
+capacitively to the coil conductor, and travel to the winding terminals. The PD test enables
+detection of the biggest defects, where failure is likely to originate. PD testing measures
+the condition of the worst defect, thus being suitable for detection of local damages.
+Ofﬂine PD tests measure the pulse currents resulting from PD within a winding
+energized at rated line-to-ground voltage with high bandwidth transducers (from kHz to
+MHz). During the test, voltage is increased gradually and the voltage at which the PD is
+ﬁrst detected is called the discharge inception voltage (DIV). The voltage is then gradually
+lowered and the voltage at which the PD is no longer discernible is the discharge extinction
+voltage (DEV). DIV , DEV and peak PD magnitude are indicators of fault severity.
+The most common hardware used for detecting PD is a high voltage capacitor con-
+nected to the stator terminals. Other solutions employ high frequency current transformers,
+Rogowski coils, and antennas. PD does not occur with sinusoidal supply below phase
+voltages of 3 kV . However, in low voltage inverter-fed generators, short rise-time voltage
+surges (high dV/dt) can cause PD.
+Off-line PD results are not interpreted in isolation, instead they must be compared
+against other test results used as reference of healthy condition. Such reference may be
+obtained in several ways: (1) other phases or branches of the same generator; (2) other
+generators of the same type; (3) trending results over time for one generator. Signiﬁcant
+variations over time or between reference and generator under test are indicators of
+insulation issues.
+------------------------------End of the page -----------------------------------
+Machines 2021 ,9, 260 14 of 26
+6.6. Surge Voltage Test
+The tests addressed above assess the condition of turn insulation indirectly only when
+it is part of the groundwall insulation (e.g., form-wound stators), but not the insulation
+between two adjacent turns. The surge voltage test is the only one that directly determines
+the condition of the turn insulation. It is analogous to the Hipot tests for ground wall
+insulation, applying a relatively high voltage surge (short duration and fast rise time pulse)
+between the turns that punctures a weak enough insulation.
+As opposed to detecting a ground fault in a fully assembled generator, detecting
+interturn SC fault does not trigger overcurrent protections and becomes a non-trivial task.
+Alternatively, measuring the winding resonant frequency before and after the surge test
+can show the change in inductance due to interturn fault, but sensitivity is still an issue.
+The surge test is a pass/fail test, but it can be combined with ofﬂine PD test to provide
+indication of insulation condition. The surge PD test for CM of turn insulation is addressed
+in [69].
+6.7. Thermal Imaging
+Testing a generator at high current levels and measuring temperature of connections
+by means of a thermal imaging camera may allow detection of hotspots at connections.
+However, this test is impractical for generators with complex and non-visible connections,
+which would require testing at an early stage of the production line to prevent later
+disassembly. Moreover, the stress imposed in a short duration test may be insufﬁcient to
+cause a measurable hotspot, and the fault will become evident under normal operation of
+the WT only.
+6.8. Converter Ofﬂine Tests
+Ofﬂine tests can be done regularly at a WT with permanently installed equipment,
+for which the power converter is the most attractive candidate. Converter control self-
+commissioning is used to determine system parameters and tune controllers, but it can
+be extended to detect faults at standstill. Interturn and eccentricity faults are detected by
+estimating phase impedances with signal injection when at standstill in [ 70]. Similar con-
+cepts were explored previously, examples are the estimation of d-axis inductance through
+a converter start-up routine for detection of airgap eccentricity [ 71] and demagnetiza-
+tion [ 60,61]. It is worth noting that the explored concepts are related to magnetic saturation
+and saliency—also for rotor position estimation with high-frequency signal injection—thus
+opportunities for integration may exist at a low cost. A method based on estimation of
+incremental inductance is proposed for detection of static eccentricity in rotational tests at
+the end of the production line in [72].
+Another ofﬂine test suitable for DD generators is the back-emf measurement for
+condition monitoring of permanent magnets [ 73], if voltage sensors are ﬁtted. As opposed
+to other applications, this test is well suited for WTs because blade pitch control allows the
+WT to regulate its rotational speed even though the generator is disconnected.
+7. Online Fault Detection for PMSGs
+Online FD makes use of instrumentation that is permanently installed in a WT to
+measure relevant quantities continuously. This section addresses electromagnetic measure-
+ments such as magnetic ﬂux density, current, voltage, and power. Current measurements
+are widely available for control and protections functions, whereas the availability of others
+depend strongly on the requirements of the application. Some examples are search coils
+for airgap or stray ﬂux measurement, voltage sensors for back-emf measurement, and
+Rogowski coils to capture the high-frequency content in the neutral current. It is worth
+reminding the reader that this section on online FD is limited to detecting faults, and in
+most cases the discussed methods are unsuitable for providing health status information.
+Faults disrupt the internal symmetry of the generator, and the effects are changes to its
+electromagnetic variables. A large portion of the state-of-the-art addresses the asymmet-
+------------------------------End of the page -----------------------------------
+Machines 2021 ,9, 260 15 of 26
+ric/unbalanced condition of an electrical machine for the sake of FD, which ends up being
+common to various fault types and making fault discrimination difﬁcult to achieve.
+A rich literature is available in the ﬁeld of FD based on electromagnetic signals for
+electrical drives, and publications cover several electrical machine types and industrial
+applications. The review carried out in this section does not discriminate between types of
+machines and application, provided that the contributions are relevant for FD in PMSG
+drives. To start with, the authors acknowledge the numerous reviews already published
+concerning fault diagnosis of electrical machines [ 49,74–80], with special attention being
+given to interturn faults that remain an open research topic. The limitations of the state-of-
+the-art are exposed, which concern robustness against false alarms, sensitivity, and fault
+discrimination. Airgap and stray ﬂux analysis are pointed out as one of the most promising
+research trends, however their ability to provide earlier and more reliable warnings and
+enable fault prognostics in MW generators is still to be demonstrated.
+Signal processing methods are used to extract characteristics of interest (so-called
+features) from the monitored variables, such as FFT (fast Fourier transform), time-frequency
+methods (Hilbert–Huang and wavelet transforms), Park’s vector-based approaches, sym-
+metrical components, multiple reference frame theory, and more.
+7.1. Stator Current Signature Analysis
+Analysis of stator current has shown to be a viable technique, capable of detecting
+faults in electrical and mechanical components of a generator. A fault disturbs the rotating
+magnetic ﬁeld and introduces a characteristic frequency in the stator current that depends
+on the type of fault [ 81–84]. Phase current must be measured in at least one phase of the
+generator, and the signal processed by the preferred method. Some of the characteristic
+harmonics created in PMG phase currents by stator faults, partial demagnetization, and
+airgap eccentricity may coincide.
+7.2. Unbalanced Current, Voltage, and Power Signals
+By taking advantage of the information contained in asymmetric three phase quanti-
+ties, various methods were proposed and showed advantageous when compared to the
+stator current signature analysis. The pattern of the current Park’s Vector representation
+becomes elliptic in the presence of inter-turn short-circuit faults [ 85], as opposed to the
+circular shape under healthy operation. The extended Park’s vector approach (EPVA) relies
+on the spectral analysis of the current Park’s Vector modulus [ 86], with the component
+at twice the supply frequency associated to a stator asymmetry. As an alternative to the
+analysis of negative sequence component of the stator current, a method based on the
+multiple reference frame theory was proposed in [ 87]. In the dqframe, 2nd order harmonic
+components can be used for interturn SC fault detection [ 88]. Alternative and simple
+mathematical manipulation of phase currents’ amplitude is proposed in [89].
+The voltage signature analysis is many times similar to the current signature analysis
+with the requirement to either measure voltages or access voltage references of the power
+converter. Drawbacks are the need for extra sensors and adequate ﬁltering for measured
+signals, or errors in reference signals. Synchronous demodulation is used to extract the
+magnitude of the second harmonic of the dqvoltage references in [ 90], allowing interturn
+fault detection. Diagnostic signals for SC faults are derived from positive and negative
+sequences of voltage references in [ 91]. Measured voltage signals are processed based
+on the symmetrical component theory in [ 92]. The analysis of dq-axes voltage references
+is used in [ 93] to detect and classify three fault types: eccentricity, demagnetization and
+interturn SC fault. Amplitude and initial phase angles of zero sequence voltage components
+(ZSVC) are analyzed in [ 94]. Approaches based on ZSVC tend to require access to the
+generator neutral point. A method based on the 1st harmonic of ZSVC showed improved
+performance when compared to the 3rd harmonic of the stator currents in [ 95]. For
+detection of low severity interturn faults in [ 96], zero-sequence voltages are derived from
+the converter PWM pattern, and a method based on vector decomposition was proposed.
+------------------------------End of the page -----------------------------------
+Machines 2021 ,9, 260 16 of 26
+Instantaneous active and reactive power signature analysis appears as a promising
+approach that combines information contained in both current and voltage signals. The
+2nd harmonic in instantaneous power signals is used for detection of short-circuit and
+open-circuit fault detection [ 97], and high resistance connections [ 98]. The instantaneous
+active power is preferred for interturn fault detection in PMSGs [ 99], and the diagnostic
+signals of multiple three-phase sets can be compared against each other to reduce operating
+point dependence and improve immunity against transients.
+Closed-loop control algorithms implemented in the converter controller impact many
+of the proposed diagnostic signals. The 2nd harmonic in q-axis current was found de-
+pendent on the gains of ﬁeld-oriented control in [ 100]. Concerning DTC, third harmonic
+in supply currents is observed in [ 101] for both residual stator asymmetry and interturn
+faults, thus the authors suggest using the multiple reference frames technique. Recent
+publications address model predictive control (MPC) in the presence of interturn faults and
+show that signatures are affected by control parameter variations [ 102]. The instantaneous
+reactive power dependence on the current controller bandwidth is tackled in [ 103] by an
+alternative diagnostic signal derived as a weighted average of voltages and currents. The
+current controllers’ effects concerning demagnetization detection by the stator current
+signature is presented in [ 104]. In conclusion, FD methods must be evaluated together
+with the closed-loop control system because signatures and fault detection thresholds are
+expected to depend on chosen control strategies and parameters. Accordingly, distinguish-
+ing between generator faults and faults in control or converter hardware turns out to a be
+challenging task that industrial applications must deal with.
+Moreover, temperature and manufacturing tolerances can affect negatively the ca-
+pabilities of FD methods [ 29,34]. The resulting variations of the values assumed by the
+diagnostic signals may force to increase thresholds and prevent detection of low severity
+faults. Alternatively, the complexity of the algorithms is required to increase to compensate
+the considered effects.
+High-resistance electrical connections are many times addressed by the same tech-
+niques as interturn faults. Negative-sequence current and zero-sequence voltage are both
+deemed suitable for detection of high-resistance connections [ 105], and their phase is used
+for discriminating between these high-resistance connections and interturn faults in [ 106].
+The control strategy is modiﬁed to include current controllers in multiple reference frames,
+whose outputs provide the fault signatures in [107–109].
+7.3. Model-Based Approaches
+Model-based strategies have also been adopted for interturn fault detection. An open-
+loop physics-based estimator enables the comparison between estimated and reference
+back-EMF in [ 110], and the difference is used for detecting interturn faults. An observer
+estimates currents, which are compared against measured currents to generate a residual
+vector in [ 111]. Negative-sequence voltage components are calculated by means of a
+machine model in [ 112]. A high-ﬁdelity FE-based model of the healthy machine is deployed
+to generate current residuals in [ 113]. Temperature estimation of electrical machines has
+been an active research topic for decades, with many publications addressing sensorless
+estimation of average stator and rotor temperatures. It can be achieved by means of
+estimation of temperature dependent machine parameters—stator resistance and PM ﬂux.
+The error between distinct temperature estimates provided by thermal and electrical models
+is used for condition monitoring in [ 114]. Rotor temperature estimation for PMSMs based
+on measured currents and voltages is addressed in [115].
+7.4. Signal Injection
+Current or voltage signal injection by the power converter under operation has been
+suggested for fault detection. Even though operation and efﬁciency of the drive are
+disturbed, fault signatures are less dependent on operating conditions. DC-signal injection
+was used for detection of high-resistance connection in [ 116,117]. High frequency signal
+------------------------------End of the page -----------------------------------
+Machines 2021 ,9, 260 17 of 26
+injection was used for detection of interturn faults in [ 118]. As an alternative to the
+injection of an additional HF signal, the current ripple due to PWM is exploited in [ 119].
+The discrimination between high-resistance connections and interturn faults was addressed
+by means of multiple HF signals in [ 120], and by analyzing the symmetry of HF currents
+in [121].
+7.5. Flux Monitoring
+Flux monitoring concerns airgap and stray ﬂux measurements. Airgap ﬂux mea-
+surements require sensor installation inside the machine, which is considered a proven
+technology in some industries [ 122]. Search coils [ 123] and FBG magnetostrictive sen-
+sors [ 124] have been proposed for PM machines. Design, installation, and maintenance
+of such devices is challenging and avoided by WT manufacturers in serial produced
+generators.
+Stray ﬂux measurements are non-invasive with sensors installed externally to the
+machine. Therefore, recent research on ﬂux monitoring focus on stray ﬂux due to ease of
+sensors’ installation in the frame of the machine. These academic publications addressed
+small size machines, but never large generators. Although there is an increasing number of
+publications pursuing advances in this ﬁeld, the present technology readiness level is low,
+which is evident in the lack of reported ﬁeld test results.
+Axial and radial external magnetic ﬁelds are studied under the underlying principle
+that asymmetries introduced by faults in the airgap and/or end winding magnetic ﬁelds
+are measurable externally to the machine. Even though signals are attenuated by the stator
+core and frame, it has been claimed that spectral analysis of external magnetic ﬁelds is
+more sensitive than stator current analysis [ 76]. Most used sensors are search coils and HE
+sensors, varying in location and number. Additionally, modeling and computing external
+magnetic ﬁelds is a non-trivial task that requires complex FE models.
+Two external ﬂux sensors are placed in the vicinity of the machine and positioned
+180apart from each other in a circumference centered with the machine axis in [125,126].
+The variations of the amplitude of the spectral components of the two signals enabled
+detection of interturn SC faults. The 3rd harmonic of stray ﬂux is proposed in [ 127], and
+fault location possible by means of multiple sensors. Three sensors spatially displaced by
+120 electrical degrees are installed in the machine’s frame in [ 128], and a method based on
+the Park’s ﬂux vector shows superior sensitivity when compared to other techniques for
+detection of low severity interturn faults.
+7.6. Innovative Approaches
+A few examples of innovative approaches are also found in the literature. Arc fault
+detection based on the current waveform in [ 129]. An optical ﬁber sensor installed in
+the stator core for strain and temperature measurements to identify faults in bearing
+elements [ 130]. Early detection of interturn short-circuit fault by a ﬁber Bragg grating
+(FBG) sensor in situ to monitor winding internal thermal excitation is suggested in [ 131],
+enabling single turn–turn fault detection and fault location. An array of discrete infra-red
+sensors mounted along the inner wall of the stators’ casing is proposed in [ 132] for online
+monitoring of end windings, enabling detection of hotspots due to interturn SC faults. The
+number of required sensors was 16 for a 1.5 kW motor, which could increase drastically
+for a large diameter MW generator. An additional array of hall-effect sensors is presented
+in [133] and claimed to be advantageous.
+8. Condition Monitoring of PMSGs
+The ultimate goal of condition monitoring of generators is to predict the time of failure,
+enabling condition-based maintenance.
+Fault prognosis, as opposed to diagnosis, is a process to predict the evolution of
+an undesirable condition (fault) till failure—when the generator no longer operates as
+desired. The predicted time to failure is often called estimated remaining useful life (RUL),
+------------------------------End of the page -----------------------------------
+Machines 2021 ,9, 260 18 of 26
+which is obtained by means of models. The prediction is only useful if accurate in a short
+conﬁdence interval, allowing service teams to initiate maintenance activities timely and
+prevent downtime. Prognosis is based on trending over time a sequence of measurements
+that depend on the condition of the component being monitored. In other words, the
+selected features must vary as per the evolution of the fault. Initial lifetime assessment
+is performed at the design stage with aid of physics-based models that relate to known
+degradation processes. RUL estimation in service is performed with data-driven models,
+physics-based models, or a combination of both.
+Understanding that detecting a fault and warning the service team minutes in advance
+of catastrophic failure does not fall within useful fault prognostics. This section addresses
+methods that can observe slow evolving manifestations of generator winding insulation
+faults, ideally providing valuable information to service teams for planning maintenance
+weeks in advance.
+In this context, online PD detection has been in the spotlight of academia and industry
+for long years [ 62]. On-line partial discharge testing is claimed to ﬁnd loose, overheated,
+and contaminated windings well before these problems lead to failure [ 134]. It is widely
+used in some applications [135], but not in the wind industry.
+On-line PD detection is very similar to the previously described ofﬂine PD test. The
+main differences are that the noise becomes a more prominent issue, and the frequency
+range of interest increases (e.g., 30–300 MHz). Sensors are capacitors on the generator
+terminals, antennas, and high-frequency current transformers.
+Signal processing to discriminate PD signals from electrical noise is of paramount
+importance to eliminate pulses originated somewhere else (power lines, inverters, etc.).
+The increasing PWM frequencies with silicon carbide devices worsen the issue of noise
+separation. The relative time of arrival and the shape of the pulse are characteristics
+analyzed often.
+PD data under comparison must have been logged under similar operating conditions,
+because PD activity depends on factors such as stator voltage and current, humidity, and
+winding temperature. It is worth noting that new windings tend to produce higher PD
+activity, thus the ﬁrst few months of data may be of limited use for CM, unless infant mor-
+tality becomes obvious in PD indicators. Other observations made are that PD indicators
+tend to level off after signiﬁcant degradation took place, but they may plummet when
+failure is imminent. Historical and present issues with online PD are discussed in [ 135].
+In short, early start of PD activity and slow progress are very desired characteristics for
+fault prognostics. However, predicting accurately time to failure is still difﬁcult. Machine
+learning methods for CM based on PD detection are reviewed in [136].
+Online monitoring of winding insulation capacitance and dissipation factor by mea-
+suring the differential leakage-current for each phase was introduced in [ 137,138]. The
+measurement of the current through the insulation requires a high sensitivity current
+transformer (HSCT) to be placed around the combined high voltage and neutral leads of
+a wye-connected stator winding. This technique determines the average condition of the
+winding insulation, for instance, thermal ageing causes the capacitance to decrease over
+time. Test results during accelerated life testing are presented in [ 139]. The use of a single
+HSCT to measure common mode insulation leakage current was ﬁrst proposed in [ 140],
+and further investigated in accelerated life tests [ 141] and in the presence of humidity [ 142].
+The development of the measurement equipment was also presented in [ 143,144]. The
+estimation of the insulation RUL was proved feasible under thermal ageing in [ 141] by
+calculating an equivalent capacitance value from harmonics of the PWM frequency. The
+issue of monitoring groundwall and phase-to-phase separately is studied in [145].
+9. Experience with Stator Winding Failure
+Several industry surveys have helped to identify the most prone to fail components
+in electrical machines. Statistics given by these have been used as the motivations for
+hundreds of research papers. Recently, the experience of Korea Electric Power Corporation
+------------------------------End of the page -----------------------------------
+Machines 2021 ,9, 260 19 of 26
+Research Institute with stator insulation testing and failures in the power generation
+industry was discussed in [ 68], together with a critical review of existing methods for
+condition monitoring of turn insulation. Such studies are rarely this thorough, thus some
+of the valuable insights provided are summarized next. The implementation of periodic
+ofﬂine testing and condition-based maintenance contributed to signiﬁcantly reduce failures
+due to stator groundwall (GW) insulation breakdown. Accordingly, most of the recent
+failures were caused by turn or phase insulation breakdown due to lack of suitable testing
+methods. Most of the turn insulation failures have been observed to occur in the terminal
+end of the stator—the end-winding near the slot exit—and attributed to high voltage stress.
+End-winding turn insulation is likely more vulnerable to failure due to manufacturing
+processes, vibration, and thermal expansion. Interturn faults at the end-windings can occur
+and remain undetected without causing GW insulation failure. The lack of acceptance of
+online interturn FD by the industry is attributed to its limited value, which is to reduce the
+extent of the damage after a short-circuit fault occurs. It is also stressed that undetected
+turn faults did not cause stator core damages. Finally, it is concluded that research of new
+methods for turn insulation condition monitoring and their validation are needed.
+Concerning the authors’ experience with DD PMGs for offshore WTs, the fact that
+existing ﬂeets are young and located remotely results in the available information about
+generator stator testing and failures being less insightful. High availability levels of DD
+turbines—between 97% and 99%—align with a very low number of winding insulation
+failures. To the authors’ knowledge, the limited number of failures tend to occur in the ﬁrst
+months of operation due to insufﬁciently tightened stator connections or foreign objects
+in airgap and end-windings. These issues were neither detected by factory ofﬂine testing
+of winding insulation nor by rotational tests at the end of the production line. Periodic
+ofﬂine testing is unpractical and such a data base does not exist for offshore generators.
+Accordingly, the observations discussed next are found most valuable for the sake of
+online FD.
+End-winding interturn SC fault can remain undetected by ground fault protection
+till smoke is detected. In other words, an interturn insulation failure does not inevitably
+evolve quickly to a groundwall insulation failure. As opposed to the remarks in [ 68],
+resuming operation of a faulty generator caused damages to increase signiﬁcantly, thus
+exposing that there is value in online FD of interturn faults. Despite recognizing its
+value, the acceptance of state-of-the-art methods like the ones based on electromagnetic
+asymmetry has been low due to their shortfalls. The challenges with the deployment of
+such methods were addressed throughout this paper, and again stressed here based on WT
+ﬂeet data. Fault signatures have shown to vary little with low severity faults, and depend
+on operating conditions (current, speed, temperature), generator manufacturing tolerances,
+and abnormal behaviors of converter hardware or software. In summary, there is the need
+for methods that are more robust, more sensitive, capable of discriminating fault types,
+and seamless integrated with the converter control system.
+High-resistance connections appear to worsen quickly under operation due to thermal
+expansion and vibrations. As opposed to interturn fault detection, asymmetry-based
+methods appear to be ﬁt for detection of high-resistance connections. Available data has
+shown that a fault can evolve to an open-circuit fault in a time window of a few seconds,
+contradicting usual descriptions of a slow fault development process.
+Experience has showed that standard vibration monitoring systems are unsuited for
+early detection of electrical faults. However, it is worth stressing that fault signatures do
+exist in vibration signals, which can provide opportunities for improving fault detection
+in WTs.
+10. Fault-Tolerant PMSGs
+Fault-tolerant (FT) systems can add high business value when only fault detection is
+possible. A fault-tolerant generator can continue operation under given conditions after
+a fault occurrence, preventing a long and costly downtime. The so-called fault-tolerant
+------------------------------End of the page -----------------------------------
+Machines 2021 ,9, 260 20 of 26
+operation may be achieved automatically by the controller, or only manually after on-site
+intervention by technicians.
+Possibilities for post-fault operation depend strongly on the generator design and the
+fault itself (type, location, severity level) when concerning interturn SC faults. Reviews of
+FT PM machines are found in [ 146,147]. Multi-phase fractional slot concentrated winding
+machines together with FT control [ 146], and modiﬁed winding conﬁgurations to limit
+the interturn SC current [ 55] are suggested. Machine topologies able to tolerate interturn
+SC faults tend to inherit lower efﬁciency and power density (large inductance and low
+power factor). The conﬂict between efﬁciency, power density and fault-tolerant capability
+requirements during the design process is illustrated in [ 148]. Therefore, fault-tolerant
+generators may offer little advantage when compared to other design choices for achieving
+high reliability like insulation thickness, cooling, and rated operating temperatures.
+The control system may attempt to extend the generator lifetime by constraining
+operating conditions and reducing fault current—perhaps possible at early stage of fault
+development. The study in [ 46] suggests limiting the operating speed, restricting torque,
+and starting ﬁeld-weakening to enable post-fault operation.
+Another possible approach for enabling post-fault operation after an insulation failure
+is to cut and bypassed faulty coils—adopted for hydro generator in [ 149]. Such remedial
+action aims to reduce downtime, enabling de-rated operation before a full repair is possible.
+It is worth noting that the applicability of this solution depends on the generator design
+and fault type, for instance, it may address end-winding insulation failures.
+Regarding high-resistance connections, multiphase generators offer the possibility to
+operate with the healthy phases only provided that the power output is reduced. Taking a
+dual three-phase generator as an example, the faulty three-phase system is disconnected,
+whereas the healthy one keeps running. The described FT drive is often designed to
+provide continuous operation in the presence of power converter faults.
+11. Conclusions and Research Challenges
+Condition monitoring (CM) has been proved proﬁtable for the wind industry. Analysis
+of vibrations and oil are widely used for CM of wind turbines concerning mechanical
+components such as gearboxes and bearings, detecting faults months before failure. On
+the other hand, analysis of electrical/electromagnetic quantities suggested for a more cost-
+effective CM tend to fail detecting faults reliably and early enough, thus have received little
+acceptance by the industry. Accordingly, some generator fault types can remain undetected
+till catastrophic failure, meaning that unscheduled stops and downtime are unavoidable.
+Ultimately, availability and O&M costs of DD wind turbines can be compromised by
+immature CM methods for PMSGs that either leave faults undetected or generate false
+alarms.
+The analysis of PMSG fault types (stator winding insulation and connection faults,
+airgap eccentricity, and demagnetization) has showed that various features can be extracted
+from electromagnetic measurements—current, voltage, power, and ﬂux.
+Online FD and CM methods measure these signals continuously during normal
+operation of a generator. Ofﬂine methods are often more accurate but require turbine
+outage. Therefore, ofﬂine tests are better suited for factory tests, onsite fault troubleshooting,
+and converter self-commissioning procedures at standstill.
+Winding insulation failures force immediate stop and unplanned corrective mainte-
+nance. Despite the criticality of winding insulation, technologies for its online condition
+monitoring are found at low readiness levels, thus they have not been deployed ﬂeet wide.
+In general, online FD methods are unsuitable for providing health status information,
+instead they aid minimizing damages and triggering fault-tolerant operation.
+Experience from other industries has proved periodic ofﬂine testing advantageous and
+mature for groundwall insulation monitoring only, whereas interturn faults tend to remain
+undetected. The online methods required by the offshore wind industry are generally less
+------------------------------End of the page -----------------------------------
+Machines 2021 ,9, 260 21 of 26
+advantageous due to their shortfalls, namely robustness, sensitivity to low severity faults,
+and ability to discriminate fault types.
+In the past, many publications in the ﬁeld of rotating machines addressed fault
+detection and condition monitoring together, erroneously overstating the capabilities of
+new proposals. The more recent literature has exposed the limitations of the state-of-the-art
+in CM of generators to justify the lack of adoption by the industry and motivate new
+developments.
+Trends identiﬁed in recently published work are: (1) ﬂux monitoring for fault de-
+tection; (2) online capacitance measurement for condition monitoring and estimation of
+RUL; (3) bulk temperature measurements close to stator windings; (4) development of
+innovative sensors; and (5) deployment of machine learning and model-based diagnostics.
+Opportunities for progress may be offered also by incremental improvements in existing
+technologies. Integration of CM systems with turbine and power converter controllers may
+improve capabilities at low cost, enabling multi-parameter monitoring and sensor fusion
+(e.g., vibration and electrical signals). Online PD detection is an old candidate, whose
+feasibility needs to be demonstrated in wind turbine applications.
+To fulﬁl industry’s demand for CM of PMSGs winding insulation, foreseen research
+challenges are the development of new sensors and methods tailored to large size PMSGs
+in wind turbines, and the validation of techniques under laboratory accelerated life tests
+and in the ﬁeld.
+Funding: This research received no external funding.
+Institutional Review Board Statement: Not applicable.
+Informed Consent Statement: Not applicable.
+Data Availability Statement: Not applicable.
+Conﬂicts of Interest: The authors declare no conﬂict of interest.
+References
+1. Taherian-Fard, E.; Sahebi, R.; Niknam, T.; Izadian, A.; Shasadeghi, M. Wind Turbine Drivetrain Technologies. IEEE Trans. Ind.
+Appl. 2020 ,56, 1729–1741. [CrossRef]
+2. Shourangiz-Haghighi, A.; Diazd, M.; Zhang, Y.; Li, J.; Yuan, Y.; Faraji, R.; Ding, L.; Guerrero, J.M. Developing More Efﬁcient Wind
+Turbines: A Survey of Control Challenges and Opportunities. IEEE Ind. Electron. Mag. 2020 ,14, 53–64. [CrossRef]
+3. Esch, J. High-power wind energy conversion systems: State-of-the-art and emerging technologies. Proc. IEEE 2015 ,103, 736–739.
+[CrossRef]
+4. Blaabjerg, F.; Ma, K. Future on Power Electronics for Wind Turbine Systems. IEEE J. Emerg. Sel. Top. Power Electron. 2013 ,1,
+139–152. [CrossRef]
+5. Polinder, H.; Ferreira, J.A.; Jensen, B.B.; Abrahamsen, A.B.; Atallah, K.; McMahon, R.A. Trends in Wind Turbine Generator
+Systems. IEEE J. Emerg. Sel. Top. Power Electron. 2013 ,1, 174–185. [CrossRef]
+6. Costa, Á.M.; Orosa, J.A.; Vergara, D.; Fern ández-Arias, P . New Tendencies in Wind Energy Operation and Maintenance. Appl. Sci.
+2021 ,11, 1386. [CrossRef]
+7. Tavner, P .; Ran, L.; Penman, J.; Sedding, H. Condition Monitoring of Rotating Electrical Machines ; IET, Energy Engineering: London,
+UK, 2008.
+8. Cardoso, A.J.M. Diagnosis and Fault Tolerance of Electrical Machines, Power Electronics and Drives ; IET, Energy Engineering: London,
+UK, 2018.
+9. Horenbeek, A.V .; Ostaeyen, J.V .; Duﬂou, J.R.; Pintelon, L. Quantifying the added value of an imperfectly performing condition
+monitoring system—Application to a wind turbine gearbox. Reliab. Eng. Syst. Saf. 2013 ,111, 45–57. [CrossRef]
+10. Tchakoua, P .; Wamkeue, R.; Ouhrouche, M.; Slaoui-Hasnaoui, F.; Tameghe, T.; Ekemb, G. Wind Turbine Condition Monitoring:
+State-of-the-Art Review, New Trends, and Future Challenges. Energies 2014 ,7, 2595–2630. [CrossRef]
+11. Maldonado-Correa, J.; Mart ín-Mart ínez, S.; Artigao, E.; G ómez-L ázaro, E. Using SCADA Data for Wind Turbine Condition
+Monitoring: A Systematic Literature Review. Energies 2020 ,13, 3132. [CrossRef]
+12. Tautz-Weinert, J.; Watson, S.J. Using SCADA data for wind turbine condition monitoring—A review. IET Renew. Power Gener.
+2017 ,11, 382–394. [CrossRef]
+13. Castellani, F.; Astolﬁ, D.; Natili, F. SCADA Data Analysis Methods for Diagnosis of Electrical Faults to Wind Turbine Generators.
+Appl. Sci. 2021 ,11, 3307. [CrossRef]
+------------------------------End of the page -----------------------------------
+Machines 2021 ,9, 260 22 of 26
+14. Zhao, Y.; Li, D.; Dong, A.; Kang, D.; Lv, Q.; Shang, L. Fault Prediction and Diagnosis of Wind Turbine Generators Using SCADA
+Data. Energies 2017 ,10, 1210. [CrossRef]
+15. Márquez, F.P .G.; Tobias, A.M.; Pinar P érez, J.M.; Papaelias, M. Condition monitoring of wind turbines: Techniques and methods.
+Renew. Energy 2012 ,46, 169–178. [CrossRef]
+16. Chen, B.; Zappal á, D.; Crabtree, C.J.; Tavner, P .J. Survey of Commercially Available SCADA Data Analysis Tools for Wind Turbine
+Health Monitoring. Available online: http://dro.dur.ac.uk/12563/ (accessed on 29 September 2021).
+17. Predict the Future with Vibration Diagnostics—Siemens Gamesa. Available online: https://www.siemensgamesa.com/-/media/
+siemensgamesa/downloads/en/products-and-services/services/diagnostics/siemens-gamesa-service-diagnostic-services-
+vibration-diagnostics-brochure.pdf (accessed on 29 September 2021).
+18. Liu, Y.; Wu, Z.; Wang, X. Research on Fault Diagnosis of Wind Turbine Based on SCADA Data. IEEE Access 2020 ,8, 185557–185569.
+[CrossRef]
+19. C006432_004—Siemens SWT3.6. Available online: https://30npnb10r4n0173ti73ov30l-wpengine.netdna-ssl.com/wp-content/
+uploads/2016/05/Siemens-SWT3_6-Application-Guide.pdf (accessed on 29 September 2021).
+20. Soua, S.; Van Lieshout, P .; Perera, A.; Gan, T.-H.; Bridge, B. Determination of the combined vibrational and acoustic emission
+signature of a wind turbine gearbox and generator shaft in service as a pre-requisite for effective condition monitoring. Renew.
+Energy 2013 ,51, 175–181. [CrossRef]
+21. Yang, W.; Tavner, P .J.; Crabtree, C.J.; Wilkinson, M. Cost-Effective Condition Monitoring for Wind Turbines. IEEE Trans. Ind.
+Electron. 2010 ,57, 263–271. [CrossRef]
+22. Immovilli, F.; Bellini, A.; Rubini, R.; Tassoni, C. Diagnosis of Bearing Faults in Induction Machines by Vibration or Current Signals:
+A Critical Comparison. IEEE Trans. Ind. Appl. 2010 ,46, 1350–1359. [CrossRef]
+23. Cheng, F.; Qu, L.; Qiao, W. Fault Prognosis and Remaining Useful Life Prediction of Wind Turbine Gearboxes Using Current
+Signal Analysis. IEEE Trans. Sustain. Energy 2018 ,9, 157–167. [CrossRef]
+24. Jin, X.; Qiao, W.; Peng, Y.; Cheng, F.; Qu, L. Quantitative Evaluation of Wind Turbine Faults Under Variable Operational
+Conditions. IEEE Trans. Ind. Appl. 2016 ,52, 2061–2069. [CrossRef]
+25. Balakrishna, P .; Khan, U. An Autonomous Electrical Signature Analysis-Based Method for Faults Monitoring in Industrial Motors.
+IEEE Trans. Instrum. Meas. 2021 ,70, 1–8. [CrossRef]
+26. Stetco, A.; Dinmohammadi, F.; Zhao, X.; Robu, V .; Flynn, D.; Barnes, M.; Keane, J.; Nenadic, G. Machine learning methods for
+wind turbine condition monitoring: A review. Renew. Energy 2019 ,133, 620–635. [CrossRef]
+27. Nyanteh, Y.; Edrington, C.; Srivastava, S.; Cartes, D. Application of Artiﬁcial Intelligence to Real-Time Fault Detection in
+Permanent-Magnet Synchronous Machines. IEEE Trans. Ind. Appl. 2013 ,49, 1205–1214. [CrossRef]
+28. Lee, H.; Jeong, H.; Koo, G.; Ban, J.; Kim, S.W. Attention Recurrent Neural Network-Based Severity Estimation Method for
+Interturn Short-Circuit Fault in Permanent Magnet Synchronous Machines. IEEE Trans. Ind. Electron. 2021 ,68, 3445–3453.
+[CrossRef]
+29. Haddad, R.Z.; Strangas, E.G. On the Accuracy of Fault Detection and Separation in Permanent Magnet Synchronous Machines
+Using MCSA/MVSA and LDA. IEEE Trans. Energy Convers. 2016 ,31, 924–934. [CrossRef]
+30. Rezamand, M.; Kordestani, M.; Carriveau, R.; Ting, D.S.K.; Orchard, M.E.; Saif, M. Critical Wind Turbine Components Prognostics:
+A Comprehensive Review. IEEE Trans. Instrum. Meas. 2020 ,69, 9306–9328. [CrossRef]
+31. Leite, G.N.P .; Ara újo, A.M.; Rosas, P .A.C. Prognostic techniques applied to maintenance of wind turbines: A concise and speciﬁc
+review. Renew. Sustain. Energy Rev. 2018 ,81, 1917–1925. [CrossRef]
+32. Yaramasu, V .; Wu, B. Model Predictive Control of Wind Energy Conversion Systems ; IEEE: Piscataway, NJ, USA, 2017.
+33. Jahns, T.M.; Soong, W.L. Pulsating torque minimization techniques for permanent magnet AC motor drives-a review. IEEE Trans.
+Ind. Electron. 1996 ,43, 321–330. [CrossRef]
+34. Leboeuf, N.; Guan, X.; Li, C.; Mou, Q. Effects of Imperfect Manufacturing Process on Electromagnetic Performance and Online
+Interturn Fault Detection in PMSMs. IEEE Trans. Ind. Electron. 2015 ,62, 3388–3398.
+35. Wang, J.; Atallah, K.; Howe, D. Optimal torque control of fault-tolerant permanent magnet brushless machines. IEEE Trans. Magn.
+2003 ,39, 2962–2964. [CrossRef]
+36. Springob, L.; Holtz, J. High-bandwidth current control for torque-ripple compensation in PM synchronous machines. IEEE Trans.
+Ind. Electron. 1998 ,45, 713–721. [CrossRef]
+37. Mattavelli, P . Synchronous-frame harmonic control for high-performance AC power supplies. IEEE Trans. Ind. Appl. 2001 ,37,
+864–872. [CrossRef]
+38. Hu, Y.; Zhu, Z.; Liu, K. Current Control for Dual Three-Phase Permanent Magnet Synchronous Motors Accounting for Current
+Unbalance and Harmonics. IEEE J. Emerg. Sel. Top. Power Electron. 2014 ,2, 272–284.
+39. Geyer, T. Model Predictive Control of High-Power Converters and Industrial Drives ; Wiley: Chichester, UK, 2017.
+40. Muetze, A.; Strangas, E.G. The Useful Life of Inverter-Based Drive Bearings: Methods and Research Directions from Localized
+Maintenace to Prognosis. IEEE Ind. Appl. Mag. 2016 ,22, 63–73. [CrossRef]
+41. Spinato, F.; Tavner, P .J.; van Bussel, G.J.W.; Koutoulakos, E. Reliability of wind turbine subassemblies. IET Renew. Power Gener.
+2009 ,3, 387–401. [CrossRef]
+42. Carroll, J.; McDonald, A.; McMillan, D. Reliability Comparison of Wind Turbines with DFIG and PMG Drive Trains. IEEE Trans.
+Energy Convers. 2015 ,30, 663–670. [CrossRef]
+------------------------------End of the page -----------------------------------
+Machines 2021 ,9, 260 23 of 26
+43. Qiao, W.; Lu, D. A Survey on Wind Turbine Condition Monitoring and Fault Diagnosis—Part I: Components and Subsystems.
+IEEE Trans. Ind. Electron. 2015 ,62, 6536–6545. [CrossRef]
+44. Alewine, K.; Chen, W. A review of electrical winding failures in wind turbine generators. IEEE Electr. Insul. Mag. 2012 ,28, 8–13.
+[CrossRef]
+45. Malliou, C.; Karlis, A.D.; Danikas, M.G.; Lloyd, B. A Short Review on the Offshore Wind Turbine Generator Windings’ Insulation
+and the Effect of Water Droplets and Salinity. IEEE Trans. Ind. Appl. 2016 ,52, 4610–4618. [CrossRef]
+46. Cintron-Rivera, J.G.; Foster, S.N.; Strangas, E.G. Mitigation of turn-to-turn faults in fault tolerant permanent magnet synchronous
+motors. IEEE Trans. Energy Convers. 2015 ,30, 465–475. [CrossRef]
+47. Chen, L.; Wang, J.; Sun, Z. Electromagnetic-thermal coupled modelling and analysis of inter-turn short-circuit faults of a
+permanent magnet alternator. J. Eng. 2019 ,2019 , 4426–4431. [CrossRef]
+48. Zhao, J.; Guan, X.; Li, C.; Mou, Q.; Chen, Z. Comprehensive Evaluation of Inter-Turn Short Circuit Faults in PMSM Used for
+Electric Vehicles. IEEE Trans. Intell. Transp. Syst. 2021 ,22, 611–621. [CrossRef]
+49. Gandhi, A.; Corrigan, T.; Parsa, L. Recent Advances in Modeling and Online Detection of Stator Interturn Faults in Electrical
+Motors. IEEE Trans. Ind. Electron. 2011 ,58, 1564–1575. [CrossRef]
+50. Usman, A.; Joshi, B.M.; Rajpurohit, B.S. Review of fault modeling methods for permanent magnet synchronous motors and
+their comparison. In Proceedings of the 2017 IEEE 11th International Symposium on Diagnostics for Electrical Machines, Power
+Electronics and Drives (SDEMPED), Tinos, Greece„ 29 August–1 September 2017; pp. 141–146.
+51. Kim, T.; Lee, H.; Kwak, S. The Internal Fault Analysis of Brushless DC Motors Based on the Winding Function Theory. IEEE Trans.
+Magn. 2009 ,45, 2090–2096.
+52. Dai, M.; Keyhani, A.; Sebastian, T. Fault analysis of a PM brushless DC Motor using ﬁnite element method. IEEE Trans. Energy
+Convers. 2005 ,20, 1–6. [CrossRef]
+53. Vaseghi, B.; Takorabet, N.; Meibody-Tabar, F. Fault Analysis and Parameter Identiﬁcation of Permanent-Magnet Motors by the
+Finite-Element Method. IEEE Trans. Magn. 2009 ,45, 3290–3295. [CrossRef]
+54. Sun, Z.; Wang, J.; Howe, D.; Jewell, G. Analytical Prediction of the Short-Circuit Current in Fault-Tolerant Permanent-Magnet
+Machines. IEEE Trans. Ind. Electron. 2008 ,55, 4210–4217.
+55. Arumugam, P .; Hamiti, T.; Gerada, C. Modeling of Different Winding Conﬁgurations for Fault-Tolerant Permanent Magnet
+Machines to Restrain Interturn Short-Circuit Current. IEEE Trans. Energy Convers. 2012 ,27, 351–361. [CrossRef]
+56. Romeral, L.; Urresty, J.C.; Ruiz, J.R.; Espinosa, A.G. Modeling of Surface-Mounted Permanent Magnet Synchronous Motors with
+Stator Winding Interturn Faults. IEEE Trans. Ind. Electron. 2011 ,58, 1576–1585. [CrossRef]
+57. Jeong, I.; Hyon, B.J.; Nam, K. Dynamic Modeling and Control for SPMSMs With Internal Turn Short Fault. IEEE Trans. Power
+Electron. 2013 ,28, 3495–3508. [CrossRef]
+58. Forstner, G.; Kugi, A.; Kemmetmüller, W. A Magnetic Equivalent Circuit Based Modeling Framework for Electric Motors Applied
+to a PMSM with Winding Short Circuit. IEEE Trans. Power Electron. 2020 ,35, 12285–12295. [CrossRef]
+59. Qi, Y.; Bostanci, E.; Gurusamy, V .; Akin, B. A Comprehensive Analysis of Short-Circuit Current Behavior in PMSM Interturn
+Short-Circuit Faults. IEEE Trans. Power Electron. 2018 ,33, 10784–10793. [CrossRef]
+60. Hong, J.; Hyun, D.; Lee, S.B.; Yoo, J.; Lee, K. Automated Monitoring of Magnet Quality for Permanent-Magnet Synchronous
+Motors at Standstill. IEEE Trans. Ind. Appl. 2010 ,46, 1397–1405. [CrossRef]
+61. Hong, J.; Lee, S.B.; Kral, C.; Haumer, A. Detection and Classiﬁcation of Rotor Demagnetization and Eccentricity Faults for PM
+Synchronous Motors. IEEE Trans. Ind. Appl. 2012 ,48, 923–932. [CrossRef]
+62. Stone, G.; Boulter, E.; Culbert, I.; Dhirani, H. Electrical Insulation for Rotating Machines—Design, Evaluation, Aging, Testing, and
+Repair ; Wiley-IEEE Press: Piscataway, NJ, USA, 2014.
+63. IEEE Recommended Practice for Testing Insulation Resistance of Electric Machinery. IEEE Std 43–2013; Revision of IEEE Std
+43–2000. 2012, Volume 6, pp. 1–37. Available online: https://ieeexplore.ieee.org/document/6754111 (accessed on 29 September
+2021).
+64. IEEE Guide for the Measurement of Partial Discharges in AC Electric Machinery . IEEE Std 1434–2014; Revision of IEEE Std 1434–2000.
+2014, Volume 4, pp. 1–89. Available online: https://ieeexplore.ieee.org/document/6973042 (accessed on 29 September 2021).
+65. IEEE Guide for Testing Turn Insulation of Form-Wound Stator Coils for Alternating-Current Electric Machines . IEEE Std 522–2004;
+Revision of IEEE Std 522–1992. 2004, pp. 1–28. Available online: https://ieeexplore.ieee.org/document/1322822 (accessed on 29
+September 2021).
+66. Stone, G.C. Recent important changes in IEEE motor and generator winding insulation diagnostic testing standards. IEEE Trans.
+Ind. Appl. 2005 ,41, 91–100. [CrossRef]
+67. Stranges, M.K.W.; Haq, S.U.; Vouk, A.O. Monitoring Stator Insulation in Critical Motors: Choosing Diagnostic Tests. IEEE Ind.
+Appl. Mag. 2014 ,20, 50–55. [CrossRef]
+68. Kim, H.; Lee, S.B.; Kral, C.; Haumer, A. Experience with Stator Insulation Testing and Turn/Phase Insulation Failures in the
+Power Generation Industry. IEEE Trans. Ind. Appl. 2018 ,54, 2225–2236. [CrossRef]
+69. Yang, J.; Lee, S.B.; Kral, C.; Haumer, A. Experimental evaluation of using the surge PD test as a predictive maintenance tool for
+monitoring turn insulation quality in random wound AC motor stator windings. IEEE Trans. Dielectr. Electr. Insul. 2012 ,19, 53–60.
+[CrossRef]
+------------------------------End of the page -----------------------------------
+Machines 2021 ,9, 260 24 of 26
+70. Qi, Y.; Zafarani, M.; Akin, B.; Fedigan, S.E. Analysis and Detection of Inter-Turn Short-Circuit Fault Through Extended Self-
+Commissioning. IEEE Trans. Ind. Appl. 2017 ,53, 2730–2739. [CrossRef]
+71. Hong, J.; Lee, S.B.; Kral, C.; Haumer, A. Detection of Airgap Eccentricity for Permanent Magnet Synchronous Motors Based on
+the d-Axis Inductance. IEEE Trans. Power Electron. 2012 ,27, 2605–2612. [CrossRef]
+72. Aggarwal, A.; Kral, C.; Haumer, A. Off-Line Detection of Static Eccentricity of PMSM Robust to Machine Operating Temperature
+and Rotor Position Misalignment Using Incremental Inductance Approach. IEEE Trans. Transp. Electrif. 2021 ,7, 161–168.
+[CrossRef]
+73. Deng, H. Method to Detect or Monitor the Demagnetization of a. Magnet. Patent U.S. 2017/0030984 A1, 2 February 2017.
+74. Nandi, S.; Toliyat, H.A.; Li, X. Condition Monitoring and Fault Diagnosis of Electrical Motors—A Review. IEEE Trans. Energy
+Convers. 2005 ,20, 719–729. [CrossRef]
+75. Grubic, S.; Aller, J.M.; Lu, B.; Habetler, T.G. A Survey on Testing and Monitoring Methods for Stator Insulation Systems of
+Low-Voltage Induction Machines Focusing on Turn Insulation Problems. IEEE Trans. Ind. Electron. 2008 ,55, 4127–4136. [CrossRef]
+76. Henao, H.; Lee, S.B.; Kral, C.; Haumer, A. Trends in Fault Diagnosis for Electrical Machines: A Review of Diagnostic Techniques.
+IEEE Ind. Electron. Mag. 2014 ,8, 31–42. [CrossRef]
+77. Riera-Guasp, M.; Lee, S.B.; Kral, C.; Haumer, A. Advances in Electrical Machine, Power Electronic, and Drive Condition
+Monitoring and Fault Detection: State of the Art. IEEE Trans. Ind. Electron. 2015 ,62, 1746–1759. [CrossRef]
+78. Zafarani, M.; Bostanci, E.; Qi, Y.; Goktas, T.; Akin, B. Interturn Short-Circuit Faults in Permanent Magnet Synchronous Machines:
+An Extended Review and Comprehensive Analysis. IEEE J. Emerg. Sel. Top. Power Electron. 2018 ,6. [CrossRef]
+79. Ullah, Z.; Hur, J. A Comprehensive Review of Winding Short Circuit Fault and Irreversible Demagnetization Fault Detection in
+PM Type Machines. Energies 2018 ,11, 3309. [CrossRef]
+80. Lee, S.B.; Lee, S.B.; Kral, C.; Haumer, A. Condition Monitoring of Industrial Electric Machines: State of the Art and Future
+Challenges. IEEE Ind. Electron. Mag. 2020 ,14, 158–167. [CrossRef]
+81. Wu, Q.; Nandi, S. Fast Single-Turn Sensitive Stator Interturn Fault Detection of Induction Machines Based on Positive- and
+Negative-Sequence Third Harmonic Components of Line Currents. IEEE Trans. Ind. Appl. 2010 ,46. [CrossRef]
+82. Ebrahimi, B.M.; Faiz, J. Conﬁguration Impacts on Eccentricity Fault Detection in Permanent Magnet Synchronous Motors. IEEE
+Trans. Magn. 2012 ,48, 903–906. [CrossRef]
+83. Ebrahimi, B.M.; Faiz, J.; Roshtkhari, M.J. Static-, Dynamic-, and Mixed-Eccentricity Fault Diagnoses in Permanent-Magnet
+Synchronous Motors. IEEE Trans. Ind. Electron. 2009 ,56, 4727–4739. [CrossRef]
+84. Wang, C.; Prieto, M.D.; Romeral, L.; Chen, Z.; Blaabjerg, F.; Liu, X. Detection of Partial Demagnetization Fault in PMSMs
+Operating Under Nonstationary Conditions. IEEE Trans. Magn. 2016 ,52, 1–4. [CrossRef]
+85. Cardoso, A.J.M.; Cruz, S.M.A.; Fonseca, D.S.B. Inter-turn stator winding fault diagnosis in three-phase induction motors, by
+Park’s vector approach. IEEE Trans. Energy Convers. 1999 ,14, 595–598. [CrossRef]
+86. Cruz, S.M.A.; Cardoso, A.J.M. Stator winding fault diagnosis in three-phase synchronous and asynchronous motors, by the
+extended Park’s vector approach. IEEE Trans. Ind. Appl. 2001 ,37, 1227–1233. [CrossRef]
+87. Cruz, S.M.A.; Cardoso, A.J.M. Multiple reference frames theory: A new method for the diagnosis of stator faults in three-phase
+induction motors. IEEE Trans. Energy Convers. 2005 ,20, 611–619. [CrossRef]
+88. Kim, K. Simple Online Fault Detecting Scheme for Short-Circuited Turn in a PMSM Through Current Harmonic Monitoring.
+IEEE Trans. Ind. Electron. 2011 ,58, 2565–2568. [CrossRef]
+89. Hang, J.; Ding, S.; Zhang, J.; Cheng, M.; Chen, W.; Wang, Q. Detection of Interturn Short-Circuit Fault for PMSM with Simple
+Fault Indicator. IEEE Trans. Energy Convers. 2016 ,31, 1697–1699. [CrossRef]
+90. Boileau, T.; Leboeuf, N.; Nahid-Mobarakeh, B.; Meibody-Tabar, F. Synchronous Demodulation of Control Voltages for Stator
+Interturn Fault Detection in PMSM. IEEE Trans. Power Electron. 2013 ,28, 5647–5654. [CrossRef]
+91. Meinguet, F.; Semail, E.; Kestelyn, X.; Mollet, Y.; Gyselinck, J. ’Change-detection algorithm for short-circuit fault detection in
+closed-loop AC drives. IET Electr. Power Appl. 2014 ,8, 165–177. [CrossRef]
+92. Immovilli, F.; Lee, S.B.; Kral, C.; Haumer, A. Evaluation of Combined Reference Frame Transformation for Interturn Fault
+Detection in Permanent-Magnet Multiphase Machines. IEEE Trans. Ind. Electron. 2015 ,62, 1912–1920. [CrossRef]
+93. Haddad, R.Z.; Lopez, C.A.; Foster, S.N.; Strangas, E.G. A Voltage-Based Approach for Fault Detection and Separation in
+Permanent Magnet Synchronous Machines. IEEE Trans. Ind. Appl. 2011 ,53, 5305–5314. [CrossRef]
+94. Hang, J.; Zhang, J.; Cheng, M.; Huang, J. Online Interturn Fault Diagnosis of Permanent Magnet Synchronous Machine Using
+Zero-Sequence Components. IEEE Trans. Power Electron. 2015 ,30, 6731–6741. [CrossRef]
+95. Urresty, J.; Riba, J.; Romeral, L. Diagnosis of Interturn Faults in PMSMs Operating Under Nonstationary Conditions by Applying
+Order Tracking Filtering. IEEE Trans. Power Electron. 2013 ,28, 507–515. [CrossRef]
+96. Zhang, Y.; Liu, G.; Zhao, W.; Zhou, H.; Chen, Q.; Wei, M. Online Diagnosis of Slight Interturn Short-Circuit Fault for a Low-Speed
+Permanent Magnet Synchronous Motor. IEEE Trans. Transp. Electrif. 2021 ,7, 104–113. [CrossRef]
+97. Drif, M.; Cardoso, A.J.M. Stator Fault Diagnostics in Squirrel Cage Three-Phase Induction Motor Drives Using the Instantaneous
+Active and Reactive Power Signature Analyses. IEEE Trans. Ind. Inform. 2014 ,10, 1348–1360. [CrossRef]
+98. Gritli, Y.; Tani, A.; Rossi, C.; Casadei, D. Cosed-loop control impact on condition monitoring of high-resistance connections in
+PMSM based on power signature analysis. In Proceedings of the IECON 2016 42nd Annual Conference of the IEEE Industrial
+Electronics Society, Florence, Italy, 23–26 October 2016.
+------------------------------End of the page -----------------------------------
+Machines 2021 ,9, 260 25 of 26
+99. Wang, B.; Wang, J.; Griffo, A.; Sen, B. Stator Turn Fault Detection by Second Harmonic in Instantaneous Power for a Triple-
+Redundant Fault-Tolerant PM Drive. IEEE Trans. Ind. Electron. 2018 ,65, 7279–7289. [CrossRef]
+100. Bellini, A.; Filippetti, F.; Franceschini, G.; Tassoni, C. Closed-loop control impact on the diagnosis of induction motors faults.
+IEEE Trans. Ind. Appl. 2000 ,36, 1318–1329. [CrossRef]
+101. Cruz, S.M.A.; Cardoso, A.J.M. Diagnosis of stator inter-turn short circuits in DTC induction motor drives. IEEE Trans. Ind. Appl.
+2004 ,40, 1349–1360. [CrossRef]
+102. Hang, J.; Zhang, J.; Xia, M.; Ding, S.; Hua, W. Interturn Fault Diagnosis for Model-Predictive-Controlled-PMSM Based on Cost
+Function and Wavelet Transform. IEEE Trans. Power Electron. 2020 ,35, 6405–6418. [CrossRef]
+103. Huang, S.; Aggarwal, A.; Strangas, E.G.; Li, K.; Niu, F.; Huang, X. Robust Stator Winding Fault Detection in PMSMs With Respect
+to Current Controller Bandwidth. IEEE Trans. Power Electron. 2021 ,36, 5032–5042. [CrossRef]
+104. Zafarani, M.; Goktas, T.; Akin, B.; Fedigan, S.E. Modeling and Dynamic Behavior Analysis of Magnet Defect Signatures in
+Permanent Magnet Synchronous Motors. IEEE Trans. Ind. Appl. 2016 ,52, 3753–3762. [CrossRef]
+105. Yun, J.; Cho, J.; Lee, S.B.; Yoo, J. Online Detection of High-Resistance Connections in the Incoming Electrical Circuit for Induction
+Motors. IEEE Trans. Ind. Appl. 2009 ,45, 694–702. [CrossRef]
+106. Yun, J.; Lee, K.; Lee, K.; Lee, S.B.; Yoo, J. Detection and Classiﬁcation of Stator Turn Faults and High-Resistance Electrical
+Connections for Induction Machines. IEEE Trans. Ind. Appl. 2009 ,45, 666–675. [CrossRef]
+107. Zarri, L.; Lee, S.B.; Kral, C.; Haumer, A. Detection and Localization of Stator Resistance Dissymmetry Based on Multiple Reference
+Frame Controllers in Multiphase Induction Motor Drives. IEEE Trans. Ind. Electron. 2013 ,60, 3506–3518. [CrossRef]
+108. Mengoni, M.; Lee, S.B.; Kral, C.; Haumer, A. Online Detection of High-Resistance Connections in Multiphase Induction Machines.
+IEEE Trans. Power Electron. 2015 ,30, 4505–4513. [CrossRef]
+109. Mengoni, M.; Zarri, L.; Gritli, Y.; Tani, A.; Filippetti, F.; Lee, S.B. Online Detection of High-Resistance Connections with
+Negative-Sequence Regulators in Three-Phase Induction Motor Drives. IEEE Trans. Ind. Appl. 2015 ,51, 1579–1586. [CrossRef]
+110. Sarikhani, A.; Mohammed, O.A. Inter-Turn Fault Detection in PM Synchronous Machines by Physics-Based Back Electromotive
+Force Estimation. IEEE Trans. Ind. Electron. 2013 ,60, 3472–3484. [CrossRef]
+111. Mazzoletti, M.A.; Bossio, G.R.; de Angelo, C.H.; Espinoza-Trejo, D.R. A Model-Based Strategy for Interturn Short-Circuit Fault
+Diagnosis in PMSM. IEEE Trans. Ind. Electron. 2017 ,64, 7218–7228. [CrossRef]
+112. Jeong, H.; Moon, S.; Kim, S.W. An Early Stage Interturn Fault Diagnosis of PMSMs by Using Negative-Sequence Components.
+IEEE Trans. Ind. Electron. 2017 ,64, 5701–5708. [CrossRef]
+113. Hu, R.; Wang, J.; Mills, A.R.; Chong, E.; Sun, Z. Current-Residual-Based Stator Interturn Fault Detection in Permanent Magnet
+Machines. IEEE Trans. Ind. Electron. 2021 ,68, 59–69. [CrossRef]
+114. Milanfar, P .; Lang, J.H. Monitoring the thermal condition of permanent-magnet synchronous motors. IEEE Trans. Aerosp. Electron.
+Syst. 1996 ,32, 1421–1429. [CrossRef]
+115. Xiao, S.; Griffo, A. PWM-Based Flux Linkage and Rotor Temperature Estimations for Permanent Magnet Synchronous Machines.
+IEEE Trans. Power Electron. 2020 ,35, 6061–6069. [CrossRef]
+116. de la Barrera, P .M.; Bossio, G.R.; Leidhold, R. Online Voltage Sensorless High-Resistance Connection Diagnosis in Induction
+Motor Drives. IEEE Trans. Ind. Electron. 2015 ,62, 4374–4384. [CrossRef]
+117. Sun, J.; Li, C.; Zheng, Z.; Wang, K.; Li, Y. Online Estimation of Per-phase Stator Resistance Based on DC-Signal Injection for
+Condition Monitoring in Multiphase Drives. IEEE Trans. Ind. Electronics 2021 . [CrossRef]
+118. Briz, F.; Degner, M.W.; Zamarron, A.; Guerrero, J.M. Online stator winding fault diagnosis in inverter-fed AC machines using
+high-frequency signal injection. IEEE Trans. Ind. Appl. 2003 ,39, 1109–1117. [CrossRef]
+119. Wang, B.; Luo, L.; Fu, W.; Hua, W.; Wang, G.; Wang, Z. Study on the PWM Ripple Current Based Turn Fault Detection for Interior
+PM Machine. IEEE Trans. Transp. Electrif. 2021 ,7, 1537–1547. [CrossRef]
+120. Zhang, J.; Xu, Z.; Wang, J.; Zhao, J.; Din, Z.; Cheng, M. Detection and Discrimination of Incipient Stator Faults for Inverter-Fed
+Permanent Magnet Synchronous Machines. IEEE Trans. Ind. Electron. 2021 ,68, 7505–7515. [CrossRef]
+121. Hu, R.; Wang, J.; Mills, A.R.; Chong, E.; Sun, Z. High-Frequency Voltage Injection Based Stator Interturn Fault Detection in
+Permanent Magnet Machines. IEEE Trans. Power Electron. 2021 ,36, 785–794. [CrossRef]
+122. Sasic, M.; Campbell, S.R.; Lloyd, B. Flux Monitoring Improvement. IEEE Ind. Appl. Mag. 2011 ,17, 66–69. [CrossRef]
+123. Da, Y.; Shi, X.; Krishnamurthy, M. A New Approach to Fault Diagnostics for Permanent Magnet Synchronous Machines Using
+Electromagnetic Signature Analysis. IEEE Trans. Power Electron. 2013 ,28, 4104–4112. [CrossRef]
+124. Mohammed, A.; Melecio, J.I.; Djurovi´ c, S. Electrical Machine Permanent Magnets Health Monitoring and Diagnosis Using an
+Air-Gap Magnetic Sensor. IEEE Sens. J. 2020 ,20, 5251–5259. [CrossRef]
+125. Irhoumah, M.; Pusca, R.; Lefevre, E.; Mercier, D.; Romary, R.; Demian, C. Information Fusion with Belief Functions for Detection
+of Interturn Short-Circuit Faults in Electrical Machines Using External Flux Sensors. IEEE Trans. Ind. Electron. 2018 ,65, 2642–2652.
+[CrossRef]
+126. Irhoumah, M.; Lee, S.B.; Kral, C.; Haumer, A. Detection of the Stator Winding Inter-Turn Faults in Asynchronous and Synchronous
+Machines Through the Correlation Between Harmonics of the Voltage of Two Magnetic Flux Sensors. IEEE Trans. Ind. Appl. 2019 ,
+55, 2682–2689. [CrossRef]
+127. Gurusamy, V .; Bostanci, E.; Li, C.; Qi, Y.; Akin, B. A Stray Magnetic Flux-Based Robust Diagnosis Method for Detection and
+Location of Interturn Short Circuit Fault in PMSM. IEEE Trans. Instrum. Meas. 2021 ,70, 1–11. [CrossRef]
+------------------------------End of the page -----------------------------------
+Machines 2021 ,9, 260 26 of 26
+128. Gyftakis, K.N.; Cardoso, A.J.M. Reliable Detection of Stator Interturn Faults of Very Low Severity Level in Induction Motors.
+IEEE Trans. Ind. Electron. 2021 ,68, 3475–3484. [CrossRef]
+129. Grassetti, R.; Ottoboni, R.; Rossi, M.; Toscani, S. Low cost arc fault detection in aerospace applications. IEEE Instrum. Meas. Mag.
+2013 ,16, 37–42. [CrossRef]
+130. de Pelegrin, J.; Dreyer, U.J.; Martelli, C.; da Silva, J.C.C. Optical Fiber Sensor Encapsulated in Carbon Fiber Reinforced Polymer
+for Fault Detection in Rotating Electrical Machines. IEEE Sens. J. 2020 ,20, 11364–11371. [CrossRef]
+131. Mohammed, A.; Melecio, J.I.; Djurovi´ c, S. Stator Winding Fault Thermal Signature Monitoring and Analysis by In Situ FBG
+Sensors. IEEE Trans. Ind. Electron. 2019 ,66, 8082–8092. [CrossRef]
+132. Kumar, P .S.; Xie, L.; Halick, M.S.M.; Vaiyapuri, V . Online stator end winding thermography using infrared sensor array. In
+Proceedings of the 2018 IEEE Applied Power Electronics Conference and Exposition (APEC), San Antonio, TX, USA, 4–8 March
+2018; pp. 2454–2459.
+133. Kumar, P .S.; Xie, L.; Halick, M.S.M.; Vaiyapuri, V . Stator End-Winding Thermal and Magnetic Sensor Arrays for Online Stator
+Inter-Turn Fault Detection. IEEE Sens. J. 2021 ,21, 5312–5321. [CrossRef]
+134. Stone, G.C.; Warren, V . Effect of manufacturer, winding age and insulation type on stator winding partial discharge levels. IEEE
+Electr. Insul. Mag. 2004 ,20, 13–17. [CrossRef]
+135. Stone, G.C. A perspective on online partial discharge monitoring for assessment of the condition of rotating machine stator
+winding insulation. IEEE Electr. Insul. Mag. 2012 ,28, 8–13. [CrossRef]
+136. Lu, S.; Chai, H.; Sahoo, A.; Phung, B.T. Condition Monitoring Based on Partial Discharge Diagnostics Using Machine Learning
+Methods: A Comprehensive State-of-the-Art Review. IEEE Trans. Dielectr. Electr. Insul. 2020 ,27, 1861–1888. [CrossRef]
+137. Lee, S.B.; Yang, J.; Younsi, K.; Bharadwaj, R.M. An online groundwall and phase-to-phase insulation quality assessment technique
+for AC-machine stator windings. IEEE Trans. Ind. Appl. 2006 ,42, 946–957.
+138. Lee, S.B.; Younsi, K.; Kliman, G.B. An online technique for monitoring the insulation condition of AC machine stator windings.
+IEEE Trans. Energy Convers. 2005 ,20, 737–745. [CrossRef]
+139. Younsi, K.; Lee, S.B.; Kral, C.; Haumer, A. On-line capacitance and dissipation factor monitoring of AC stator insulation. IEEE
+Trans. Dielectr. Electr. Insul. 2010 ,17, 1441–1452. [CrossRef]
+140. Zhang, P .; Younsi, K.; Neti, P . A Novel Online Stator Ground-Wall Insulation Monitoring Scheme for Inverter-Fed AC Motors.
+IEEE Trans. Ind. Appl. 2015 ,51, 2201–2207. [CrossRef]
+141. Tsyokhla, I.; Griffo, A.; Wang, J. Online Condition Monitoring for Diagnosis and Prognosis of Insulation Degradation of
+Inverter-Fed Machines. IEEE Trans. Ind. Electron. 2019 ,66, 8126–8135. [CrossRef]
+142. Tsyokhla, I.; Griffo, A.; Wang, J. Detection of humidity ingress using online common-mode insulation impedance-monitoring
+system. J. Eng. 2019 ,2019 , 4411–4414. [CrossRef]
+143. Tsyokhla, I.; Griffo, A.; Wang, J. On-Line Motor Insulation Capacitance Monitoring Using Low-Cost Sensors. In Proceedings of
+the 2019 IEEE Energy Conversion Congress and Exposition (ECCE), Baltimore, MD, USA, 29 September–3 October 2019; pp.
+6996–7003.
+144. Alvarez-Gonzalez, F.; Hewitt, D.; Griffo, A.; Wang, J. Challenges of Common Mode Current and Voltage Acquisition for Stator
+Winding Insulation Health Monitoring. In Proceedings of the 2020 IEEE Energy Conversion Congress and Exposition (ECCE),
+Detroit, MI, USA, 11–15 October 2020; pp. 4452–4459.
+145. Zheng, D.; Zhang, P . An Online Groundwall and Phase-to-Phase Stator Insulation Monitoring Method for Inverter-Fed Machine.
+IEEE Trans. Ind. Electron. 2021 ,68, 5303–5313. [CrossRef]
+146. El-Refaie, A.M. Fault-tolerant permanent magnet machines: A review. IET Electr. Power Appl. 2011 ,5, 59–74. [CrossRef]
+147. Arumugam, P .; Hamiti, T.; Gerada, C. Turn–turn short circuit fault management in permanent magnet machines. IET Electr. Power
+Appl. 2015 ,9, 634–641. [CrossRef]
+148. Dusek, J.; Arumugam, P .; Brunson, C.; Amankwah, E.K.; Hamiti, T.; Gerada, C. Impact of Slot/Pole Combination on Inter-Turn
+Short-Circuit Current in Fault-Tolerant Permanent Magnet Machines. IEEE Trans. Magn. 2016 ,52, 1–9. [CrossRef]
+149. Merkhouf, A.; Bernier, S.; Cave, J.; Kokoko, O.; Pedneault-Desroches, J.; Millet, C. Operational Limits of a Large Hydro Generator
+with Bypassed Coils and Circuits. In Proceedings of the 2019 IEEE Workshop on Electrical Machines Design, Control and
+Diagnosis (WEMDCD), Athens, Greece, 22–23 April 2019.
+------------------------------End of the page -----------------------------------

@@ -1,0 +1,646 @@
+/gid00030/gid00035/gid00032/gid00030/gid00038/gid00001/gid00033/gid00042/gid00045 /gid00001
+/gid00048/gid00043/gid00031/gid00028/gid00047/gid00032/gid00046Citation: Park, J.; Kim, C.; Dinh,
+M.-C.; Park, M. Design of a Condition
+Monitoring System for Wind
+Turbines. Energies 2022 ,15, 464.
+https://doi.org/10.3390/en15020464
+Academic Editor: Yolanda Vidal
+Received: 3 December 2021
+Accepted: 4 January 2022
+Published: 10 January 2022
+Publisher’s Note: MDPI stays neutral
+with regard to jurisdictional claims in
+published maps and institutional afﬁl-
+iations.
+Copyright: © 2022 by the authors.
+Licensee MDPI, Basel, Switzerland.
+This article is an open access article
+distributed under the terms and
+conditions of the Creative Commons
+Attribution (CC BY) license (https://
+creativecommons.org/licenses/by/
+4.0/).
+energies
+Article
+Design of a Condition Monitoring System for Wind T urbines
+Jinje Park1, Changhyun Kim1, Minh-Chau Dinh2
+and Minwon Park1,*
+1Department of Electrical Engineering, Changwon National University, Changwon 51140, Korea;
+pmn02045@naver.com (J.P .); askim0124@gmail.com (C.K.)
+2Institute of Mechatronics, Changwon National University, Changwon 51140, Korea; thanchau7787@gmail.com
+*Correspondence: capta.paper@gmail.com; Tel.: +82-10-7311-7519
+Abstract: Renewable energy is being adopted worldwide, and the proportion of offshore wind tur-
+bines is increasing. Offshore wind turbines operate in harsh weather conditions, resulting in various
+failures and high maintenance costs. In this paper, a condition diagnosis model for condition moni-
+toring of an offshore wind turbine has been developed. The generator, main bearing, pitch system,
+and yaw system were selected as components subject to the condition monitoring by considering the
+failure rate and downtime of the wind turbine. The condition diagnosis model works by comparing
+real-time and predictive operating data of the wind turbine, and about four years of Supervisory
+Control and Data Acquisition (SCADA) data from a 2 MW wind turbine was used to develop the
+model. A deep neural network and an artiﬁcial neural network were used as machine learning to
+predict the operational data in the condition diagnosis model, and a confusion matrix was used to
+measure the accuracy of the failure determination. As a result of the condition monitoring derived by
+inputting SCADA data to the designed system, it was possible to maintain the failure determination
+accuracy of more than 90%. The proposed condition monitoring system will be effectively utilized
+for the maintenance of wind turbines.
+Keywords: correlation analysis; artificial neural network; machine learning; operations and maintenance ;
+wind turbine
+1. Introduction
+Currently, the seriousness of global warming is emerging around the world, and many
+countries are making various efforts to reduce CO 2emissions, the cause of global warming,
+through the Kyoto Protocol and the Paris Agreement on Climate Change [ 1]. Historically,
+nuclear power generation has been converted from the traditional fossil fuel-based energy
+system to reduce the burden of fossil fuel depletion and environmental problems and is
+playing a leading role in the global electricity market. However, after the Chernobyl and
+Fukushima nuclear accidents, public preference for the nuclear power plants has declined
+due to safety concerns. In 40 out of 42 countries surveyed, the preference for nuclear
+power decreased, and some European countries have decided not to build additional
+nuclear power plants [ 2,3]. Reducing the development of nuclear power plants has raised
+expectations and capacity for new and renewable energy sources as an alternative [ 4]. New
+energy that uses hydrogen or changes existing fossil fuels to be environmentally friendly is
+being put to practical use in the form of IGCC (Integrated Gasiﬁcation Combined Cycle)
+and hydrogen fuel cells, and CO 2capture and storage technology is being developed [ 5].
+In addition, efforts are being made to convert traditional fossil-fuel-based energy systems
+to renewable-based energy systems such as hydro, wind and solar power. According to the
+statistics of the International Energy Agency (IEA), the proportion of new and renewable
+energy consumption has steadily increased, increasing by 41.59% from 10 years ago in
+2017 [ 6], and wind power accounts for 36% of the total increase. It is growing much
+faster than other renewable power generations such as solar power (27%), hydro (22%)
+and biomass (12%) [ 7,8]. In addition, according to a report by the IEA, it is predicted
+Energies 2022 ,15, 464. https://doi.org/10.3390/en15020464 https://www.mdpi.com/journal/energies
+------------------------------End of the page -----------------------------------
+Energies 2022 ,15, 464 2 of 16
+that renewable energy will account for nearly 30% of global electricity in 2023, of which
+wind will account for 6% of the total renewable energy [ 9]. In particular, the proportion
+of offshore wind turbines that have excellent wind conditions and can mitigate problems
+such as noise pollution during operation is increasing [10–12].
+Wind turbines are exposed to highly variable weather conditions such as wind, tropical
+heat, hail and snow. In particular, offshore wind turbines are exposed to harsher weather
+conditions than onshore due to the salinity of the sea and strong winds. These weather
+conditions add loads to wind turbines and cause various types of failures due to extreme
+mechanical stress [ 13–15]. In the case of a wind turbine failure, not only repair costs but
+also costs due to power generation interruption are burdened. The maintenance cost of
+offshore wind turbines, which have poor operating conditions compared to onshore ones,
+accounts for about 30% of the total energy production cost [ 16]. Therefore, the importance
+of the maintenance of wind turbines is increasing [ 17–19]. The maintenance consists
+of post-maintenance to repair failures of wind turbines and predictive and preventive
+maintenances to prevent failures. Preventive maintenance is the replacement of parts on
+a regular schedule. Predictive maintenance uses a condition monitoring technology to
+check the performance of machines in operation, detect failures, and make repairs before
+they occur. As a result, the predictive maintenance can prevent catastrophic failures by
+predicting failures early and can reduce the cost of parts and consumables compared to
+preventive maintenance. It also has the advantage of reducing downtime by shortening
+parts delivery time and repair preparation time, which in turn leads to improved reliability.
+The predictive maintenance requires monitoring procedures to observe faults and
+identify changes to wind turbines in operation. The monitoring system can be used to
+measure and analyze the vibration and temperature of the wind turbine, identify the
+conditions before failure, and establish appropriate preventive measures, thereby reducing
+the overall maintenance process and cost [ 20]. Recently, in various industrial ﬁelds such as
+rotating machines and cutting machines, many studies have been conducted on condition
+monitoring systems using machine learning that do not require complex physical equations
+between components and have high accuracy [21,22].
+Along with the increase in power generation systems using renewable energy, a large-
+scale wind power generator condition monitoring system using machine learning is also
+being developed. The wind turbine condition monitoring system, which is currently being
+developed considering the priority of failure rate, is concentrated on the generator and
+gearbox among various components of the wind turbine [ 23,24]. Clifton, A. et al. [ 23] per-
+formed a condition monitoring to predict the output of wind turbines using the regression
+tree method, which combines the regression method and the decision tree method among
+machine learning methods. For predictions, data from a 1.5 MW wind turbine simulator
+using the aero structural simulator FAST and the stochastic turbulence simulator Turbsim
+were used. Rashid et al. [ 24] conducted a study on the condition monitoring of gearboxes
+using machine learning techniques. Among various machine learning techniques, bag-
+ging regression was used and the temperature of the gearbox oil was measured to predict
+gearbox failure. In terms of the failure rate and downtime of wind turbines, not only the
+generator and gearbox but also the yaw system and pitch-system-related components are
+becoming important monitoring targets [ 25]. For example, Dao, C. et al. [ 25] reported that
+the failure rate of offshore wind turbines was 25% for the pitch system, which was higher
+than for generators (16.7%) and gearboxes (8.3%). Therefore, for the proper maintenance
+of the wind turbine, not only the generator and gearbox but also other components of the
+wind turbine should be additionally considered in the condition monitoring system.
+In this paper, a condition diagnosis model of the condition monitoring system for the
+generator, main bearing, yaw system, and pitch system, which is helpful in the maintenance
+of offshore wind turbines, has been developed, and the effectiveness was veriﬁed using real-
+time data. The condition diagnosis model consists of selecting the components of the wind
+turbine to be diagnosed, selecting the data required for diagnosis, designing a machine
+learning-based condition prediction procedure, and selecting the failure determination
+------------------------------End of the page -----------------------------------
+Energies 2022 ,15, 464 3 of 16
+criteria. The criteria for the selecting wind turbine components are the failure rate and
+downtime. As a result of investigating the failure rate and downtime of each component of
+the wind turbine, the generator, main bearing, pitch system, and yaw system were selected
+for monitoring. The condition diagnosis model works by comparing the real-time and
+predictive operation data of the wind turbine, and the prediction of the operation data of
+the wind turbine utilizes the real-time operation data of the turbine. Supervisory Control
+and Data Acquisition (SCADA) data of about four years of 2 MW wind power generator
+was used as the operating data for constructing the condition prediction procedure of
+the condition diagnosis model. The type of SCADA data of the wind turbine to be input
+into the machine learning was selected by referring to the Pearson correlation coefﬁcient
+between the operation data to be predicted [ 26]. We used neural networks for machine
+learning to predict the condition of wind turbine components. In addition, a confusion
+matrix was used to set the abnormal operation criteria of the condition diagnosis model by
+referring to Programmable Logic Controller (PLC) state among the SCADA data and to
+measure the abnormal operation judgment accuracy of the diagnostic model [27].
+As a result of verifying the performance of the condition monitoring system using the
+condition diagnosis model proposed in this study with SCADA data for about four months,
+the failure determination accuracy for all components of the wind turbine was over 90%.
+The condition monitoring system will be effectively used for the maintenance of offshore
+wind turbines in the future.
+2. Conﬁgurations of the Condition Monitoring System
+2.1. Functionalities of the Condition Monitoring System
+The wind turbine condition monitoring system consists of a real-time monitoring
+module and a condition diagnosis model. The real-time monitoring module collects
+environmental data such as wind speed and turbine ambient temperature, component
+status data such as generator temperature and blade pitch angle, and operating data such
+as output current and power of the wind turbine in real-time. The data used by the
+monitoring module is collected by using additionally installed sensors or SCADA systems
+for the condition monitoring system. SCADA systems are installed in most wind turbines
+and collect data to monitor the operation of wind turbines. Therefore, if the SCADA
+system is used for the real-time monitoring module, there is no need to install additional
+sensors, thereby reducing the construction cost of the condition monitoring system. The
+condition monitoring system in this paper was designed using data collected for about four
+years from a SCADA system of a 2 MW wind turbine that outputs an average of 1 data
+every 10 min.
+The condition diagnosis model of the condition monitoring system uses the data of the
+wind turbine collected through the real-time monitoring module to determine the operating
+condition of the wind turbine. As methods used for condition diagnosis, a real-time order
+analysis, a ﬁltering by frequency band, a machine learning, etc. are used. Recently, by
+utilizing machine learning, a condition diagnosis model with high prediction accuracy is
+being designed without the need for complex physical equations between data of wind
+turbines. The data with the condition of the wind turbine is predicted using machine
+learning, and the predicted data is used to diagnose the condition of the wind turbine.
+In order to diagnose the condition of a wind turbine, appropriate diagnostic criteria are
+required, and to select an appropriate diagnostic criterion, it is good to use data from the
+start of operation of the turbine to the occurrence of a failure. The PLC state represents the
+real-time operation condition of the wind turbine, and the operating condition includes
+failures, maintenances, and normal operations.
+Figure 1 shows the working process of the designed condition monitoring system.
+------------------------------End of the page -----------------------------------
+Energies 2022 ,15, 464 4 of 16
+Figure 1. Working process of the condition monitoring system.
+First, the condition diagnosis model designed with the SCADA data collected for
+four years is imported into the condition monitoring system. The condition monitoring
+model receives the real-time SCADA data and predicts and outputs the condition data of
+each component. At this point, the absolute deviation between the predicted condition data
+and the real-time condition data is measured. By comparing the deviation of the condition
+data with the abnormal operating deviation criteria, it is classiﬁed into the normal operation
+and the abnormal operation. The monitoring process is performed every 10 min by the
+SCADA data measured every 10 min.
+2.2. Selection of the Wind Turbine Components for the Condition Monitoring System
+A wind turbine consists of various components such as a generator, a drivetrain, and
+a pitch system. When all components are considered in the condition monitoring system, it
+is a great help for maintenance of a wind turbine. However, considering all components
+of a wind turbine, there is a limit to the cost due to the installation of sensors and the
+development of a condition monitoring system. Therefore, it is necessary to select the
+appropriate components to be considered in the condition monitoring system. To design
+an optimal condition monitoring system for maintenance, the failure rate and downtime of
+wind turbines were considered [ 25]. Maintenance costs can be further reduced by selecting
+components with high failure rates and downtime. Figure 2 depicts the proportion of each
+component among the total failures occurring in offshore wind turbines and the proportion
+of each component in the downtime due to the failure.
+------------------------------End of the page -----------------------------------
+Energies 2022 ,15, 464 5 of 16
+Figure 2. Failure rates and downtime rates of offshore wind turbine components: ( a) each compo-
+nent’s share of the total failures; ( b) each component’s percentage of the total downtime.
+In Figure 2a, the pitch system accounted for 25% of all wind turbine failures, and the
+generator took the second place with 16.7%. The gearbox, yaw system, control system,
+blade, and drivetrain were the same with a failure rate of 8.3%. In Figure 2b, among
+the wind turbine components, the gearbox and the generator accounted for the highest
+downtime rate of 33.3%. Next, the blades accounted for 22.2% and the drivetrains accounted
+for 11.1% of downtime. Considering the failure rate and downtime, the generator, main
+bearing, pitch system, and yaw system were selected as the target components of the
+condition monitoring system. Because the target of the condition monitoring system to be
+implemented in this study is a direct-driven offshore wind turbine in which the driving
+force of the rotor is transmitted directly to the generator, the gearbox was excluded from
+consideration, and the bearing of the main shaft was subject to monitoring because it would
+receive a high load.
+2.3. Design of the Condition Diagnosis Model
+The design of the condition diagnosis model proceeds with the selection of condition
+data of each component, the data preprocessing, the machine learning for condition data
+prediction, and the selection of abnormal operation judgment criteria.
+2.3.1. Selection of Predictive Data for the Condition Diagnosis Model
+It is the process of selecting data representing the condition of the wind turbine
+components. The SCADA data of a 2 MW wind turbine was used to design the wind turbine
+condition monitoring system. Each SCADA data consists of about 140 types of operation
+statuses. Among them, the SCADA data related to the status of generator, main bearing,
+pitch system, and yaw system handled by the condition monitoring system were selected.
+Table 1 represents the SCADA data selected as the condition data of the components.
+Table 1. The SCADA data selected as the condition data of the components.
+Components of Wind T urbine Condition Data
+Generator Temperature of the generator
+Main bearing Temperature of the main bearing
+Yaw system Deviation of wind direction angle relative to nacelle position
+Pitch system Blade pitch angle
+The output of the generator is mostly limited by the temperature rise, such as the
+temperature rise of the ﬁeld winding and the armature winding, the temperature rise at the
+------------------------------End of the page -----------------------------------
+Energies 2022 ,15, 464 6 of 16
+iron core edge of the armature, and the temperature rise due to the failure of the cooling
+device, so the temperature was selected as the condition data. Moreover, in the case of
+the main bearing, the temperature rises due to large loads and imbalances, which can
+cause cracks and damage, so the bearing temperature was selected as the condition data to
+prevent damage. The pitch system and the yaw system, which adjust the angle of the blade
+and nacelle according to the real-time wind speed and direction, are abnormally changed
+in the angle of the blade and the nacelle due to a malfunction of the pitch controller or wind
+vane during operation. Therefore, the blade pitch angle and wind direction angle deviation
+were selected as the condition data for the pitch and yaw system as shown in Table 1.
+2.3.2. Data Preprocessing of the Condition Diagnosis Model
+The SCADA data of the condition diagnosis model should be preprocessed. Prepro-
+cessing proceeds with data selection under the normal operation status, the SCADA data
+selection related to condition data and data scaling. The PLC state was used to distinguish
+the normal operation status. The condition diagnosis model uses the SCADA data cor-
+related with the condition data of each component. In order to improve the prediction
+accuracy of condition data through machine learning, it is necessary to select the SCADA
+data with high correlation with condition data. The Pearson correlation coefﬁcient is a
+statistical method that measures the magnitude and direction of the linear relationship
+between the condition data of each component and the SCADA data, and the Pearson corre-
+lation coefﬁcient is the formal method of measuring correlation and is still the most widely
+used [ 26]. Thus, the Pearson correlation coefﬁcient was used to measure the correlation in
+this study and is expressed in Equation (1) [27].
+r=ån
+i=1 
+Xi X 
+Yi Y
+q
+ån
+i=1 
+Xi X2q
+ån
+i=1 
+Yi Y2(1)
+In Equation (1), ris the Pearson correlation coefﬁcient, nis the number of variables,
+Xi,Yiare each variable, and X,Yare the average of each variable. The correlation
+coefﬁcient is distributed between  1 and +1, and the closer the relationship between
+the two variables, the closer to the extreme value. The SCADA data with correlation
+coefﬁcients close to  1 or 1 were used. The data scaling was performed on the SCADA data
+selected using the correlation coefﬁcient. Figure 3 shows the SCADA data for 1000 min .
+As shown in Figure 3a,b, the data range of wind speed is 1.79~6.85 m/s, and the range of
+system active power is 0~971.34 W, respectively.
+Figure 3. SCADA data for 1000 min: ( a) the data range of wind speed; ( b) the range of system
+active power.
+If the range of the SCADA data is different, the accuracy of the condition prediction is
+affected, so the range of the SCADA data is adjusted to a certain level through data scaling.
+For data scaling, there are scalers such as Normalizer, Standard scaler, and MinMax scaler,
+and a scaler suitable for the data type and machine learning technique is used in general.
+------------------------------End of the page -----------------------------------
+Energies 2022 ,15, 464 7 of 16
+2.3.3. Machine Learning for the Prediction of Condition Data
+The machine learning predicts the condition data using the preprocessed SCADA data.
+The conﬁguration of machine learning is shown in Figure 4.
+Figure 4. Conﬁguration of the machine learning.
+The machine learning uses supervised learning when there are output variables for
+input variables, and unsupervised learning when there are no output variables for input
+variables. In addition, supervised learning is divided into regression and classiﬁcation
+based on whether the type of the output variable is a numeric variable or a categorical
+variable. The input variable used for the machine learning of the condition diagnosis model
+is the SCADA data, and the output variable is the condition data, which is a numerical
+variable, so the machine learning used a regression model of supervised learning. The
+regression models include methods such as a regression tree, bagged regression technique,
+and neural network. Among them, the neural network was used to design the condition
+diagnosis model. The neural network is the machine learning technique created by referring
+to the way the human brain processes information, and given sufﬁcient computation time,
+data, and parameter tuning, it outperforms other machine learning methods. According to
+the number of the hidden layers, the neural networks are divided into an artiﬁcial neural
+network (ANN) composed of a single layer and a deep neural network (DNN) composed
+of two or more layers. Figure 5 shows the structure of the neural network used to predict
+the condition data [28].
+Figure 5. The structure of the neural network of the condition diagnostic model.
+The neural network of the condition diagnosis model uses the SCADA data as the
+input variables and predicts the condition data as the output variables. The parameters of
+a neural network include the number of hidden layers, activation functions, and epochs.
+As shown in Figure 5, the hidden layer between the input layer and the output layer is
+composed of nodes and neurons, enabling the prediction of complex data. At least one
+hidden layer is required for a neural network, and a neural network with multiple hidden
+layers is called a deep neural network. A training accuracy changes according to the
+------------------------------End of the page -----------------------------------
+Energies 2022 ,15, 464 8 of 16
+number of hidden layers. In order to determine the number of hidden layers with the
+highest training accuracy, the training accuracy was measured by changing the number of
+hidden layers from one to ﬁve. The activation function creates nonlinearities in the training
+process of the neural network, making it possible to train complex patterns. Figure 6 depicts
+activation functions. Activation functions were compared with a hyperbolic tangent (Tanh)
+and a rectiﬁed linear unit (ReLU). The Tanh is in the form of Figure 6a, has the same
+characteristics as sigmoid, and the output value is between  1 and 1 depending on the
+input variable. The ReLU is in the form of Figure 6b, which is a linear function for positive
+input variables and zero for negative input variables.
+Figure 6. Activation functions: ( a) hyperbolic tangent; ( b) rectiﬁed linear unit.
+The epoch represents the number of learning iterations, and as the epoch increases,
+the number of iterations of learning increases. Figure 7 shows the learning loss when the
+epoch is increased from 0 to 100.
+Figure 7. Training loss graph according to the size of the epoch.
+When the epoch increases, the training loss decreases, but the training loss remains
+constant from a certain epoch or more. In the epoch, there is little change in the training
+loss, and the value of the moment similar to the training loss of validation is used.
+2.3.4. Selection of Abnormal Operation Criteria for the Condition Diagnosis Model
+The abnormal operation of the condition diagnosis model is determined by comparing
+the real-time condition data with the predicted condition data. The real-time condition
+data and the predicted condition data are measured using the SCADA data that is put
+------------------------------End of the page -----------------------------------
+Energies 2022 ,15, 464 9 of 16
+out every 10 min. Therefore, the abnormal operation of the condition diagnosis model is
+judged every 10 min. When the deviation value between the real-time condition data and
+the predicted condition data increases by more than the abnormal operation criteria, it is
+determined as abnormal operation of the wind turbine. The abnormal operation criteria
+were selected using the condition data and PLC state. The abnormal operation criteria were
+set by adjusting the standard deviation of the real-time condition data and the predicted
+condition data by an integer multiple until the moment when the condition diagnosis
+accuracy is high. The condition diagnosis accuracy was measured using a confusion matrix.
+The confusion matrix is a measure for judging the accuracy of data classiﬁcation, and its
+structure is as shown in Figure 8.
+Figure 8. Structure of the confusion matrix.
+The confusion matrix consists of two dimensions, including the dimension of the real-
+time operation state and the dimension of the predicted operation state. In the confusion
+matrix, when the real-time operation is normal, it consists of True positive ( TP), which is
+a diagnosis success, and False negative ( FN), which is a diagnosis failure. If the real-time
+operation is abnormal, it is composed of True negative ( TN), which is a successful diagnosis,
+and False positive ( FP), which is a diagnosis failure. The method of measuring the accuracy
+of the condition diagnosis using the confusion matrix is as shown in Equation (2) [29].
+Accuracy =TP+TN
+FP+TP+TN+FN(2)
+The accuracy of the condition diagnosis model is judged by the ratio of true positive
+and true negative among the total operating state of the wind turbine.
+3. Design of a Neural Network for Condition Data Prediction
+3.1. Data Preprocessing
+When designing the condition diagnosis model, the SCADA data of about four years
+of 2 MW wind turbine was used. The number of stored SCADA data for about four years is
+about 238,000. When training the neural network for the design of the condition diagnosis
+model, the data in the normal operation of the wind turbine among the SCADA data was
+used. The condition of the wind turbine was classiﬁed using the PLC state. The PLC state
+indicates the real-time operation status of the wind turbine, receives the temperature, wind
+speed, output power, etc. around the turbine, and classiﬁes the condition through the logic
+appropriate to the input. As shown in Table 2, the PLC state consists of 14 types such as
+Error, Production, and Setup.
+------------------------------End of the page -----------------------------------
+Energies 2022 ,15, 464 10 of 16
+Table 2. PLC states of wind turbine.
+Num. PLC State
+1 Standby
+2 Error
+3 Grid loss
+4 Initialization
+5 Ready
+6 Start up
+7 Low temperature
+8 Production
+9 Setup
+10 Health check
+11 High wind speed
+12 Service mode
+13 Slow stop
+14 Reset from emergency stop
+Of the PLC states, the following three states, Ready, Startup, and Production were
+classiﬁed as normal operations, and the remaining states were classiﬁed as abnormal
+operations. Among the four years of SCADA data, the number of normal operation data
+is 178,000. By using the classiﬁed normal operation data, the SCADA data related to
+the condition data of each component was selected; data scaling and condition prediction
+model design were carried out. In order to select the SCADA data that has a high correlation
+with the condition data, the Pearson correlation coefﬁcient was used. The SCADA data were
+classiﬁed into 10% units for each section according to the correlation coefﬁcient between
+the condition data and the SCADA data. The classiﬁed SCADA data selects high-accuracy
+SCADA data when training the neural network. As a data scaling method, the training
+accuracy was compared using the Standard and MinMax scalers [ 30]. The Standard scaler
+is obtained by Equation (3) by scaling to a value with a Gaussian normal distribution where
+the mean of each of the data is 0 and the variance is 1.
+xi_new=xi m
+s(3)
+In Equation (3), m=Mean and s=Standard Deviation . The MinMax scaler is
+obtained by Equation (4) by changing the basic estimate of the corresponding element to 0
+for each component, the most extreme value to 1, and scaling the data values to a value in
+the range between 0 and 1.
+xi_new=xi xmin
+xmax xmin(4)
+In Equation (4), xminis the minimum value of data, and xmaxis the maximum value of
+data. After comparing the training accuracy through the neural network using the Standard
+scaler and the MinMax scaler, a scaler with higher accuracy was used.
+3.2. Result of Parameter Selection of the Neural Network for the Condition Diagnosis Model
+The SCADA data classiﬁed according to the Pearson correlation coefﬁcient was used
+for training the neural network by section. The training accuracy of the neural network was
+measured using mean absolute error (MAE). Table 3 shows the training accuracy results of
+the SCADA data for each section classiﬁed according to the Pearson correlation coefﬁcient
+with the condition data for each component. There was no SCADA data measured in the
+section where the correlation coefﬁcient was 50% with the condition data of the yaw system.
+Therefore, the accuracy according to the 50% or higher correlation coefﬁcient of the yaw
+system in Table 3 could not be measured.
+------------------------------End of the page -----------------------------------
+Energies 2022 ,15, 464 11 of 16
+Table 3. Training accuracy results of the SCADA data.
+Correlation Coefﬁcient Generator Main Bearing Yaw System Pitch System
+80% or more 2.45 1.45 4.67 1.8
+70% or more 2.11 1.09 4.95 1.26
+60% or more 1.66 1.3 4.83 1.36
+50% or more 1.67 1.39 - 1.44
+In Table 3, when the SCADA data with a correlation coefﬁcient of 60% or more was
+used according to the correlation coefﬁcient of the generator, the MAE showed the lowest
+error of 1.66, and the number of SCADA data in the corresponding section was 10. When
+the SCADA data with a correlation coefﬁcient of 70% or more was used for the main
+bearing, the MAE showed the lowest error of 1.09, and the number of SCADA data in the
+corresponding section was 8. When the SCADA data having a correlation coefﬁcient of 80%
+or higher was used, the MAE showed the lowest error of 4.67, and the number of SCADA
+data in the corresponding section was 4. When the pitch system used the SCADA data
+with a correlation coefﬁcient of 70% or more, the MAE showed the lowest error of 1.26, and
+the number of SCADA data in the corresponding section was 10. The data scaling was
+performed using the SCADA data of the selected section. The scaler compared Standard
+scaler and MinMax scaler. Table 4 shows the learning accuracy by scaling.
+Table 4. Learning accuracy results according to the scaler.
+Scaler Generator Main Bearing Yaw System Pitch System
+Non scaler 1.66 1.09 4.67 1.26
+Standard scaler 1.23 1.08 4.65 1.14
+MinMax scaler 1.6 1.23 4.89 1.29
+As a result of comparing the learning accuracy according to the scaler, all four compo-
+nents showed low MAE when using the standard scaler, and the MinMax scaler showed
+relatively higher MAE values. The data scaler, hidden layer, epoch, and activation function
+with high learning accuracy were selected using the SCADA data of the selected section.
+Parameters of the data scaling and the neural network were selected as shown in Table 5.
+Table 5. Results of parameter selection of the neural network for each component.
+Parameter Generator Main Bearing Yaw System Pitch System
+Type of scaler Standard scaler
+Num. hidden layer 5 1 3 3
+Activation function Tanh ReLU Tanh Tanh
+Num. epoch 200
+The Standard scaler was selected as the scaler because it showed high accuracy. In the
+case of hidden layers, accuracy does not increase just because the number of layers is large.
+In the case of the main bearing, high accuracy was achieved in the ANN conﬁguration with
+one hidden layer, the generator with ﬁve layers of DNN, and the yaw system and pitch
+system with three layers of DNN showed high accuracy. For the activation function, the
+highest accuracy was derived when the ReLU was used for the main bearing, and high
+accuracy was derived when the Tanh was used for the other three components. Epoch was
+measured by increasing it from 50, and there was no signiﬁcant change in the training loss
+even when it was increased to 200 or more, so 200 was selected as the epoch. Using the
+neural network, the abnormal operation criteria of the condition diagnosis model were
+selected and the accuracy was judged.
+------------------------------End of the page -----------------------------------
+Energies 2022 ,15, 464 12 of 16
+4. Diagnosis Results of the Condition Monitoring System
+4.1. Selection of Abnormal Operating Deviation Criteria for the Condition Diagnosis
+In order to diagnose the real-time operation of the wind turbine in the condition
+diagnosis model, abnormal operating deviation criteria were used. Table 6 shows the
+deviation criteria for the abnormal operation selected using the condition data and the
+PLC state.
+Table 6. Condition data for each part component and selected abnormal operating deviation criteria.
+Components of the Wind T urbine Condition DataAbnormal Operating
+Deviation Criteria
+Generator Temperature of generator 6.18C
+Main bearing Temperature of the main bearing 5.34C
+Yaw system Deviation of wind direction angle relative to nacelle position 10.64
+Pitch system Blade pitch angle 4.95
+The deviation criterion for abnormal operation of each component is an integer mul-
+tiple of the standard deviation between the real-time condition data and the predicted
+condition data. Because the condition data of the generator and main bearing utilizes
+temperature data, the abnormal operating deviation criterion is temperature data, and the
+condition data of the pitch system and the yaw system uses angle data, so the abnormal
+operating deviation criterion is the angle data. The accuracy of the designed condition
+diagnosis model was measured using the selected abnormal operating deviation criteria.
+4.2. Results of the Condition Monitoring of the Wind Turbine
+The condition diagnosis of the wind turbine is performed using the abnormal operation
+criteria selected for each component. Figure 9 shows the results of monitoring the operating
+status of the SCADA data for about four months using the condition monitoring system.
+The red dot indicates abnormal operation as the deviation of the condition data is more
+than the abnormal operation criteria. The black dot indicates normal operation as the
+deviation of the condition data is less than the abnormal operation criteria. Compared to
+Figure 9a,b,d, more abnormal operations were found in Figure 9d, the measurement result
+of the pitch system. The cause of the results of Figure 9d is that the turbine stopped at the
+cut-in wind speed due to maintenance or error occurrence of the wind turbine.
+Figure 9. Cont.
+------------------------------End of the page -----------------------------------
+Energies 2022 ,15, 464 13 of 16
+Figure 9. Results of the condition monitoring, ( a) generator; ( b) main bearing; ( c) yaw system;
+(d) pitch system.
+Table 7 shows the ﬁnal condition diagnosis accuracy of the condition monitoring
+system for each component. As shown in Table 7, the condition diagnosis accuracy of the
+generator, main bearing, yaw system, and pitch system was measured to be over 90%.
+Table 7. Accuracy of the condition diagnosis for each component of the condition monitoring system.
+Generator Main Bearing Yaw System Pitch System
+Accuracy 94.93% 93.51% 94.72% 93.61%
+------------------------------End of the page -----------------------------------
+Energies 2022 ,15, 464 14 of 16
+As shown in Table 7, the diagnostic accuracy through the condition monitoring is ap-
+proximately 93% for four components. In 7% of cases, the abnormal state of the component
+was judged to be normal or the normal state was judged to be abnormal due to an incorrect
+diagnosis. Because the designed condition monitoring system is an auxiliary means, the
+operator’s additional judgment on the situation that has occurred is required.
+5. Conclusions
+In this paper, a real-time condition monitoring system for operation condition diagno-
+sis of offshore wind turbines has been dealt with. For the components subject to condition
+monitoring, the generator, main bearing, pitch system, and yaw system were selected in
+consideration of the failure rate and downtime of the wind turbine, and the condition
+diagnosis model was designed using the SCADA data of 2 MW wind power generator for
+about four years. Among the SCADA data, the data with high correlation with condition
+data was selected using the Pearson correlation coefﬁcient. A neural network was applied
+as a machine learning method to predict the condition data of each component of the
+diagnosis model, and the neural network was designed by selecting parameters such as
+activation function, number of hidden layers, and epoch. For high prediction accuracy,
+the ANN with a single hidden layer for the main bearing, the DNN with three hidden
+layers for the yaw system and pitch system, and the DNN with ﬁve hidden layers for the
+generator have been designed. As the activation function used in the neural network of
+each component, the activation function of the generator, yaw system, and pitch system
+was selected as Tanh, and the activation function of the main bearing was selected as ReLU.
+The deviation criteria for judging abnormal operation were selected using the PLC state of
+the SCADA data and the condition data. The deviation criteria were selected 6.18C for
+the generator, 5.34C for the main bearing, 10.64for the yaw system, and 4.95for the
+pitch system, respectively. The condition monitoring of the SCADA data for four months
+was conducted using the selected deviation criteria. As a result, the monitoring accuracy of
+the main bearing was the lowest at 93.51%, and the monitoring accuracy of the generator
+was measured the highest at 94.93%. The condition monitoring system of the offshore wind
+turbine proposed in this study collects data of the real-time wind turbine and predicts the
+operating condition of components. The predicted results are provided to the operator,
+which will be a good reference for the operator to carry out the predictive maintenance of
+the wind turbine. This notiﬁes the operator of the situation before a serious failure of the
+wind turbine occurs, and it can reduce downtime through components supply and repair
+planning. It can also reduce the impact on surrounding components due to severe failure.
+As a result, it is expected that the operational reliability of the offshore wind turbines
+will be improved, and the economical maintenance will be possible through the condition
+monitoring system.
+Author Contributions: Conceptualization and methodology, J.P ., M.-C.D.; software, J.P .; validation,
+J.P ., C.K.; investigation, J.P . and M.-C.D.; writing—original draft preparation, J.P .; writing—review
+and editing, J.P ., and C.K.; supervision, M.P . All authors have read and agreed to the published
+version of the manuscript.
+Funding: This work was supported by the Korea Institute of Energy Technology Evaluation and
+Planning (KETEP) grant funded by the Korea government (MOTIE) (No. 20203010020050).
+Institutional Review Board Statement: Not applicable.
+Informed Consent Statement: Not applicable.
+Data Availability Statement: Data is contained within the article.
+Conﬂicts of Interest: The authors declare no conﬂict of interest.
+------------------------------End of the page -----------------------------------
+Energies 2022 ,15, 464 15 of 16
+Abbreviations
+ANN Artiﬁcial neural network
+DNN Deep neural network
+IEA International Energy Agency
+IGCC Integrated Gasiﬁcation Combined Cycle
+MAE Mean absolute error
+PLC Programmable Logic Controller
+ReLU Rectiﬁed linear unit
+SCADA Supervisory Control And Data Acquisition
+Tanh Hyperbolic tangent
+TN True negative
+TP True positive
+FN False negative
+FP False positive
+References
+1. Arantegui, R.L.; Jäger-Waldau, A. Photovoltaics and wind status in the European union after the Paris agreement. Renew. Sustain.
+Energy Rev. 2018 ,81, 2460–2471. [CrossRef]
+2. Kim, Y.; Kim, M.; Kim, W. Effect of the Fukushima nuclear disaster on global public acceptance of nuclear energy. Energy Policy
+2013 ,61, 822–828. [CrossRef]
+3. Hayashi, M.; Hughes, L. The Fukushima nuclear accident and its effect on global energy security. Energy Policy 2013 ,59, 102–111.
+[CrossRef]
+4. Froggatt, A.; Schneider, M. Nuclear Power Versus Renewable Energy—A Trend Analysis [Point of View]. Proc. IEEE 2015 ,103,
+487–490. [CrossRef]
+5. Padurean, A.; Cormos, C.-C.; Agachi, P .-S. Pre-combustion carbon dioxide capture by gas–liquid absorption for Integrated
+Gasiﬁcation Combined Cycle power plants. Int. J. Greenh. Gas Control 2012 ,7, 1–11. [CrossRef]
+6. Li, L.; Jian, L.; Nianyuan, W.; Shan, X.; Chao, M.; Yanan, Z.; Xiaonan, W.; Yingru, Z. Review and outlook on the international
+renewable energy development. Energy Built Environ. 2020 ,3, 139–157. [CrossRef]
+7. IRENA. Query Tool, Renewable Electricity Capacity and Generation Statistics. 2018. Available online: https://www.irena.org/
+Statistics/View-Data-by-Topic/Capacity-and-Generation/Query-Tool (accessed on 23 September 2021).
+8. Rubanenko, O.; Miroshnyk, O.; Shevchenko, S.; Yanovych, V .; Danylchenko, D.; Rubanenko, O. Distribution of Wind Power
+Generation Dependently of Meteorological Factors. In Proceedings of the 2020 IEEE KhPI Week on Advanced Technology
+(KhPIWeek), Kharkiv, Ukraine, 5–10 October 2020; pp. 472–477. [CrossRef]
+9. IRENA. Global Energy Transformation: A Roadmap to 2050 , 2018 ed.; International Renewable Energy Agency: Abu Dhabi, United
+Arab Emirates, 2019. Available online: https://www.irena.org/publications/2018/Apr/Global-Energy-Transition-A-Roadmap-
+to-2050 (accessed on 6 October 2021).
+10. Zheng, C.W.; Li, C.Y.; Pan, J.; Liu, M.Y.; Xia, L.L. An overview of global ocean wind energy resource evaluations. Renew. Sustain.
+Energy Rev. 2016 ,53, 1240–1251. [CrossRef]
+11. Twidell, J.; Gaudiosi, G. Offshore Wind Power , 2009 ed.; Multi-Science: Brentwood, UK, 2009; ISBN 978-0906522-639.
+12. Soares-Ramos, E.P .; Assis, L.D.O.; Sarrias-Mena, R.; Fern ández-Ram írez, L.M. Current status and future trends of offshore wind
+power in Europe. Energy 2020 ,202, 117787. [CrossRef]
+13. Kang, J.; Sun, L.; Soares, C.G. Fault Tree Analysis of ﬂoating offshore wind turbines. Renew. Energy 2019 ,133, 1455–1467.
+[CrossRef]
+14. Ribrant, J.; Bertling, L. Survey of failures in wind power systems with focus on Swedish wind power plants during 1997–2005.
+IEEE Trans. Energy Convers. 2007 ,22, 167–173. [CrossRef]
+15. Gundebommu, L.; Hunko, I.; Rubanenko, O.; Kuchanskyy, V . Assessment of the Power Quality in Electric Networks with Wind
+Power Plants. In Proceedings of the 2020 IEEE 7th International Conference on Energy Smart Systems (ESS), Kyiv, Ukraine,
+12–14 May 2020; pp. 190–194. [CrossRef]
+16. IRENA. Renewable Power Generation Costs in 2017 ; Technical Report; International Renewable Energy Agency: Abu Dhabi,
+United Arab Emirates, 2018.
+17. Kuchanskyy, V .; Zaitsev, I.O. Corona discharge power losses measurement systems in extra high voltage transmissions lines. In
+Proceedings of the 2020 IEEE 7th International Conference on Energy Smart Systems (ESS), Kyiv, Ukraine, 12–14 May 2020.
+18. Izquierdo, J.; M árquez, A.C.; Uribetxebarria, J.; Erguido, A. On the importance of assessing the operational context impact on
+maintenance management for life cycle cost of wind energy projects. Renew. Energy 2020 ,153, 1100–1110. [CrossRef]
+19. Ren, Z.; Verma, A.S.; Li, Y.; Teuwen, J.J.; Jiang, Z. Offshore wind turbine operations and maintenance: A state-of-the-art review.
+Renew. Sustain. Energy Rev. 2021 ,144, 110886. [CrossRef]
+20. Helsen, J.; Devriendt, C.; Weijtjens, W.; Guillaume, P . Condition Monitoring by Means of SCADA Analysis ; EWEA 2015 Annu. Event;
+European Wind Energy Association: Brussels, Belgium, November 2015.
+------------------------------End of the page -----------------------------------
+Energies 2022 ,15, 464 16 of 16
+21. Zekveld, M.; Hancke, G.P . Vibration Condition Monitoring Using Machine Learning. In Proceedings of the IECON 2018-44th
+Annual Conference of the IEEE Industrial Electronics Society, Washington, DC, USA, 21–23 October 2018; pp. 4742–4747.
+[CrossRef]
+22. Patange, A.D.; Jegadeeshwaran, R.; Dhobale, N.C. Milling cutter condition monitoring using machine learning approach. IOP
+Conf. Ser. Mater. Sci. Eng. 2019 ,624, 012030. [CrossRef]
+23. Clifton, A.; Kilcher, L.; Lundquist, J.K.; Fleming, P . Using machine learning to predict wind turbine power output. Environ. Res.
+Lett. 2013 ,8, 024009. [CrossRef]
+24. Rashid, H.; Khalaji, E.; Rasheed, J.; Batunlu, C. Fault Prediction of Wind Turbine Gearbox Based on SCADA Data and Machine
+Learning. In Proceedings of the 2020 10th International Conference on Advanced Computer Information Technologies (ACIT),
+Deggendorf, Germany, 16–18 September 2020; pp. 391–395. [CrossRef]
+25. Dao, C.; Kazemtabrizi, B.; Crabtree, C. Wind turbine reliability data review and impacts on levelised cost of energy. Wind Energy
+2019 ,22, 1848–1871. [CrossRef]
+26. Zhou, H.; Deng, Z.; Xia, Y.; Fu, M. A new sampling method in particle ﬁlter based on Pearson correlation coefﬁcient. Neurocom-
+puting 2016 ,216, 208–215. [CrossRef]
+27. Benesty, J.; Chen, J.; Huang, Y.; Cohen, I. Pearson correlation coefﬁcient. In Noise Reduction in Speech Processing ; Springer:
+Berlin/Heidelberg, Germany, 2009; pp. 1–4.
+28. Gallant, S.I. Neural Network Learning and Expert Systems ; MIT Press: Cambridge, MA, USA, 1993.
+29. Patro, V .M.; Patra, M.R. Augmenting weighted average with confusion matrix to enhance classiﬁcation accuracy. Trans. Mach.
+Learn. Artif. Intell. 2014 ,2, 77–91.
+30. Raju, V .N.G.; Lakshmi, K.P .; Jain, V .M.; Kalidindi, A.; Padma, V . Study the Inﬂuence of Normalization/Transformation Process
+on the Accuracy of Supervised Classiﬁcation. In Proceedings of the 2020 Third International Conference on Smart Systems and
+Inventive Technology (ICSSIT), Tirunelveli, India, 20–22 August 2020.
+------------------------------End of the page -----------------------------------

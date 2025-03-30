@@ -1,0 +1,1272 @@
+Citation: Tang, M.; Cao, C.; Wu, H.;
+Zhu, H.; Tang, J.; Peng, Z.; Wang, Y.
+Fault Detection of Wind Turbine
+Gearboxes Based on IBOA-ERF.
+Sensors 2022 ,22, 6826. https://
+doi.org/10.3390/s22186826
+Academic Editors: Kaixiang Peng,
+Zhiwen Chen and Kai Zhang
+Received: 10 August 2022
+Accepted: 29 August 2022
+Published: 9 September 2022
+Publisher’s Note: MDPI stays neutral
+with regard to jurisdictional claims in
+published maps and institutional afﬁl-
+iations.
+Copyright: © 2022 by the authors.
+Licensee MDPI, Basel, Switzerland.
+This article is an open access article
+distributed under the terms and
+conditions of the Creative Commons
+Attribution (CC BY) license (https://
+creativecommons.org/licenses/by/
+4.0/).
+sensors
+Article
+Fault Detection of Wind T urbine Gearboxes Based
+on IBOA-ERF
+Mingzhu Tang1,†
+, Chenhuan Cao1, Huawei Wu2,*, Hongqiu Zhu3,†
+, Jun Tang1, Zhonghui Peng1
+and Yifan Wang1
+1School of Energy and Power Engineering, Changsha University of Science & Technology,
+Changsha 410114, China
+2Hubei Key Laboratory of Power System Design and Test for Electrical Vehicle, Hubei University of Arts and
+Science, Xiangyang 441053, China
+3School of Automation, Central South University, Changsha 410083, China
+*Correspondence: whw_xy@hbuas.edu.cn
+† These authors contributed equally to this work.
+Abstract: As one of the key components of wind turbines, gearboxes are under complex alternating
+loads for a long time, and the safety and reliability of the whole machine are often affected by the
+failure of internal gears and bearings. Aiming at the difﬁculty of optimizing the parameters of wind
+turbine gearbox fault detection models based on extreme random forest, a fault detection model with
+extreme random forest optimized by the improved butterﬂy optimization algorithm (IBOA-ERF) is
+proposed. The algebraic sum of the false alarm rate and the missing alarm rate of the fault detection
+model is constructed as the ﬁtness function, and the initial position and position update strategy
+of the individual are improved. A chaotic mapping strategy is introduced to replace the original
+population initialization method to enhance the randomness of the initial population distribution.
+An adaptive inertia weight factor is proposed, combined with the landmark operator of the pigeon
+swarm optimization algorithm to update the population position iteration equation to speed up the
+convergence speed and improve the diversity and robustness of the butterﬂy optimization algorithm.
+The dynamic switching method of local and global search stages is adopted to achieve dynamic
+balance between global exploration and local search, and to avoid falling into local optima. The
+ERF fault detection model is trained, and the improved butterﬂy optimization algorithm is used to
+obtain optimal parameters to achieve fast response of the proposed model with good robustness and
+generalization under high-dimensional data. The experimental results show that, compared with
+other optimization algorithms, the proposed fault detection method of wind turbine gearboxes has a
+lower false alarm rate and missing alarm rate.
+Keywords: fault detection; butterﬂy optimization algorithm; extreme random forest; wind
+turbine; gearbox
+1. Introduction
+As an important source of clean and renewable energy, wind energy resources play an
+important role in the sustainable development of the national economy. The use of wind
+power is very environmentally friendly, and wind energy reserves are huge, so wind power
+is attracting more and more attention from countries all over the world. According to the
+forecast of the Global Wind Energy Council (GWEC), global wind power will increase by
+557 GW in the next ﬁve years (2022–2026), with a compound annual growth rate of 6.6%.
+By 2026, the global newly installed capacity of wind power will reach 128.8 GW, of which
+the newly installed capacity of onshore wind power will be 97.4 GW, while the newly
+installed capacity of offshore wind power will be 31.4 GW [ 1]. However, abundant wind
+resources are often found in remote areas, and the occurrence of some extreme weather
+conditions can lead to the failure of wind turbines [ 2]. Compared with the tower base, the
+Sensors 2022 ,22, 6826. https://doi.org/10.3390/s22186826 https://www.mdpi.com/journal/sensors
+------------------------------End of the page -----------------------------------
+Sensors 2022 ,22, 6826 2 of 21
+narrow nacelle does not have a solid foundation, and the factors of power matching and
+torsional deformation in the drive train are always concentrated in a weak link. Much
+research has proven that this link is often the gearbox in the unit [ 3]. The gearbox is an
+essential mechanical component, and its main purpose is to transport the power generated
+by the blades to the power generator in order to obtain the appropriate speed [ 4]. Due to
+its special installation position, once a fault occurs, it is very difﬁcult to repair. Compared
+with other unit components, the gearbox has the longest downtime and repair time due to
+failure, resulting in long-term gearbox downtime. Therefore, providing accurate guidance
+at the ﬁrst instance of failure can reduce the operating cost and maintenance cost of the
+wind turbine, which has great economic and engineering value [ 5]. In recent years, scholars
+have carried out extensive applied research on the fault detection of wind turbines.
+Currently, research on fault detection of wind turbine gearboxes mainly includes
+methods based on signal processing, along with data-driven and model-based meth-
+ods [ 6–8]. Signal-based approaches—such as spectral analysis, wavelet transform [ 9], and
+non-parametric spectrum estimation—are often carried out. However, for stationary signal
+power, unlike the theoretical inﬁnite-length signal, the actual observed signal is a ﬁnite-
+length signal. Low resolution of frequency is inevitable in the conversion process. The
+data-driven approach requires large volumes of historical data and multidimensional fea-
+tures [ 10]. Today, machine-learning-based fault detection approaches are used extensively
+in the ﬁeld of industry [11].
+In machine learning, the decision tree classiﬁcation model is a tree structure, which is
+strongly intuitive and easy to understand, and has become a popular technology of online
+detection. Liang [ 12] proposed to encrypt the decision table using a searchable symmetric
+encryption method to improve the classiﬁcation speed and solve the detection requirement
+in microseconds. Stetco [ 13] reviewed the machine learning methods used in wind turbine
+blades, generator temperature fault detection, etc. Classiﬁcation is mostly used when using
+SCADA datasets or simulation data, and decision trees are the most commonly used models.
+In general, decision trees are prone to overﬁtting and poor generalization performance, and
+small changes in the data may lead to the generation of completely different trees—that is,
+their stability performance needs to be improved. To solve this problem, Feng [ 14] used the
+adaptive boost algorithm to ﬁnd the mapping between incoming data and outgoing data,
+and the overall accuracy of the model was improved.
+The boost algorithm in machine learning refers to integrating multiple weak classi-
+ﬁers to reduce the time complexity of a single decision tree and make the model easy to
+display [ 15]. Liu [ 16] proposed a fault detection method based on NFSW-BP-AdaBoost
+to evaluate the combination of multiple classiﬁers with non-fuzzy solution coefﬁcients to
+improve the recognition rate of faults. Chakraborty [ 17] designed the data-driven model
+of extreme gradient boosting (XGBoost), using the dynamic adjusted threshold to judge
+the occurrence of faults, which improved the quality of the model and had strong general-
+ization ability. Xu [ 18] designed cost-sensitive GBDT (CS-GBDT) to improve the problem
+of low diagnostic accuracy in the face of unbalanced datasets, and used multiple-domain
+feature extraction and feature selection to enhance diagnostic accuracy. However, in the
+face of high-dimensional complex data in actual wind farms, the boost algorithm con-
+sumes too much memory, making it easy to reduce the calculation accuracy and fault
+detection accuracy.
+Owing to the large amount of data and high dimensionality of real wind farms,
+existing studies usually have problems such as poor performance and long training time.
+Extreme random forest is an ensemble tree algorithm with complete randomness proposed
+on the basis of decision trees. The feature values are selected for segmentation in the
+training phase to obtain the segmentation values. This method has strong randomness,
+and in practical applications it shows high accuracy in high-dimensional datasets, can
+easily achieve parallelization, and has strong generalization performance. However, in the
+domain of practical fault detection, the selection of hyperparameters is extremely critical to
+------------------------------End of the page -----------------------------------
+Sensors 2022 ,22, 6826 3 of 21
+the ﬁnal detection results, and suitable hyperparameters can prevent the local convergence
+of the model and achieve the best results [19].
+For high-dimensional nonlinear problems, the modern intelligent optimization al-
+gorithm is widely used in the ﬁeld of fault detection [ 20]. In practical applications, the
+optimization algorithm is used to ﬁnd the optimal scheme or parameter value among
+many schemes or parameter values, so that some performance and function indices of the
+system can reach optimal values. Arora [ 21] introduced a new nature-inspired heuristic
+algorithm—the butterﬂy optimization algorithm, which has the strengths of requiring
+few adjustment parameters and strong convergence. However, in the face of complex
+optimization problems such as high-dimensional data, it is prone to being trapped in local
+optima, and another problem is its slow convergence speed [22].
+In view of the above problems, a fault detection model with extreme random forest
+optimized by improved butterﬂy optimization algorithm (IBOA-ERF) was proposed. In
+the improved butterﬂy optimization algorithm, chaotic mapping is introduced to initialize
+the population, and the adaptive inertia weight factor is introduced. Combined with the
+pigeon swarm optimization algorithm, adaptive dynamic switching is proposed to control
+the conversion of the search stage, which is integrated into the population position update
+formula, and the convergence speed and optimization accuracy are greatly improved.
+Firstly, the data are cleaned using Pearson’s correlation analysis, reducing the data’s
+dimensions and deleting redundant features. Secondly, the sample dataset is divided into
+two categories: a training set and a test set. The improved butterﬂy algorithm is used to
+generate the best hyperparameters of the extreme random forest, and the IBOA-ERF fault
+detection model is constructed to detect the gearbox faults of wind turbines.
+2. Fault Detection of Wind T urbine Gearboxes
+As one of the most signiﬁcant structural parts of a wind turbine, the gearbox is subject
+to very complex forces, and works under complex alternating loads and harsh working
+environments for a long time.
+Figure 1 shows schematic diagrams of a wind turbine’s structure and the fault detection
+process. When the unsteady wind acts on the unit, different loads are generated [ 23]. The
+blade produces axial thrust and circumferential shear, resulting in deﬂection movement [ 24].
+The torsional main bearing transmits the blade torque to the gearbox to complete the output
+of the corresponding load. In the generator, the torque on the motor shaft continuously cuts
+the magnetic induction line to output power, and completes the conversion of wind energy,
+mechanical energy, and power [ 25]. Subsequently, the coordination of major electrical
+parameters and data interaction is completed through the frequency converter and control
+unit. The actual operating data of the wind turbine are stored in the SCADA system,
+making it easy to extract data for fault detection.
+The proportion of failures caused by broken teeth, pitting, gluing, and wear of gears
+inside the gearbox is about 60%, while the proportion of failures caused by damage to
+bearings such as burns, balls falling off, and cage deformation is about 20%, which seriously
+impact the security and stability of the whole machine’s operation [ 26]. Due to the high
+fault dimensions and redundant parameters, it is important to mine the fault characteristics
+of gearboxes deeply and determine the fault location and category quickly and accurately
+for the secure and stable operation of wind turbines.
+In summary, in order to further enhance the stability and precision of wind turbine
+gearbox fault detection, aiming at the problems of gearbox fault data dimension reduction,
+feature selection, and model parameter optimization, combined with extreme random
+forest with excellent classiﬁcation performance, a wind turbine fault detection model based
+on IBOA-ERF is adopted, which improves the detection precision of the model and ensures
+the safe operation of the wind turbine.
+------------------------------End of the page -----------------------------------
+Sensors 2022 ,22, 6826 4 of 21
+Sensors 2022 , 22, x FOR PEER REVIEW 4 of 22 
+ 
+  
+Figure 1. Schematic diagrams of a wind turbine’s structure and the fault detection process. 
+In summary, in order to further enhance the stability and precision of wind turbine 
+gearbox fault detection, aiming at the prob lems of gearbox fault data dimension reduc-
+tion, feature selection, and model parameter optimization, combined with extreme ran-
+dom forest with excellent classification pe rformance, a wind turbine fault detection 
+model based on IBOA-ERF is adopted, which improves the detection precision of the 
+model and ensures the safe operation of the wind turbine. 
+3. Extreme Random Forest 
+Random forest (RF) consists of a series of decision trees . The decision tree is a tree 
+structure, in which each internal node repr esents a categorical judgment, and each leaf 
+node at the bottom represents a classification result; this is detailed in Figures 2 and 3. A 
+subset of n samples of the same size as the sample set is obtained by randomly selecting 
+the sample set. Next, several weak classifiers are built. A decision tree is a tree classifica-
+tion method derived from the training sa mples by using a set of random vectors. 
+At the time of node-splitting, through top- down recursion, trav ersing each feature 
+and each value of each feature, and use evaluati on criteria such as the Gini coefficient to 
+determine the optimal features and feature va lues as node features and thresholds. The 
+process iteratively splits down until the entropy of each leaf node is reduced to 0—that is, 
+the class confusion degree of the sample is 0—and then votes to determine the final 
+classification. Through the above steps, the unique path of each sample is determined, and the category of the sample is the catego ry corresponding to the leaf node of the 
+unique path. 
+Figure 1. Schematic diagrams of a wind turbine’s structure and the fault detection process.
+3. Extreme Random Forest
+Random forest (RF) consists of a series of decision trees. The decision tree is a tree
+structure, in which each internal node represents a categorical judgment, and each leaf
+node at the bottom represents a classiﬁcation result; this is detailed in Figures 2 and 3. A
+subset of n samples of the same size as the sample set is obtained by randomly selecting the
+sample set. Next, several weak classiﬁers are built. A decision tree is a tree classiﬁcation
+method derived from the training samples by using a set of random vectors.
+Sensors 2022, 22, x FOR PEER REVIEW   5 of 22 
+ 
+ Dataset DDataset D1
+Dataset D2
+Dataset DnVote( 1 ) Generation  of
+        sample subset( 2 ) Establishing  ERT
+ fault tree（3）Vote
+ 
+Figure 2. Structure  diagram of ERF. 
+While inheriting  the good performance  of RF, extreme random forest (ERF) has two 
+main differences:  First, the original dataset is used in the training set of each decision tree. 
+Due to the randomness  of feature selection  and node splitting,  the obtained  results will 
+be better than those of RF. Second, after picking the segmentation  features,  RF selects an 
+optimal feature value for segmentation,  while the ERF splits the randomly  selected 
+eigenvalues,  which enhances  the generic performance  of the model, while the size of the 
+decision tree increases.  Figure 2 shows a structural  diagram of ERF. 
+The class attribute is determined  by the vote of all decision trees, and its vote is based 
+on Equation  (1). The larger the calculated  P, the higher the probability  of belonging  to the 
+corresponding  category.  Equation  (2) is the voting mechanism  principle  of the final 
+decision tree. The above method is used to generate the extreme random forest decision 
+tree. 
+Pሺc| f୧ሻൌ1
+D෍P ୲ሺc|V ୧ሻୈ
+୲ୀଵ  (1) 
+cොൌa r g m a x ୡ Pሺc|V ୧ሻ  (2) 
+where V୧ denotes the feature vector of the sample, c is some kind of category,  D denotes 
+the number of trees in the ERF, P୲ሺc|V ୧ሻ denotes the probability  that the sample belongs 
+to category  c conditional  on the feature vector V୧, Pሺc|V ୧ሻ is the average value in the ERF, 
+and cො represents  the category  corresponding  to the maximum  value of Pሺc|V ୧ሻ. 
+During the node‐splitting phase, for the process of selecting  the obtained  feature as 
+the splitting feature, Equation  (3) is used to measure the score. When the leaf nodes are 
+split, the splitting feature is selected as the feature with the highest score. Samples 
+smaller than the splitting threshold  are put in the left leaf node after splitting;  otherwise,  
+they are placed in the right leaf node. These procedures  are repeated  until the sample 
+confusion  in the leaf node is 0. Figure 3 illustrates  the splitting architecture  of the ERF 
+fault tree. 
+Score ୩ൌ2I୩
+H୩൅H ୡ  (3) 
+where Score ୩ represents  the score measurement  of the calculated  feature, and I୩ 
+denotes the mutual information  of the two subsets of the node after splitting on the basis 
+of the corresponding  features and splitting threshold  of the sample category.  H୩ denotes 
+Figure 2. Structure diagram of ERF.
+------------------------------End of the page -----------------------------------
+Sensors 2022 ,22, 6826 5 of 21
+Sensors 2022, 22, x FOR PEER REVIEW   6 of 22 
+ 
+ the split entropy of feature k, while Hୡ represents  the information  entropy of the node 
+for the corresponding  category.  
+Feature X 
+( branch
+node )
+Normal 
+category
+ ( leaf node )
+Feature Y 
+( branch 
+node )
+Normal 
+category
+ ( leaf node )
+Fault category
+ ( leaf node )Randomly  selected 
+splitting threshold  x
+Samples
+ less than x in XSamples greater than 
+or equal to x in X
+Random  selection  
+splitting threshold  y
+Samples
+ less than y in YSamples greater than 
+or equal to y in Y
+ 
+Figure 3. Illustration  of the splitting architecture  of the ERF fault tree. 
+The choice of hyperparameters  in ERF has a great influence  on the classification  
+precision  of the model, and the optimization  of the parameters  is difficult.  Therefore,  
+optimization  algorithms  must be introduced  to search for the best parameters  to enhance 
+the reliability  of the fault detection  model. 
+4. Butterfly  Optimization  Algorithm  
+In nature, butterflies  use their high sensitivity  to fragrance  to search for food and 
+partners.  In 2019, Arora [21] proposed  the butterfly  optimization  algorithm  (BOA), which 
+imitates the movements  of butterflies  in search of food and mating. 
+4.1. Basic Theory of the Butterfly Optimization  Algorithm  
+Studies have shown that butterflies  can accurately  determine  the location of food by 
+detecting  different  flavors and flavor intensity  during predation  [27]. In the butterfly  op‐
+timization  algorithm,  each butterfly  produces  a certain intensity  of fragrance  according  to 
+its fitness, and when it perceives  that the fragrance  emitted by another butterfly  in a cer‐
+tain region is stronger,  it will try to approach  this butterfly,  which is known as global 
+search. When a butterfly  perceives  its own fragrance  to be more intense than that of other 
+butterflies,  it will be able to freely move in space, which is known as local search [28]. 
+In the BOA, butterfly  fragrance  calculation  is as shown in Equation  (4): 
+fൌs I஑  (4) 
+where f is the fragrance  intensity,  I is the stimulus  intensity,  s is the sensory modality  
+with a value of 0.01, and α is the power exponent  with a value of 0.1. 
+In the BOA, the stimulus  intensity  I of the individual  is influenced  by the objective  
+function,  and the power exponent  α is the exponent  of the increase in fragrance  intensity.  
+The transitions  of the global and local search stages are controlled  by the switching  
+transition  frequency  p ∈ [0, 1]. In the global search phase, the position is updated as 
+shown in Equation  (5): 
+x୧୲ାଵൌx୧୲൅ሺrଶൈg∗െx୧୲ሻൈf ୧  (5) 
+where x୧୲ାଵ and x୧୲ are the location information  of the i‐th individual  in the t+1‐th and 
+t‐th iterations,  respectively;  g∗ is the best value in the current iteration;  f୧ is the 
+Figure 3. Illustration of the splitting architecture of the ERF fault tree.
+At the time of node-splitting, through top-down recursion, traversing each feature
+and each value of each feature, and use evaluation criteria such as the Gini coefﬁcient to
+determine the optimal features and feature values as node features and thresholds. The
+process iteratively splits down until the entropy of each leaf node is reduced to 0—that
+is, the class confusion degree of the sample is 0—and then votes to determine the ﬁnal
+classiﬁcation. Through the above steps, the unique path of each sample is determined, and
+the category of the sample is the category corresponding to the leaf node of the unique path.
+While inheriting the good performance of RF, extreme random forest (ERF) has two
+main differences: First, the original dataset is used in the training set of each decision
+tree. Due to the randomness of feature selection and node splitting, the obtained results
+will be better than those of RF. Second, after picking the segmentation features, RF selects
+an optimal feature value for segmentation, while the ERF splits the randomly selected
+eigenvalues, which enhances the generic performance of the model, while the size of the
+decision tree increases. Figure 2 shows a structural diagram of ERF.
+The class attribute is determined by the vote of all decision trees, and its vote is based
+on Equation (1). The larger the calculated P, the higher the probability of belonging to the
+corresponding category. Equation (2) is the voting mechanism principle of the ﬁnal decision
+tree. The above method is used to generate the extreme random forest decision tree.
+P(cjfi) =1
+DD
+å
+t=1Pt(cjVi) (1)
+ˆc=argmaxcP(cVi) (2)
+where Videnotes the feature vector of the sample, c is some kind of category, Ddenotes
+the number of trees in the ERF, Pt(cjVi)denotes the probability that the sample belongs
+to category c conditional on the feature vector Vi,P(cjVi)is the average value in the ERF,
+and ˆc represents the category corresponding to the maximum value of P (cjVi).
+During the node-splitting phase, for the process of selecting the obtained feature as
+the splitting feature, Equation (3) is used to measure the score. When the leaf nodes are
+split, the splitting feature is selected as the feature with the highest score. Samples smaller
+than the splitting threshold are put in the left leaf node after splitting; otherwise, they are
+placed in the right leaf node. These procedures are repeated until the sample confusion in
+the leaf node is 0. Figure 3 illustrates the splitting architecture of the ERF fault tree.
+Score k=2Ik
+Hk+Hc(3)
+------------------------------End of the page -----------------------------------
+Sensors 2022 ,22, 6826 6 of 21
+where Score krepresents the score measurement of the calculated feature, and Ikdenotes
+the mutual information of the two subsets of the node after splitting on the basis of the
+corresponding features and splitting threshold of the sample category. Hkdenotes the
+split entropy of feature k, while H crepresents the information entropy of the node for the
+corresponding category.
+The choice of hyperparameters in ERF has a great inﬂuence on the classiﬁcation
+precision of the model, and the optimization of the parameters is difﬁcult. Therefore,
+optimization algorithms must be introduced to search for the best parameters to enhance
+the reliability of the fault detection model.
+4. Butterﬂy Optimization Algorithm
+In nature, butterﬂies use their high sensitivity to fragrance to search for food and
+partners. In 2019, Arora [ 21] proposed the butterﬂy optimization algorithm (BOA), which
+imitates the movements of butterﬂies in search of food and mating.
+4.1. Basic Theory of the Butterﬂy Optimization Algorithm
+Studies have shown that butterﬂies can accurately determine the location of food
+by detecting different ﬂavors and ﬂavor intensity during predation [ 27]. In the butterﬂy
+optimization algorithm, each butterﬂy produces a certain intensity of fragrance according
+to its ﬁtness, and when it perceives that the fragrance emitted by another butterﬂy in a
+certain region is stronger, it will try to approach this butterﬂy, which is known as global
+search. When a butterﬂy perceives its own fragrance to be more intense than that of other
+butterﬂies, it will be able to freely move in space, which is known as local search [28].
+In the BOA, butterﬂy fragrance calculation is as shown in Equation (4):
+f=sI(4)
+where f is the fragrance intensity, I is the stimulus intensity, s is the sensory modality with a
+value of 0.01, and is the power exponent with a value of 0.1.
+In the BOA, the stimulus intensity I of the individual is inﬂuenced by the objective
+function, and the power exponent is the exponent of the increase in fragrance intensity.
+The transitions of the global and local search stages are controlled by the switching transi-
+tion frequency p2[0, 1]. In the global search phase, the position is updated as shown in
+Equation (5):
+xt+1
+i=xt
+i+
+r2g xt
+i
+fi (5)
+where xt+1
+iand xt
+iare the location information of the i-th individual in the t+1-th and
+t-th iterations, respectively; gis the best value in the current iteration; fiis the fragrance
+intensity emitted by the i-th individual; and r is the random value from 0 to 1. In the local
+search phase, the position is updated as shown in Equation (6):
+xt+1
+i=xt
+i+
+r2xt
+j xt
+k
+fi (6)
+where j and k are the random numbers generated in each iteration, while xt
+jand xt
+kare the
+location information of the j-th and k-th individuals in the current iteration, respectively.
+4.2. Improvement and Innovation of the Butterﬂy Optimization Algorithm
+Compared with some existing meta-heuristic algorithms, the BOA is relatively novel,
+with simple operation, few parameters to be adjusted, and better robustness. It is superior
+to some classic intelligent optimization algorithms in terms of optimization ability, and has
+achieved good results in the preliminary application of engineering practice. However, in
+the face of complex conditions, its performance is not good, and there are still problems
+such as its tendency to become trapped in local optima and its low convergence precision
+------------------------------End of the page -----------------------------------
+Sensors 2022 ,22, 6826 7 of 21
+when solving high-dimensional functions. To solve this problem, the improved butterﬂy
+optimization algorithm (IBOA) is constructed through the following four modiﬁcations:
+1. Introduce a chaotic map to randomly initialize the population position, so that the
+initial population is random and aperiodic, so as to prevent the exploration process
+from ending up in a local optimum.
+2. Design an adaptive inertia weight factor and apply it to the position update formula
+to enhance the capability of local search and accelerate the search rate.
+3. Introduce the landmark operator sub-item of the pigeon group optimization algorithm,
+design a new position update formula, enhance the global search capability, and
+improve the diversity and robustness of the butterﬂy optimization algorithm.
+4. Design a new dynamic switching method for the local search phase and the global
+search phase, and introduce the variant of trigonometric function as the switching
+basis, which can effectively prevent trapping in local optima and accelerate the con-
+vergence speed.
+4.2.1. Chaos Map Initialization
+BOA randomly initializes the population position, but using this approach to generate
+the initial population may lead to uneven distribution and superposition of individual
+butterﬂy positions. In the butterﬂy population, the small change in the initial distribution
+has a great impact on the subsequent iterative search process. To solve this problem,
+chaotic variables are used to optimize the search so as to evenly distribute the initial
+population [ 29], which can improve the diversity of BOA, greatly improve the convergence
+speed and optimization accuracy, and prevent premature convergence. After testing and
+comparison, the classical logistical chaotic mapping is used to initialize the population.
+The logistic map described in [ 30] is used to map the variables into the chaotic variable
+space, and then used the linear transformation to map the generated chaotic variables into
+the solution space in need of optimization. Figure 4 shows the comparison between the
+initialization using chaotic mapping and the original initialization method. The speciﬁc
+expression of the logistic map is as shown in Equation (7):
+X(t+1)=X(t)(1 X(t))2[0, 4], X2[0, 1] (7)
+whereis the logistics parameter, X is the position parameter, and t is the value of the
+iterations. The research shows that when is 4, the range of X is almost evenly distributed
+in the entire region of 0 to 1, so the value of in this case is 4.
+Sensors 2022, 22, x FOR PEER REVIEW   8 of 22 
+ 
+   
+(a) (b) 
+Figure 4. (a) The distribution  after random initialization;  (b) the distribution  after initialization  of 
+the chaotic map. 
+4.2.2. Adaptive  Inertia Weighting  Factor 
+According  to the basic principle  of the BOA, each individual  updates or randomly  
+moves its position according  to the current best individual  position.  Therefore,  the posi‐
+tion of individual  butterflies  is not fully utilized, and it is easy to become trapped in a 
+local optimum.  When the inertia factor is large, the global search capability  is strong, 
+and vice versa. Therefore,  to address this issue, an adaptive  inertia weighting  factor was 
+designed  to apply to the position update formula,  so that the historical  optimal position 
+information  of the individual  is fully utilized. Meanwhile,  as the iterations  grow in size, 
+the direction  and distance of the individual  are effectively  controlled,  so as to enhance 
+the optimization  precision  and convergence  velocity, and avoid falling into local optima. 
+The expression  of the inertia weighting  factor is as follows: 
+ωሺtሻൌ1െs i n  ሺπt
+√e൅1 ൈT ୧୲ୣ୰ሻ  (8) 
+where ω  is the adaptive  inertia weight, T୧୲ୣ୰ is the largest value of the number of 
+iterations  t in the optimization  process, and e is the Euler number. 
+The position update formula for the global search phase after the introduction  of 
+the adaptive  inertia weighting  factor in BOA is as follows: 
+x୧୲ାଵൌω ሺtሻൈx୧୲൅ሺrଶൈg∗െx୧୲ሻൈf୧  (9) 
+The position update formula for the local search phase is as follows: 
+x୧୲ାଵൌω ሺtሻൈx୧୲൅൫ rଶൈx୨୲െx୩୲൯ൈf୧  (10) 
+4.2.3. Pigeon‐Inspired Optimization  Algorithm  Landmark  Operator  
+Inspired by the nesting activity of pigeons, a new population  intelligence  optimiza ‐
+tion algorithm—the  pigeon‐inspired optimization  (PIO) algorithm—was  first proposed  
+by Duan [31] in 2014. 
+PIO simulates  pigeon homing using different  search mechanisms  at different  stages. 
+The algorithm  includes two models: a compass  model and a landmark  model. In the 
+compass  model, the individual  updates the location according  to its previous  location 
+information  and the current global optimal location information.  In the landmark  oper‐
+ator, on the basis of halving the number of groups in each iteration,  the pigeons acceler‐
+ate the convergence  rate according  to the average value of group fitness. PIO has the 
+characteristics  of fast convergence  and high search accuracy,  and has been widely used 
+in different  fields [32]. 
+Figure 4. (a) The distribution after random initialization; ( b) the distribution after initialization of the
+chaotic map.
+------------------------------End of the page -----------------------------------
+Sensors 2022 ,22, 6826 8 of 21
+4.2.2. Adaptive Inertia Weighting Factor
+According to the basic principle of the BOA, each individual updates or randomly
+moves its position according to the current best individual position. Therefore, the position
+of individual butterﬂies is not fully utilized, and it is easy to become trapped in a local
+optimum. When the inertia factor is large, the global search capability is strong, and vice
+versa. Therefore, to address this issue, an adaptive inertia weighting factor was designed
+to apply to the position update formula, so that the historical optimal position information
+of the individual is fully utilized. Meanwhile, as the iterations grow in size, the direction
+and distance of the individual are effectively controlled, so as to enhance the optimization
+precision and convergence velocity, and avoid falling into local optima. The expression of
+the inertia weighting factor is as follows:
+!(t)=1 sintp
+e+1Titer
+(8)
+where!is the adaptive inertia weight, Titeris the largest value of the number of iterations
+t in the optimization process, and e is the Euler number.
+The position update formula for the global search phase after the introduction of the
+adaptive inertia weighting factor in BOA is as follows:
+xt+1
+i=!(t)xt
+i+
+r2g xt
+i
+fi (9)
+The position update formula for the local search phase is as follows:
+xt+1
+i=!(t)xt
+i+
+r2xt
+j xt
+k
+fi (10)
+4.2.3. Pigeon-Inspired Optimization Algorithm Landmark Operator
+Inspired by the nesting activity of pigeons, a new population intelligence optimization
+algorithm—the pigeon-inspired optimization (PIO) algorithm—was ﬁrst proposed by
+Duan [31] in 2014.
+PIO simulates pigeon homing using different search mechanisms at different stages.
+The algorithm includes two models: a compass model and a landmark model. In the
+compass model, the individual updates the location according to its previous location
+information and the current global optimal location information. In the landmark operator,
+on the basis of halving the number of groups in each iteration, the pigeons accelerate the
+convergence rate according to the average value of group ﬁtness. PIO has the characteristics
+of fast convergence and high search accuracy, and has been widely used in different
+ﬁelds [32].
+The landmark model of PIO is as follows:
+xt+1
+i=xt
+i+r 
+xt
+c xt
+i
+(11)
+xt
+c=å(xt
+iFit(xt
+i))
+Nt
+påFit 
+xt
+i (12)
+Nt+1
+p=Nt
+p
+2(13)
+where xt
+cis the position of the center of the ﬂock in the current iteration, Fit(xt
+i)is the
+value of the ﬁtness function of the i-th pigeon, and Nt
+pis the number of individuals. Other
+variables are deﬁned as in Equation (5).
+In the BOA, the fragrance of butterﬂies plays an important role in guiding individuals
+to move to the optimal solution. However, if the population falls into the local optimal
+position, it is prone to resulting in a stagnant search that does not lead to a globally optimal
+resolution. Based on this problem, inspired by PIO, combined with the landmark model, a
+------------------------------End of the page -----------------------------------
+Sensors 2022 ,22, 6826 9 of 21
+new butterﬂy position update formula was constructed. Since the landmark model needs
+to calculate the average ﬁtness of the group, compared with the compass model, not only is
+the global search capability greatly enhanced, but also the convergence velocity is improved.
+The improved butterﬂy position global search stage update formula is as follows:
+xt+1
+i=!(t)xt
+i+
+r2xt
+j xt
+k
+fi+r 
+xt
+c xt
+i
+(14)
+4.2.4. Adaptive Dynamic Switching
+In the BOA, the switching between the local search stage and the global search stage
+is controlled by the switching frequency p. The higher the value of the parameter p, the
+greater the proportion of global search; the lower the value of p, the greater the proportion
+of the local search. The value of p plays a key role in the subsequent search efﬁciency and
+convergence rate. To solve this problem, an adaptive dynamic switching frequency strategy
+is proposed. The oscillation trigonometric function is introduced. The proportion of local
+and global search stages is dynamically adjusted according to the number of iterations. The
+random selection search phase is changed in such a way that global search is performed in
+the early stage, while local search is performed in the middle and late stages.
+S1(t)=(t+1)sin(wt) (15)
+S2(t)=p
+e ?((Titer t) +1)sin(w(Titer t)) (16)
+where w and ?take the values 100* pand 2.55, respectively, while e is the Euler number. The
+iterative process, as shown in Figure 5, enters the local search phase when |S1(t)| > |S 2(t)|,
+and otherwise enters the global search phase, which can be experimentally proven to
+converge faster and search more efﬁciently.
+Sensors 2022, 22, x FOR PEER REVIEW   10 of 22 
+ 
+  
+Figure 5. Switching  between global and local search phases. 
+4.3. Simulation  Experiments  
+In order to verify that the IBOA has better performance  in terms of convergence  and 
+robustness,  a performance  comparison  experiment  was carried out based on six test 
+functions:  F1~F3 are unimodal  functions  to test the convergence  performance  of the al‐
+gorithm,  while F4~F6 are complex multimodal  functions  to test global optimization  and 
+jump out of local optimization  performance.  The standard  test function information  is 
+shown in Table 1. 
+In order to sufficiently  validate the effectiveness  of the IBOA, the comparative  ex‐
+periments  were conducted  with moth–flame  optimization  (MFO) [33], multi‐verse opti‐
+mization  (MVO) [34], the sine–cosine  algorithm  (SCA) [35], the salp swarm algorithm  
+(SSA) [36], and the BOA. The number of iterations  was 500, and each method was run 30 
+times separately  on each test function to prevent bias in the outcomes  due to random 
+factors, as detailed in Table 2. 
+To visually demonstrate  the optimized  capabilities  of the IBOA, the iterative graph of 
+the convergence  curve of the six benchmark  functions  was selected, as shown in Figure 6. 
+  
+(a)  (b) 
+Figure 5. Switching between global and local search phases.
+4.3. Simulation Experiments
+In order to verify that the IBOA has better performance in terms of convergence
+and robustness, a performance comparison experiment was carried out based on six
+test functions: F1~F3 are unimodal functions to test the convergence performance of
+the algorithm, while F4~F6 are complex multimodal functions to test global optimization
+and jump out of local optimization performance. The standard test function information is
+shown in Table 1.
+In order to sufﬁciently validate the effectiveness of the IBOA, the comparative experi-
+ments were conducted with moth–ﬂame optimization (MFO) [ 33], multi-verse optimization
+------------------------------End of the page -----------------------------------
+Sensors 2022 ,22, 6826 10 of 21
+(MVO) [ 34], the sine–cosine algorithm (SCA) [ 35], the salp swarm algorithm (SSA) [ 36], and
+the BOA. The number of iterations was 500, and each method was run 30 times separately
+on each test function to prevent bias in the outcomes due to random factors, as detailed
+in Table 2.
+Table 1. Basic test function information.
+Function Types Expressions Scope Optimal Value
+UnimodalF1(x)=ån
+i=1x2
+i[ 100, 100] 0
+F2(x)=ån
+i=1
+ån
+j=1x2
+j
+[ 100, 100] 0
+F3(x)=maxfjxi, 1injg [ 100, 100] 0
+MultimodalF4(x)=ån
+i=1
+x2
+i 10 cos (2xi)+10[ 5.12, 5.12] 0
+F5(x)= 20expq
+1
+nån
+i=1x2
+i
+ exp1
+n(ån
+i=1(cos(2xi))+20+e) [ 32, 32] 0
+F6(x)=1
+4000ån
+i=1x2
+i Õn
+i=1cosxip
+i+1 [ 600, 600] 0
+Table 2. Experimental results of the test functions.
+Functions Algorithms Optimal Value Worst Value Average Value Standard Deviation
+F1IBOA 0 0 0 0
+MFO 6.9410 11.001041.351033.45103
+MVO 5.9710 11.981001.261003.3910 1
+SCA 6.0210 23.301022.981016.89101
+SSA 3.0510 83.0410 62.7010 75.7710 7
+BOA 1.0810 111.4510 111.2810 118.8110 13
+F2IBOA 0 0 0 0
+MFO 8.2410 56.671031.111032.29103
+MVO 2.4410 22.4810 11.0710 15.5910 2
+SCA 8.3210 96.7810 27.9010 31.7410 2
+SSA 3.0910 91.9110 61.5010 73.7810 7
+BOA 9.4610 121.3210 111.1210 119.0310 13
+F3IBOA 0 0 0 0
+MFO 2.9310 31.041012.421003.35100
+MVO 3.3410 21.9810 19.9810 24.0810 2
+SCA 4.8410 72.9910 22.3810 36.9210 3
+SSA 1.4710 51.0210 42.8210 51.9410 5
+BOA 4.2910 96.2310 95.3510 94.6010 10
+F4IBOA 0 0 0 0
+MFO 8.951008.461012.471011.61101
+MVO 4.981003.381011.541017.15100
+SCA 0.001001.271016.4210 12.58100
+SSA 3.981004.181011.801018.62100
+BOA 5.541005.611013.351011.94101
+F5IBOA 8.8810 168.8810 168.8810 160
+MFO 1.131002.001011.111018.60100
+MVO 1.031003.361001.921004.9910 1
+SCA 3.5310 22.031011.111019.62100
+SSA 1.9210 14.621002.651008.9110 1
+BOA 4.4910 96.8710 96.0110 95.2910 10
+F6IBOA 0 0 0 0
+MFO 4.6810 23.4910 11.5210 17.7410 2
+MVO 1.3510 15.7710 13.3210 11.2010 1
+SCA 6.0210 134.4910 18.1910 21.3410 1
+SSA 6.6410 26.4410 12.4610 11.4910 1
+BOA 4.6310 141.7510 117.2310 133.1810 12
+------------------------------End of the page -----------------------------------
+Sensors 2022 ,22, 6826 11 of 21
+To visually demonstrate the optimized capabilities of the IBOA, the iterative graph of
+the convergence curve of the six benchmark functions was selected, as shown in Figure 6.
+Sensors 2022, 22, x FOR PEER REVIEW   10 of 22 
+ 
+  
+Figure 5. Switching  between global and local search phases. 
+4.3. Simulation  Experiments  
+In order to verify that the IBOA has better performance  in terms of convergence  and 
+robustness,  a performance  comparison  experiment  was carried out based on six test 
+functions:  F1~F3 are unimodal  functions  to test the convergence  performance  of the al‐
+gorithm,  while F4~F6 are complex multimodal  functions  to test global optimization  and 
+jump out of local optimization  performance.  The standard  test function information  is 
+shown in Table 1. 
+In order to sufficiently  validate the effectiveness  of the IBOA, the comparative  ex‐
+periments  were conducted  with moth–flame  optimization  (MFO) [33], multi‐verse opti‐
+mization  (MVO) [34], the sine–cosine  algorithm  (SCA) [35], the salp swarm algorithm  
+(SSA) [36], and the BOA. The number of iterations  was 500, and each method was run 30 
+times separately  on each test function to prevent bias in the outcomes  due to random 
+factors, as detailed in Table 2. 
+To visually demonstrate  the optimized  capabilities  of the IBOA, the iterative graph of 
+the convergence  curve of the six benchmark  functions  was selected, as shown in Figure 6. 
+  
+(a)  (b) 
+Sensors 2022, 22, x FOR PEER REVIEW   11 of 22 
+ 
+   
+(c)  (d) 
+  
+(e) (f) 
+Figure 6. (a) Convergence  curve of function F1; (b) convergence  curve of function F2; (c) conver‐
+gence curve of function F3; (d) convergence  curve of function F4; (e) convergence  curve of function 
+F5; (f) convergence  curve of function F6. 
+Table 1. Basic test function information.  
+Function  Types  Expressions   Scope  Optimal  Value 
+Unimodal  F1ሺxሻ = ∑ x୧ଶ ୬
+୧ୀଵ  [−100,100]  0 
+F2ሺxሻ = ∑ ሺ∑ x୨ଶ ୬
+୨ୀଵ ሻ୬
+୧ୀଵ   [−100,100]  0 
+F3ሺxሻൌ m a x  ሼ | x ୧,1 ൑ i ≪ n | ሽ   [−100,100]  0 
+Multimodal  F4ሺxሻ = ∑ ሾx୧ଶെ 10 cos ሺ2πx ୧ሻ൅1 0 ሿ୬
+୧ୀଵ   [−5.12,5.12]   0 
+F5ሺxሻ = െ20 exp ൬ ටభ
+౤∑ x୧ଶ ୬
+୧ୀଵ ൰െe x pభ
+౤ ሺ∑ ሺcos ሺ2πx ୧ሻሻ൅2 0൅e ሻ୬
+୧ୀଵ   [−32,32]  0 
+F6ሺxሻ = భ
+రబబబ∑ x୧ଶെ∏ cos౮౟
+√౟୬
+୧ୀଵ ൅1୬୧ୀଵ  [−600,600]  0 
+Table 2. Experimental  results of the test functions.  
+Functions  Algorithms   Optimal  Value  Worst Value  Average  Value  Standard  Deviation  
+F1 IBOA  0  0  0  0 
+MFO  6.94 × 10−1  1.00 × 104  1.35 × 103  3.45 × 103 
+MVO  5.97 × 10−1  1.98 × 100  1.26 × 100  3.39 × 10−1 
+SCA  6.02 × 10−2  3.30 × 102  2.98 × 101  6.89 × 101 
+Figure 6. (a) Convergence curve of function F1; ( b) convergence curve of function F2; ( c) convergence
+curve of function F3; ( d) convergence curve of function F4; ( e) convergence curve of function F5;
+(f) convergence curve of function F6.
+------------------------------End of the page -----------------------------------
+Sensors 2022 ,22, 6826 12 of 21
+4.4. Analysis of Simulation Experiment Results
+When solving the minimum value problem, the average value is used to evaluate the
+optimal ability and convergence precision, the standard deviation is used to evaluate the
+robustness, and the best value and the worst value are used to evaluate the quality of the
+feasible solution of the algorithm.
+As shown in Table 2, in terms of optimal values, the IBOA does not signiﬁcantly
+improve in the F5 function, but it still has a great progress trend compared with the basic
+BOA, and the optimal value is found in other functions, indicating that the initialization of
+the population position through chaotic mapping maintains the diversity of the algorithm.
+From an average perspective, the IBOA’s performance is far superior to that of other
+algorithms, especially in the unimodal function, indicating that the new location up-
+date equation combined with the pigeon swarm algorithm and the strategy of dynamic
+search-stage switching not only accelerates the convergence speed, but also further en-
+hances the quality of the reﬁned search at a later stage, and greatly improves the overall
+optimization ability.
+From the perspective of standard deviation, the capability of the IBOA is signiﬁcantly
+superior to that of other methods; the optimization ability is signiﬁcantly enhanced, and the
+quality of the IBOA’s feasible solutions is high, indicating that the introduction of the adap-
+tive inertia weighting factor strategy in the position update equation effectively maintains
+the population diversity, improves the global optimization ability, and maintains strong
+robustness throughout the search process, so as to acquire the global optimal solution.
+5. ERF Fault Detection Model Based on the IBOA
+5.1. Data Pre-Processing
+The operation process of the wind turbine gearbox is complex, the state quantity
+generated is complex, and there are many redundant variables, increasing the complex-
+ity of model training and affecting the prediction performance of the model [ 37]. As
+illustrated in Figure 7b, it is important that the data gathered from the SCADA dataset
+undergo preliminary data cleaning, and then Pearson’s correlation analysis is performed
+to remove redundant feature values [ 38]. Pearson’s correlation coefﬁcient is illustrated
+in Equation (17):
+X,Y=cov(X, Y)
+XY(17)
+whererepresents the correlation coefﬁcient between features in the sample, represents
+the standard deviation of the corresponding features, and covrepresents the covariance
+between features.
+Pearson’s correlation coefﬁcient is the upgrade of Euclidean distance, and provides
+standard data input for the wind turbine gearbox fault detection model. Through Pearson’s
+correlation analysis, redundant features with low partial correlation are removed, making
+the model training more efﬁcient and the prediction results more accurate [39].
+5.2. ERF Fault Detection Model Flowchart and Pseudocode Based on the IBOA
+After Pearson’s correlation analysis, the dataset is divided into two categories: the
+training dataset is utilized to train the classiﬁcation model, while the test dataset is utilized
+for the prediction of the model, measuring the performance and classiﬁcation ability of the
+model, and evaluating the model’s prediction performance.
+The optimization of the IBOA parameters is shown in Figure 7. Firstly , the position and
+sensory mode of each individual are initialized to obtain the best adaptive value of the group.
+According to the adaptive dynamic switching, the local search or global search is selected.
+The corresponding position’s iterative formula is used to update the individual position, and
+the ERF model parameters are output to meet the iterative conditions. After obtaining the
+ERF model parameters, the ERF fault detection model based on the IBOA (IBOA-ERF) is
+constructed with the training data. The performance of the test model is tested by the real
+class labels of the test dataset and the predicted class labels generated by the model.
+------------------------------End of the page -----------------------------------
+Sensors 2022 ,22, 6826 13 of 21
+Sensors 2022, 22, x FOR PEER REVIEW   14 of 22 
+ 
+ Start
+Initializing  butterfly  
+population  parameters  
+( population  size, iteration 
+number, sensory modality  )
+Initializing  butterfly
+ population  position with the 
+chaotic mapping  by the 
+Equation  (7)
+|S1(t)| > |S2(t)| 
+Update the positions  of 
+current individual  by 
+the Equation  (10)Update the positions  of 
+current individual  by 
+the Equation  (14)
+t ≤ MaxItersY NObtaining  parameters  of ERF 
+model
+fitness(t)  < fitness(t‐1)
+Update the solution 
+vector of the optimal 
+position
+g*Y
+Update the sensory 
+modality
+sNERF Fault Detection  ModelSCADA DatasetsInitializing  butterfly  
+population  parameters,  
+SCADA Datasets
+Data pre‐processing
+Current optimal solution
+g*Calculate  the fitness of each 
+butterfly  individual
+Choose a way of position 
+iteration
+by the Equation  (15)–(16)Find the current optimal 
+individual
+g*
+ERF Fault Detection  Model 
+optimal parameters
+endNt = t + 1Obtaining  the value of 
+MAR, FAR
+Y
+ 
+(a) 
+Figure 7. Cont .
+------------------------------End of the page -----------------------------------
+Sensors 2022 ,22, 6826 14 of 21
+Sensors 2022 , 22, x FOR PEER REVIEW 15 of 22 
+ 
+ Training 
+datasetTest datasetPearson correlation analysis
+Splitting of pre-processed 
+datasetsRemoval of redundant 
+featuresSCADA Dataset
+Data
+pre-processThe dataset is
+ a test set?
+Y NSCADA
+Dataset
+Test
+datasetTraining 
+dataset  
+(b) ( c) 
+Figure 7. (a) The ﬂow chart of IBOA to find the optimal parameters; ( b) the ﬂow chart of Data 
+pre-process; ( c) the ﬂow chart of ERF Fault Detection Model. 
+Table 3 shows the optimized ERF hyperparameters τ and δ in the IBOA model, 
+including the meanings and ranges of the parameters. 
+Table 3. Selection of paramete rs for optimization. 
+Parameter Meaning Value Range 
+n_estimators ( τ) The number of decision trees in ERF [10, 1000] 
+max_depth ( δ) Maximum depth of the decision tree [10, 200] 
+Algorithm 1 is the pseudo-code of the IBOA  model’s parameters. Algorithm 2 is the 
+pseudo-code of ERF fault detection model us ing optimal parameters. The detailed opti-
+mization process of the model hyperparameters is as follows: 
+Algorithm 1.  The steps of IBOA optimization parameters. 
+Input:  IBOA parameters ( lb(τmin, δmin), ub(τmax, 𝛿max); dimension: dim; maximum number of 
+iterations: MaxIter ; population size: N; ERF parameters (𝜏, 𝛿); 
+Output:  g* (τoptimal, δoptimal); 
+1: x_train, y_train, x_test, y_test → ERF (𝜏,𝛿) 
+2: Initialize the butterfly population N (i = 1,2, ..., N)  
+3: Calculate the fitness of each butterfly 4: 
+g* (𝜏,𝛿) = the best individual 
+5: Build the fitness function: fitness = FAR + 𝜀 * MAR  
+6: While  t < MaxIter  
+7:     for i = 1: N 
+8 :          C a l c u l a t e  t h e  p e r c e i v e d  m a gnitude of the fragrance using Equation (4) 
+9:     end for  
+10:     Find the optimal butterfly individual g*  
+11:     for i = 1:  N 
+1 2 :          if |𝑆ଵ(𝑡)|>| 𝑆ଶ(𝑡)| 
+Figure 7. (a) The ﬂow chart of IBOA to ﬁnd the optimal parameters; ( b) the ﬂow chart of Data
+pre-process; ( c) the ﬂow chart of ERF Fault Detection Model.
+Table 3 shows the optimized ERF hyperparameters andin the IBOA model, includ-
+ing the meanings and ranges of the parameters.
+Algorithm 1 is the pseudo-code of the IBOA model’s parameters. Algorithm 2 is
+the pseudo-code of ERF fault detection model using optimal parameters. The detailed
+optimization process of the model hyperparameters is as follows:
+Algorithm 1. The steps of IBOA optimization parameters
+Input: IBOA parameters ( lb(tmin,dmin),ub(tmax,dmax); dimension: dim; maximum number of
+iterations: MaxIter ; population size: N; ERF parameters ( t,d);
+Output: g* (toptimal ,doptimal );
+1: x_train, y_train, x_test, y_test !ERF ( t,d)
+2: Initialize the butterﬂy population N(i = 1, 2, . . . , N)
+3: Calculate the ﬁtness of each butterﬂy
+4: g* (t,d) = the best individual
+5: Build the ﬁtness function: ﬁtness = FAR + #MAR
+6: While t <MaxIter
+7: fori = 1: N
+8: Calculate the perceived magnitude of the fragrance using Equation (4)
+9: end for
+10: Find the optimal butterﬂy individual g*
+11: fori = 1: N
+12: ifjS1(t)j>jS2(t)j
+13: Enter the local search phase based on Equation (10)
+14: else
+15: Enter the global search phase based on Equation (14)
+16: end if
+17: end for
+18: Check if each butterﬂy exceeds the search space and correct for it
+19: Calculate the ﬁtness of each butterﬂy
+20: Select the location that matches the minimum ﬁtness value
+21: Update the value of a
+22: If a better solution is available, update g*
+23: t = t + 1
+24: end while
+25: return g* (toptimal ,doptimal )
+------------------------------End of the page -----------------------------------
+Sensors 2022 ,22, 6826 15 of 21
+Algorithm 2. ERF Fault Detection Model
+Input: the best parameter vector g* (toptimal ,doptimal ); Training dataset; Test dataset;
+Output: MAR, FAR
+1: Training dataset !x_train, y_train
+2: Test dataset !x_test, y_test
+3: x_train, y_train !ERF ( toptimal ,doptimal )
+4: Training ERF fault detection model using Training dataset
+5: x_test, y_test !ERF ( toptimal ,doptimal )
+6: Testing ERF fault detection model using Test dataset
+7: Obtaining predicted labels of test datasets
+8: Calculating MAR and FAR of model performance based on Equations (18) and (19)
+9: return MAR, FAR
+Table 3. Selection of parameters for optimization.
+Parameter Meaning Value Range
+n_estimators () The number of decision trees in ERF [10, 1000]
+max_depth () Maximum depth of the decision tree [10, 200]
+6. Experimental Analysis
+6.1. Dataset Description
+To validate the validation of the proposed IBOA-ERF fault detection model, the annual
+gearbox operation data were extracted from the SCADA dataset with an interval of 1 min
+for a 1.5 MW wind turbine in China, and the data structure was selected from 30 min before
+the occurrence of the gearbox fault to 30 min after the end of the fault through the analysis
+of the wind turbine structure, as shown in Table 4.
+Table 4. Partial data of wind turbine operation.
+FeaturesTime
+18:12 18:13 18:14 . . .. 19:40 19:41 19:42
+nacelle_temperature  8.5 8.7 8.8 . . . . 9.3 9.5 9.8
+wind_speed_1 10.01 9.94 9.34 . . . . 5.92 6.12 6.01
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+hydraulic_main_sys_pressure 135.87 136.18 135.26 . . . . 144.72 144.72 144.11
+hydraulic_rotor_brake_sys_pressure 149.30 148.69 149.90 . . . . 170.36 170.05 170.05
+For the purposes of the dataset, as illustrated in Table 5, the dataset can be divided
+into two parts: Dataset 1, with data on gearbox supercapacitor overtemperature faults and
+fault-free data; and Dataset 2, with data on gearbox nacelle operation overspeed faults and
+fault-free data.
+Table 5. Description of the datasets.
+Dataset Fault-Free FaultyTotal Number of
+SamplesTotal Number of
+Features
+Dataset 1 1059 991 2050 210
+Dataset 2 1211 1080 2291 210
+6.2. Criteria for Evaluation
+For the dichotomous problem of wind turbine gearbox fault detection, a confusion
+matrix was introduced. As illustrated in Table 6, the missing alarm rate (MAR) and the
+false alarm rate (FAR) of the matrix were utilized as evaluation indices.
+------------------------------End of the page -----------------------------------
+Sensors 2022 ,22, 6826 16 of 21
+Table 6. Confusion matrix for binary classiﬁcation problems.
+Actual CategoryPredict Category
+Normal Fault
+Normal S TN(true negative) S FP(false positive)
+Fault S FN(false negative) S TP(true positive)
+MAR =SFN
+SFN+STP(18)
+FAR=SFP
+SFP+STN(19)
+where S FN, SFP, STN, and S TPrepresent the corresponding sample size.
+To validate the excellence of ERF under the IBOA for the above extracted dataset, after
+data pre-processing, it was compared with the ERF model under MFO, MVO, SSA, SCA,
+and BOA optimization, and evaluated the performance of each model using MAR and FAR.
+Lower values of MAR and FAR represent better performance of the model. In order to
+prevent overﬁtting and improve model accuracy, each model was trained using 10-level
+cross-validation when conducting the comparison experiments. At the same population
+size and number of iterations, each model was run 10 times individually.
+6.3. Experimental Results
+When comparing the MAR and FAR of the ERF model under different optimization
+algorithms, IBOA-ERF performed better than the other ﬁve models.
+For Dataset 1, as shown in Figure 8a, for the MAR of the six models, the average MAR
+of IBOA-ERF running 10 times alone was 0.86%, which is signiﬁcantly improved compared
+with the BOA algorithm, and the fault detection ability is very stable. The overall MAR was
+maintained at 0.72–0.98%, while that of the other models was maintained at 0.84–1.53%.
+The optimization ability and optimization accuracy of the model were greatly improved.
+As shown in Figure 8b, for the FAR of the six models, the average FAR of IBOA-ERF
+running alone 10 times was 5.30%. During the detection process, the FAR of MFO-ERF
+was up to 9.23%, and the optimization effect was not obvious, while that of IBOA-ERF was
+maintained between 4.87% and 5.91%, and the detection performance was very stable. This
+shows that the ERF model has lower MAR and FAR, and the convergence efﬁciency and
+optimization performance are greatly improved when using the optimization parameters
+of the IBOA.
+For Dataset 2, as shown in Figure 8c, the MAR of the ERF model under the IBOA had
+a maximum decrease of 1.06% compared to the other ﬁve models, showing less ﬂuctuation
+than the classiﬁcation results of the other models—which were generally maintained
+between 0.54% and 0.77%—along with signiﬁcantly improved detection performance
+compared to the other models. As shown in Figure 8d, the FAR of the ERF model under
+the IBOA was generally stable between 4.97% and 6.65%, while the FAR of the other ﬁve
+models mostly remained above 6.13%, with the maximum reaching 9.75%. The IBOA
+has obvious optimization effects, is not prone to becoming trapped in partial optima, and
+shows greatly improved accuracy.
+------------------------------End of the page -----------------------------------
+Sensors 2022 ,22, 6826 17 of 21
+Sensors 2022 , 22, x FOR PEER REVIEW  18 of 22 
+ 
+ mode ls mostly remain ed above 6.1 3%, with the maximum reaching 9.75%. The IBOA has 
+obvious optimization effects, is not prone to be coming  trapped in partial optim a, and 
+shows greatly improved accuracy.  
+  
+(a) (b) 
+  
+(c) (d) 
+Figure 8. (a) MAR of six algorithms for fault detection on Dataset 1; ( b) FAR of six algorithms for 
+fault detection on Dataset 1; ( c) MAR of six algorithms for fault detection on Dataset 2; ( d) FAR of 
+six algorithms for fault detection on Dataset 2 . 
+7. Conclusion s 
+Aiming at the difficulty of parameter optimization of wind turbine gearbox fault 
+detection model s, the IBOA -ERF fault detection model was proposed. The IBOA was 
+used to optimize the hyperparameters  of ERF, so as to improve the detection perfor-
+mance.  
+There are four main contributions of this paper : First, chaotic map ping  is introduced 
+to replace the original population initialization method to enhance the randomness of the 
+population distribution and enhance the local development and global exploration ca-
+pabilities. Second, the adaptive inertia weight factor is designed  and combined with the 
+landmark operator of PIO, so that the best position information of individual history is 
+more effectively used, and it is integrated into the position update formula to i mprove 
+the diversity and robustness of  the BOA. Third, a new dynamic switching method of the 
+search stage is designed, so that two search phases  can reach a dynamic balance, pre-
+vent ing a drop into local  optim a and accelerat ing convergence. Finally, an impr oved fault 
+detection model for wind turbine gearboxes is proposed by combining the above strate-
+gies with ERF.  
+Figure 8. (a) MAR of six algorithms for fault detection on Dataset 1; ( b) FAR of six algorithms for
+fault detection on Dataset 1; ( c) MAR of six algorithms for fault detection on Dataset 2; ( d) FAR of six
+algorithms for fault detection on Dataset 2.
+7. Conclusions
+Aiming at the difﬁculty of parameter optimization of wind turbine gearbox fault
+detection models, the IBOA-ERF fault detection model was proposed. The IBOA was used
+to optimize the hyperparameters of ERF, so as to improve the detection performance.
+There are four main contributions of this paper: First, chaotic mapping is introduced
+to replace the original population initialization method to enhance the randomness of
+the population distribution and enhance the local development and global exploration
+capabilities. Second, the adaptive inertia weight factor is designed and combined with the
+landmark operator of PIO, so that the best position information of individual history is
+more effectively used, and it is integrated into the position update formula to improve the
+diversity and robustness of the BOA. Third, a new dynamic switching method of the search
+stage is designed, so that two search phases can reach a dynamic balance, preventing a
+drop into local optima and accelerating convergence. Finally, an improved fault detection
+model for wind turbine gearboxes is proposed by combining the above strategies with ERF.
+In the experiments, MFO, MVO, SSA, SCA, BOA, and IBOA were introduced to
+enhance experimental fairness, each used to act on the ERF model, and the ﬁtness function
+was constructed. MAR and FAR were used as assessment indicators. The results indicate
+that when using the IBOA to optimize the ERF parameters, the MAR and FAR are still low
+when the dataset is complex and the dimensionality is high.
+Based on the proposed IBOA-ERF wind turbine gearbox fault detection model, the
+recommendations for future research are as follows:
+------------------------------End of the page -----------------------------------
+Sensors 2022 ,22, 6826 18 of 21
+ When the data categories are unbalanced—that is, when there are many normal
+samples and few fault samples—further research can be conducted to solve the prob-
+lem of the model detection being biased towards the majority of samples, and the
+classiﬁcation accuracy is reduced.
+ With the upgrading of the wind turbine gearbox technology, the feature dimension-
+ality and complexity of the original dataset can increase. There are many data pre-
+processing methods and no uniform measurement, which can inﬂuence the implemen-
+tation of the model. The data pre-processing methods that are most suitable for this
+model can be further studied.
+ The IBOA can be applied to other fault detection ﬁelds.
+Author Contributions: Supervision, M.T.; writing—original draft, C.C.; formal analysis, H.W.;
+investigation, H.Z.; data curation, J.T.; conceptualization, Z.P .; visualization, Y.W. All authors have
+read and agreed to the published version of the manuscript.
+Funding: This work was supported in part by the National Natural Science Foundation of China
+(grant no. 62173050), the National Key R&D Program of China (grant no. 2019YFE0105300), the Energy
+Conservation and Emission Reduction Hunan University Student Innovation and Entrepreneurship
+Education Center, Changsha University of Science and Technology’s “The Double First Class Univer-
+sity Plan” International Cooperation and Development Project in Scientiﬁc Research in 2018 (Grant
+No. 2018IC14), the Hunan Provincial Department of Transportation’s 2018 Science and Technology
+Progress and Innovation Plan Project (grant no. 201843), the Hubei Superior and Distinctive Dis-
+cipline Group of “New Energy Vehicle and Smart Transportation”, the Open Fund of Hubei Key
+Laboratory of Power System Design and Test for Electrical Vehicle (grant no. ZDSYS202201), General
+Projects of Hunan University Students’ Innovation and Entrepreneurship Training Program in 2022
+(grant no. 2565), and the Graduate Scientiﬁc Research Innovation Project of Changsha University of
+Science and Technology (grant no. CXCLY2022094).
+Institutional Review Board Statement: Not applicable.
+Informed Consent Statement: Not applicable.
+Data Availability Statement: The data that support the ﬁndings of this study are available from the
+corresponding author upon reasonable request.
+Conﬂicts of Interest: The authors declare no conﬂict of interest.
+Nomenclature and Abbreviations
+GWEC Global Wind Energy Council
+SCADA Supervisory control and data acquisition
+NFSW-BP-AdaBoost Non-fuzzy solution-weighted BP-AdaBoost
+XGBoost Extreme gradient boosting
+CS-GBDT Cost-sensitive GBDT
+RF Random forest
+ERF Extreme random forest
+BOA Butterﬂy optimization algorithm
+IBOA Improved butterﬂy optimization algorithm
+IBOA-ERF Extreme random forest optimized by improved butterﬂy
+optimization algorithm
+PIO Pigeon-inspired optimization
+MFO Moth–ﬂame optimization
+MVO Multi-verse optimization
+SCA Sine–cosine algorithm
+SSA Salp swarm algorithm
+UCI University of California Irvine
+FAR False alarm rate
+MAR Missing alarm rate
+------------------------------End of the page -----------------------------------
+Sensors 2022 ,22, 6826 19 of 21
+Symbols
+D Number of numbers in ERF
+Pt(cjVi) The probability that the sample belongs to category c conditional on the
+feature vector V i
+Vi Feature vector of the sample
+P(cjVi) Average value of P t(cjVi)in the ERF
+c Some kind of category
+ˆc Category corresponding to the maximum value of P (cjfi)
+Ik Mutual information of the two subsets
+Hk Split entropy of the feature k
+Hc Information entropy
+Score k Score measurement of the calculated feature
+f Fragrance intensity
+I Stimulus intensity
+s Sensory modality
+ Power exponent
+xt
+iLocation information of the i-th individual in the t-th iteration
+xt+1
+iLocation information of the i-th individual in the t + 1-th iteration
+r Random value from 0 to 1
+gBest value in the current iteration
+fi Fragrance intensity emitted by the i-th individual
+j Random number
+k Random number
+X Position parameter
+t Current number of iterations
+ Logistics parameter
+Titer Largest value of the number of iterations t
+! Adaptive inertia weight
+e Euler number
+xtc Position of the center of the ﬂock in the current iteration
+Fit 
+xt
+i
+Value of the ﬁtness function of the i-th individual
+N Number of individuals
+? 100*p
+cov Covariance
+ Standard deviation
+ Correlation coefﬁcient
+S Corresponding sample size
+References
+1. GWEC. Global Wind Energy Council (GWEC)|Global Wind Report. 2022. Available online: https://gwec.net/global-wind-
+report-2022/ (accessed on 4 April 2022).
+2. Han, Z.; Liu, Z.; Kang, W.; He, W. Boundary Feedback Control of a Nonhomogeneous Wind Turbine Tower with Exogenous
+Disturbances. IEEE Trans. Autom. Control 2022 ,67, 1952–1959. [CrossRef]
+3. Liu, Z.; Zhang, L. Zhang. A review of failure modes, condition monitoring and fault diagnosis methods for large-scale wind
+turbine bearings. Measurement 2020 ,149, 107002. [CrossRef]
+4. Jiang, G.; He, H.; Yan, J.; Xie, P . Multiscale Convolutional Neural Networks for Fault Diagnosis of Wind Turbine Gearbox. IEEE
+Trans. Ind. Electron. 2019 ,66, 3196–3207. [CrossRef]
+5. Qin, Y.; Wang, X.; Zou, J. The Optimized Deep Belief Networks with Improved Logistic Sigmoid Units and Their Application in
+Fault Diagnosis for Planetary Gearboxes of Wind Turbines. IEEE Trans. Ind. Electron. 2019 ,66, 3814–3824. [CrossRef]
+6. Tang, M.; Zhao, Q.; Ding, S.X.; Wu, H.; Li, L.; Long, W.; Huang, B. An Improved LightGBM Algorithm for Online Fault Detection
+of Wind Turbine Gearboxes. Energies 2020 ,13, 807. [CrossRef]
+7. Tang, M.; Yi, J.; Wu, H.; Wang, Z. Fault Detection of Wind Turbine Electric Pitch System Based on IGWO-ERF. Sensors 2021 ,21,
+6215. [CrossRef]
+8. Tang, M.; Zhao, Q.; Wu, H.; Wang, Z. Cost-Sensitive LightGBM-Based Online Fault Detection Method for Wind Turbine Gearboxes.
+Front. Energy Res. 2021 ,9, 378. [CrossRef]
+9. Wang, D.; Zhao, Y.; Yi, C.; Tsui, K.L.; Lin, J. Sparsity guided empirical wavelet transform for fault diagnosis of rolling element
+bearings. Mech. Syst. Signal Process. 2018 ,101, 292–308. [CrossRef]
+------------------------------End of the page -----------------------------------
+Sensors 2022 ,22, 6826 20 of 21
+10. Chen, H.; Jiang, B.; Ding, S.X.; Huang, B. Huang. Data-Driven Fault Diagnosis for Traction Systems in High-Speed Trains: A
+Survey, Challenges, and Perspectives. IEEE Trans. Intell. Transp. Syst. 2022 ,23, 1700–1716. [CrossRef]
+11. Wang, Y.; Pan, Z.; Yuan, X.; Yang, C.; Gui, W. A novel deep learning based fault diagnosis approach for chemical process with
+extended deep belief network. ISA Trans. 2020 ,96, 457–467. [CrossRef]
+12. Liang, J.; Qin, Z.; Xiao, S.; Ou, L.; Lin, X. Efﬁcient and Secure Decision Tree Classiﬁcation for Cloud-Assisted Online Diagnosis
+Services. IEEE Trans. Dependable Secur. Comput. 2021 ,18, 1632–1644. [CrossRef]
+13. Stetco, A.; Dinmohammadi, F.; Zhao, X.; Robu, V .; Flynn, D.; Barnes, M.; Nenadic, G. Machine learning methods for wind turbine
+condition monitoring: A review. Renew. Energy 2019 ,133, 620–635. [CrossRef]
+14. Feng, D.C.; Liu, Z.T.; Wang, X.D.; Chen, Y.; Chang, J.Q.; Wei, D.F.; Jiang, Z.M. Machine learning-based compressive strength
+prediction for concrete: An adaptive boosting approach. Constr. Build. Mater. 2020 ,230, 117000. [CrossRef]
+15. Jiang, H.W.; Zou, B.; Xu, C.; Xu, J.; Tang, Y.Y. SVM-Boosting based on Markov resampling: Theory and algorithm. Neural Netw.
+2016 ,131, 276–290. [CrossRef] [PubMed]
+16. Liu, Y.; Zhao, C.C.; Liang, H.Y.; Lu, H.H.; Cui, N.Y.; Bao, K.Y. A rotor fault diagnosis method based on BP-Adaboost weighted by
+non-fuzzy solution coefﬁcients. Measurement 2022 ,196, 111280. [CrossRef]
+17. Chakraborty, D.; Elzarka, H. Early detection of faults in HVAC systems using an XGBoost model with a dynamic threshold.
+Energy Build. 2019 ,185, 326–344. [CrossRef]
+18. Xu, Q.F.; Lu, S.X.; Jia, W.Y.; Jiang, C.X. Imbalanced fault diagnosis of rotating machinery via multi-domain feature extraction and
+cost-sensitive learning. J. Intell. Manuf. 2020 ,31, 1467–1481. [CrossRef]
+19. Yang, L.; Shami, A. On hyperparameter optimization of machine learning algorithms: Theory and practice. Neurocomputing 2020 ,
+415, 295–316. [CrossRef]
+20. Yang, X.S. Nature-inspired optimization algorithms: Challenges and open problems. J. Comput. Sci. 2020 ,46, 101104. [CrossRef]
+21. Arora, S.; Singh, S. Butterﬂy optimization algorithm: A novel approach for global optimization. Soft Comput. 2019 ,23, 715–734.
+[CrossRef]
+22. Luo, J.; Tian, Q.; Xu, M. Reverse guidance butterﬂy optimization algorithm integrated with information cross-sharing. J. Intell.
+Fuzzy Syst. 2021 ,41, 3463–3484. [CrossRef]
+23. Neshat, M.; Nezhad, M.M.; Abbasnejad, E.; Mirjalili, S.; Tjernberg, L.B.; Garcia, D.A.; Alexander, B.; Wagner, M. A deep learning-
+based evolutionary model for short-term wind speed forecasting: A case study of the Lillgrund offshore wind farm. Energy
+Convers. Manag. 2021 ,236, 114002. [CrossRef]
+24. Song, D.R.; Li, Z.Q.; Wang, L.; Jin, F.J.; Huang, C.E.; Xia, E.; Rizk-Allah, R.M.; Yang, J.; Su, M.; Joo, Y.H. Energy capture efﬁciency
+enhancement of wind turbines via stochastic model predictive yaw control based on intelligent scenarios generation. Appl Energy
+2022 ,312, 118773. [CrossRef]
+25. Song, D.R.; Tu, Y.P .; Wang, L.; Jin, F.J.; Li, Z.Q.; Huang, C.N.; Xia, E.; Rizk-Allah, R.M.; Yang, J.; Su, M.; et al. Coordinated
+optimization on energy capture and torque ﬂuctuation of wind turbines via variable weight NMPC with fuzzy regulator. Appl.
+Energy 2022 ,312, 118821. [CrossRef]
+26. Azamfar, M.; Singh, J.; Bravo-Imaz, I.; Lee, J. Multisensor data fusion for gearbox fault diagnosis using 2-D convolutional neural
+network and motor current signature analysis. Mech. Syst. Signal Process. 2020 ,144, 106861. [CrossRef]
+27. Long, W.; Jiao, J.J.; Liang, X.M.; Wu, T.B.; Xu, M.; Cai, S.H. Pinhole-imaging-based learning butterﬂy optimization algorithm for
+global optimization and feature selection. Appl. Soft Comput. 2021 ,103, 107146. [CrossRef]
+28. Long, W.; Wu, T.B.; Xu, M.; Tang, M.Z.; Cai, S.H. Parameters identiﬁcation of photovoltaic models by using an enhanced adaptive
+butterﬂy optimization algorithm. Energy 2021 ,229, 120750. [CrossRef]
+29. Zhang, Y.Q.; Wang, X.Y. A symmetric image encryption algorithm based on mixed linear-nonlinear coupled map lattice. Inf. Sci.
+2014 ,273, 329–351. [CrossRef]
+30. Hua, Z.Y.; Zhou, Y.C. Exponential Chaotic Model for Generating Robust Chaos. IEEE Trans. Syst. Man Cybern.-Syst. 2021 ,51,
+3713–3724. [CrossRef]
+31. Duan, H.B.; Wang, X.H. Echo State Networks with Orthogonal Pigeon- Inspired Optimization for Image Restoration. IEEE Trans.
+Neural Netw. Learn. Syst. 2016 ,27, 2413–2425. [CrossRef]
+32. Cui, Z.H.; Zhang, J.J.; Wang, Y.C.; Cao, Y.; Cai, X.; Zhang, W.J.; Chen, J.J. A pigeon-inspired optimization algorithm for
+many-objective optimization problems. Sci. China-Inf. Sci. 2019 ,62, 70212. [CrossRef]
+33. Shehab, M.; Abualigah, L.; al Hamad, H.; Alabool, H.; Alshinwan, M.; Khasawneh, A.M. Moth-ﬂame optimization algorithm:
+Variants and applications. Neural Comput. Appl. 2020 ,32, 9859–9884. [CrossRef]
+34. Mirjalili, S.; Mirjalili, S.M.; Hatamlou, A. Multi-Verse Optimizer: A nature-inspired algorithm for global optimization. Neural
+Comput. Appl. 2016 ,27, 495–513. [CrossRef]
+35. Abualigah, L.; Diabat, A. Advances in Sine Cosine Algorithm: A comprehensive survey. Artif. Intell. Rev. 2021 ,54, 2567–2608.
+[CrossRef]
+36. Mirjalili, S.; Gandomi, A.H.; Mirjalili, S.Z.; Saremi, S.; Faris, H.; Mirjalili, S.M. Salp Swarm Algorithm: A bio-inspired optimizer
+for engineering design problems. Adv. Eng. Softw. 2017 ,114, 163–191. [CrossRef]
+37. Zhang, K.; Peng, K.; Dong, J. A Common and Individual Feature Extraction-Based Multimode Process Monitoring Method with
+Application to the Finishing Mill Process. IEEE Trans. Ind. Inform. 2018 ,14, 4841–4850. [CrossRef]
+------------------------------End of the page -----------------------------------
+Sensors 2022 ,22, 6826 21 of 21
+38. Langfelder, P .; Horvath, S. Fast R Functions for Robust Correlations and Hierarchical Clustering. J. Stat. Softw. 2012 ,46, 1–17.
+[CrossRef]
+39. Zhang, K.; Peng, K.X.; Ding, S.X.; Chen, Z.W.; Yang, X. A Correlation-Based Distributed Fault Detection Method and Its
+Application to a Hot Tandem Rolling Mill Process. IEEE Trans. Ind. Electron. 2020 ,67, 2380–2390. [CrossRef]
+------------------------------End of the page -----------------------------------

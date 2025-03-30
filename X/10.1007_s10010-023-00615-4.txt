@@ -1,0 +1,464 @@
+ORIGINALARBEITEN/ORIGINALShttps://doi.org/10.1007/s10010-023-00615-4Forsch Ingenieurwes (2023) 87:31–38
+Data-driven virtual sensor for online loads estimation of drivetrain of
+wind turbines
+Omar Kamel1,2· Matthias Kretschmer2·S t e f a nP f e i f e r2·B i r g e rL u h m a n n2·S t e f a nH a u p t m a n n2·
+Carlo L. Bottasso1
+Received: 1 November 2022 / Accepted: 11 January 2023 / Published online: 20 March 2023
+© The Author(s) 2023
+Abstract
+Data-driven approaches have gained inte rest recently in the ﬁeld of wind energy. Da ta-driven online estimators have been
+investigated and demonstrated in several applications such as online loads estimation, wake center position estimations,
+online damage estimation. The present work demonstrates the application of machine learning algorithms to formulate an
+estimator of the internal loads acting on the bearings of the drivetrain of onshore wind turbines. The loads estimator is
+implemented as a linear state-space model that is augmented with a non-linear feed-forward neural network. The estimatorinfers the loads time series as a function of the standard m easurements from the SCADA and condition monitoring systems
+(CMS). A formal analysis of the available data is carried out to deﬁne the structure of the virtual sensor regarding the
+order of the models, number of states, architecture of neural networks. Correlation coefﬁcient of 98% in the time domain
+and matching of the frequency signature are achieved. Several applications are mentioned and discussed in this work suchas online estimation of the forces for monitoring and model predictive control applications.
+Datengetriebener virtueller Sensor für die Online Abschätzung der Lasten im Antriebsstrang von
+Windkraftanlagen
+Zusammenfassung
+Datengetriebene Verfahren haben in letzter Zeit im Bereich der Windenergie an Interesse zugenommen. Dabei wurden da-
+tengetriebene Online-Schätzverfahren untersucht und in ve rschiedenen Anwendungen demonstriert, wie z. B. Online-Last-
+schätzungen, Schätzungen der Position des Nachlaufzentrum s und Online-Schadensschätzungen. Die vorliegende Arbeit
+demonstriert die Anwendung von Algorithmen des maschinellen Lernens zur Formulierung eines Schätzers für die in-ternen Lasten, die auf die Lager des Antriebsstrangs von Onshore-Windkraftanlagen wirken. Der Lastschätzer ist als
+lineares Zustandsraummodell implementiert, das durch ein n ichtlineares neuronales Netz mit V orwärtskopplung ergänzt
+wird. Der Schätzer leitet die Zeitreihen der Lasten als Funktion der Standardmessungen aus den SCADA- und Zustands-überwachungssystemen (CMS) ab. Es wird eine formale Analyse der verfügbaren Daten durchgeführt, um die Struktur des
+virtuellen Sensors in Bezug auf die Ordnung der Modelle, die Anzahl der Zustände und die Architektur der neuronalen
+Netze zu deﬁnieren. Es wird ein Korrelationskoefﬁzient von 98 % im Zeitbereich und ei ne Übereinstimmung mit der
+Frequenzsignatur erreicht. Zudem werde n mehrere Anwendungen erwähnt und diskutiert, wie z. B. die Online-Schätzung
+von Kräften für Überwachungs- und mode llprädiktive Steuerungsanwendungen.
+/envelopebackOmar Kamel
+omar.kamel@mesh-engineering.de
+1Chair of Wind Energy, Technical University of Munich,Munich, Germany
+2MesH Engineering GmbH, Stuttgart, Germany1I n t r o d u c t i o n
+Data-based modeling approach es play currently a signif-
+i c a n tr o l et oi m p r o v et h ep e rformance of assets in terms
+of lifetime extension, reductio n of maintenance costs, re-
+duction of downtime, failure prediction of critical and vul-
+nerable components. These objectives can be realized byexploiting the available measurements from the established
+K
+------------------------------End of the page -----------------------------------
+32 Forsch Ingenieurwes (2023) 87:31–38
+measurement and control systems on the assets [ 8]. These
+measurements are employed to produce an added valueto the operation of the asset using machine learning anddata analytics techniques. The states and loads estimators,known as virtual sensors, can be incorporated into condition
+monitoring systems for adequate planning of maintenance
+to calculate remaining lifetime of mechanical componentshence extending the product lifetime. They have been alsoincorporated into adaptive and modern control algorithms to
+run the asset efﬁciently taking into consideration minimiza-
+tion of fatigue damage, minimization of actuators’ lifetimeconsumption.
+Recently, considerable work has been directed to tackle
+the research questions regarding the applications of sys-
+tem identiﬁcation and machine learning techniques to con-
+struct universal estimators t h a tr e l ym a i n l yo nd a t at ob e
+deployed as virtual sensors. [ 2] developed a virtual sensor
+of transmitted loads in wind turbine gearboxes using neural
+networks. The authors achieved coefﬁcient of determina-
+tion, R
+2, of more than 90% using the proposed methodol-
+ogy. [ 18] also proposed an online fatigue monitoring esti-
+mator using Kalman ﬁlters and least square approach anda quasi-static approach based on the low-ﬁdelity simula-
+tion model on the intermediate shaft and high-speed shaft
+of gearbox of wind turbines, where they achieved high co-efﬁcient of correlation in the range of 50% to 96%. [ 16]
+formulated damage equivalent loads (DEL) estimator on
+the torque arm of the gearbox housing of wind turbines
+based on low-frequency SCADA measurements. Several re-gression algorithms were investigated, yielding correlation-coefﬁcient more than 80%. [ 5,6] developed digital twins
+as state-estimators using Ka lman ﬁlters to estimate loads
+on towers using standard SCADA and kinematic measure-
+ments, achieving errors of estimations that is less than 8%.On the other hand, [ 1] highlighted one of the potential ap-
+plications of using reduced order models and virtual sen-
+sors to develop sophisticated control strategies, where they
+incorporated a reduced order model of the wind turbineinto a model predictive controller that attempts to minimizethe accumulated damage on the tower root while maintain-
+ing compromise between generated power and accumulated
+damage in the form of economic cost function.
+2 Problem Statement
+The problem at hand deals with the online estimation of the
+structural loads endured by the bearings in the drivetrain ofonshore wind turbines. This study considers the structuralloads on the bearing on front pinion shaft of the drivetrain
+as an exemplary quantity of investigation.
+The development of virtual sensors that can estimate the
+loads requires several charact eristics of the estimator thatFig. 1 Qualitative re sponse of the virtual sensor according to Eq. 1
+are developed in this work. The virtual sensor should fulﬁll
+the following characteristics:
+/CIRCLEcomputational speed and efﬁciency due to the need ofreal time estimations,
+/CIRCLEminimal, i.e. delivers only the required information,
+/CIRCLEcan infer the internal states of the system that are neitherpossible nor easy to measure (e.g. forces and torques),
+/CIRCLEis a mathematical dynamical system that can be simu-lated forward in time and can be used for what-if scenar-ios and control applications,
+/CIRCLEmathematically differentiable that can be used in gradi-
+ent-based optimization algorithms (e.g. model predictive
+control frameworks).
+3 Methodology
+The realization of the attributes mentioned in Sect. 2of
+a virtual sensor imposes the implementation of a data-basedreduced order model (ROM). The formulation of the pro-posed concept is based on a re duced-order state-space for-
+mulation, which is a linear approximation of the system
+at hand, which is augmented with a neural network thatestimates the error mismatch of the underlying state-spacesystem.
+The wind turbine system is inherently non-linear due to
+for instance the presence of contact between gears or thecontroller which attempts to maximize the generated powerby varying its control variables (the pitch angle and gener-ator torque) that follow a non-linear control strategy based
+on gain scheduling [ 15,22]. Accordingly, having a linear
+time-invariant reduced repr esentation of the system is not
+a rational approach. Hence, the need of a more sophisticatedsystem representation is cruci al. Thus, the formulation of
+the virtual sensor presented in this work is based on the
+assumption that the physical behavior of the investigateddynamical system can be reproduced using an additive es-
+K
+------------------------------End of the page -----------------------------------
+Forsch Ingenieurwes (2023) 87:31–38 33
+timator of reduced state-sp ace (SS) system and a neural
+network (data-based) model. The combined model reads as
+fM ÑcM;
+fM=MSS+MNN;(1)
+where cMis the system response of the high-ﬁdelity phys-
+ical model (ground truth), fMis the estimated system re-
+sponse using the virtual sensor, MSSandMNN are the
+system responses of the linear state-space and neural net-
+work models respectively. MSScan only reproduce the
+prevalent quasi-static response (so called slow dynamics)of the investigated system due to the reductive nature ofthe implemented formulation, while
+MNNis implemented
+to be able to estimate the error mismatch between the lin-
+ear state-space system and the ground truth, which is thetransient dynamics arising from higher-order dynamic non-linearities such as excitation due to gear contact. The qual-
+itative overall system response is depicted in Fig. 1.
+3.1 State-space Formulation
+The state-space modeling approach is based on the canon-
+ical linear time-invariant dynamic system representation
+withminputs, qoutputs and nstate variables, which reads
+Px=Ax+Bu
+y=Cx+Du;(2)
+where x2Rnis the states vector, y2Rqis the output vec-
+tor, u2Rmis the input vector. An/STXn;Bn/STXm;Cq/STXn;Dq/STXm
+are the state, input, output, feedthrough matrices respec-
+tively. For dynamic systems, Dis set to Oq/STXmby default,
+meaning that the system has no feedthrough.
+The choice of the model order (size of x2Rnin Eq. 2)
+is done according to the Hankel singular-values of the avail-
+able time data. These singular-values deﬁne the “energy”
+of each state in the system. The Hankel singular-values aredeﬁned as [ 4]
+/ESC
+H=p
+/NAKi.PQ/; (3)
+Fig. 2 Gray-box model in de-
+ployment with an example deepneural networkwhere P;Q are the controllability and observability Grami-
+ans of the system, and /ESCHis the Hankel singular-value
+associated with the eigenvalue /NAKi. The highest six Hankel
+singular-values captured more than 90% of the energy of thehigh-ﬁdelity system, leading to compromise between qual-
+ity of estimations and complexity of the identiﬁed model,
+which lead to selecting the order of the model to be in therange n= 4–6.
+3.2 Neural Network Model
+Feed-forward neural networks a re implemented to construct
+the second element of the virtual sensor. Neural networks,according to the universal approximation theorem, can rep-
+resent a wide variety of the underlying functions when given
+appropriate weights and internal parameters [ 7,12,17].
+The neural network is used to predict only the error mis-
+match between the ground truth and the linear state-space
+system, i.e.
+e
+SS=by−eySS
+eeSS=f. u;eySS/;(4)
+where byis the ground truth, eySSis the output estima-
+tion of the state-space sy stem, and accordingly eSSis the
+error of between the ground truth and the state-space sys-tem estimation,
+eeSSis the estimated error using the neural
+network, and fis the trained neural network.
+The feed-forward neural networks are inherently not able
+to reproduce dynamic systems behavior due to the absenceof state derivatives and/or history of inputs or outputs. How-ever, this can be handled by explicitly feeding in time his-
+tory as exogenous inputs, in the form:
+y
+k=f. uk;uk−1;/SOH/SOH/SOH;uk−n/; (5)
+where ykis the output at timestep k,uk;uk−1;/SOH/SOH/SOH;uk−nare
+the inputs at timesteps k;k −1;/SOH/SOH/SOH;k−nin which nprevi-
+ous timesteps are considered. This approach is very simplecompared to other approaches that inherently handle thetime dependence of dynamic systems such as recurrent neu-
+ral networks (RNN), gated recurrent units (GRU) and long-
+K
+------------------------------End of the page -----------------------------------
+34 Forsch Ingenieurwes (2023) 87:31–38
+short term memory networks (LSTM), which are very com-
+plex and problematic during training and deployment [ 11].
+After investigating the effect of shifting the inputs in
+time and feeding them to the network exogenously, a shal-
+low (one layer) feed-forward neural network of lag = 2
+(uk−1;uk−2in Eq. 5) with 10 neurons with sigmoid activa-
+tion function was trained and deployed afterwards.
+3.3 Gray-box Model
+Following the identiﬁcation of two building blocks, namely
+the state-space and neural network models separately, both
+models are combined in the gray-box model to construct
+the virtual sensor as demonstrated in Fig. 2and Eq. 6.
+eyk=eyk
+SS.uk/+eeSS.eySSk;uk;uk−1;uk−2/: (6)
+The proposed approach is applied to estimate the ax-
+ial force on the frontal bearing of the pinion shaft in the
+drivetrain, FPS;F;x .
+4 Implementation
+4.1 Modeling and Simulation
+The simulations in this study are executed using the IEA
+Task 37 3.4 MW onshore wind turbine [ 3]. The wind turbine
+conﬁguration is summarized in Table 1. A multibody sys-
+tem (MBS) simulation model is set up using the commercial
+MBS package Simpack [9] where different load cases are
+investigated using simulated turbulent wind conditions in
+accordance with the IEC 61400-1 [ 13] standard. Simpack
+has been validated in comparison to other state-of-the-art
+modeling software such as FAST ,HAWC2 (e.g. [ 20,21]).
+The MBS model is used to generate a time-series of the
+inputs and outputs of the model that are used afterwards
+in training and ﬁtting of the corresponding data models
+as depicted in Fig. 3which summarizes the work ﬂow of
+Fig. 3 Workﬂow of the proposed approach [ 2]Table 1 Summary of the conﬁguration of 3.4 MW wind turbine [ 3]
+Parameter V alue Unit
+Wind class IEC 3A [–]
+Rated aerodynamic
+power3M W
+Hub height 110 m
+Cut-in wind speed 3 m s−1
+Cut-out wind speed 25 m s−1
+Rotor diameter 130 m
+Rated rotor speed 11.753 rpm
+Rated wind speed 9.8 m s−1
+Gear ratio 97 [–]
+data generation.Fig. 4demonstrates the 3D model of the
+wind turbine and the detailed model of the drivetrain with
+the component under consideration and the corresponding
+coordinate system.
+The high-ﬁdelity MBS model features ﬂexible modeling
+of tower, blades, low speed sh aft, high speed shaft using
+linear beam ﬁnite elements. Fle xible contact between gears
+is considered analytically using the Steiner method [ 10].
+Inﬂow aerodynamics is considered using blade element
+momentum theory through the coupling of the AeroDyn
+solver [ 19]. Rotational bearings are modeled using linear
+stiffness and damping elements. Cross coupling of stiffness
+forces is considered in the main bearings.The MBS model
+provides data with sampling frequency of 1000Hz.
+4.2 Data Processing and Analysis
+Conditions of power production design load cases (DLC
+1.2 & 1.3) according to [ 13] are considered for the
+data generation. Wind proﬁles with normal turbulence
+(NTM) for DLC 1.2 and extreme turbulence (ETM) for
+DLC 1.3 were generated using TurbSim [14], with 2
+seeds for each DLC for the nominal wind velocities:
+Œ3;6;9;12;15;18;21;23;25/c141ms−1. Additional misaligned
+inﬂow design conditions of ˙8ıyaw misalignment at rated
+K
+------------------------------End of the page -----------------------------------
+Forsch Ingenieurwes (2023) 87:31–38 35
+Fig. 4 3D diagram of the wind turbine with the detailed model of the
+drivetrain from Simpack showing the coordinate system and the com-
+ponent under consideration
+wind speed are considered in the analysis, yielding 40
+simulations totally, each of 600 s long. The load cases are
+summarized in Table 2.
+For training and ﬁtting of the state-space and neural net-
+work models the ﬁrst seed was used, while the second seed
+was used for testing and validation purposes. Three state-
+space models were trained using the dataset from DLC
+1.3 with wind speeds: Œ3;12;21/c141ms−1. The trained models
+were combined into one state- space model using statisti-
+cally weighted means of the parameters of the individual
+models. The combination was done using the covariance
+matrices of the A;B;Cmatrices of the individual state-
+space models from each DLC, where these covariance ma-
+trices indicate the uncertainty of the individual models. The
+ﬁtting and training of the neural network was done using
+Table 2 Summary of load cases
+DLC Wind Speeds [m s−1] Turbulence
+ModelNo. of
+SeedsNotes Total No. of
+Simulations
+1.2 3, 6, 9, 12, 15, 18, 21, 23, 25 NTM 2 – 18
+1.2 9.8 NTM 2 Yaw misalignment = ˙8ı4
+1.3 3, 6, 9, 12, 15, 18, 21, 23, 25 ETM 2 – 18the other DLCs that were not used for ﬁtting the state-space
+models to avoid data leakage and overﬁtting.
+5 Results and Discussion
+The proposed approach is implemented on one output
+quantity exemplarily, namely the axial reaction component
+on the front bearing of the pinion shaft, FPS;F;x . The inputs
+to the virtual sensor considered for the investigated output
+quantity are u=/STX
+!Gen Pelec aPS;F aTT ˛PS;F;x/ETX
+,
+which are typically the available and accessible physical
+measurements from the SCADA and CMS systems, where
+!Gen is the generator rotational speed, Pelec is the gener-
+ated electric power, aPS;F are the measured translational
+acceleration of the front pini on shaft in the directions
+x;y;z .aTTis the tower tip translational acceleration in
+the directions x;y;z ,a n d ˛PS;F;x is the rotational accel-
+eration of the front bearing of the pinion shaft around the
+rotational axis x.
+The validation of the proposed virtual sensor concept
+is presented using comparison between the ground truth,
+which is generated using the high-ﬁdelity simulation tool
+Simpack , the trained linear state-space model, and the
+proposed concept of augmenting the simpliﬁed linear model
+with neural networks.
+Fig. 5exhibits the statistical distribution of the normal-
+ized with reference to the mean of the reference time se-
+ries output bFPS;F;x vs the estimations using state-space
+model and neural network augmented state-space model.
+The state-space model (light green) can in most cases repro-
+duce the median of the distribution accurately, however the
+25th and 75th percentiles are deviating systematically, while
+the neural network (light coral) can accurately reproduce
+the median, the 25th and 75th percentiles and the minimum
+and maximum ranges of the data with minimal deviations.
+The deviations observed in the case of vw=3 m s−1can be
+explained as follows. The cut-in wind speed of the investi-
+gated turbine is 3 m s−1, where the controller ramps up the
+turbine till it reaches the rated rotational speed, hence highly
+non-linear behavior of the commanded generator torque is
+present, which leads to larger deviations in the estimations
+of the virtual sensor compar ed to the reference signals.
+In order to have deeper understanding of the quality of
+the proposed concept, correlation of the regression is in-
+vestigated. Pearson’s coefﬁcient of correlation is used as an
+K
+------------------------------End of the page -----------------------------------
+36 Forsch Ingenieurwes (2023) 87:31–38
+Fig. 5 Statistical box plot of
+DLC 1.2 for different windspeeds and yaw conditions ofthe normalized output variable.Color code: Simpack ( blue),
+Linear State-Space ( green ),
+Augmented State-Space andNeural Network (Proposed ap-proach) ( red)
+3 m/s 9 m/s
+9.8 m/s (=-8°)
+9.8 m/s (=+8°) 12 m/s 18 m/s 25 m/s-10123Normalized FPS,F,x [-]
+Fig. 6 Correlation between esti-
+mations and reference signalsfor 2 DLCs, x-axis representsthe reference signal and y-axisrepresents the estimations ofthe virtual sensor. aDLC 1.2,
+vw=1 8 m s−1,bDLC 1.3,
+vw=6 m s−1
+-3 -2 -1 0 1
+Reference FPS,F,x [N] 105-3-2-101Estimation FPS,F,x [N]105 : R=0.99514
+Data
+Fit
+Y = T
+-15 -10 -5 0 5
+Reference FPS,F,x [N] 104-15-10-505Estimation FPS,F,x [N]104 : R=0.99062
+Data
+Fit
+Y = Tab
+Fig. 7 Estimation vs. ground
+truth in time domain. DLC 1.2,
+vw=9 m s−1
+0 100 200 300 400 500 600
+Time [s]-3-2-1012FPS,F,x [N]105
+350 350.05 350.1
+Time [s]-14-12-10-8-6-4-20104
+SPCK
+SS
+Augmented SS and NN
+K
+------------------------------End of the page -----------------------------------
+Forsch Ingenieurwes (2023) 87:31–38 37
+10-1100101102
+Frequency [Hz]4050607080PSD [dB/Hz]
+SPCK
+SS
+Augmented SS and NN
+10-1100101102
+Frequency [Hz]405060708090PSD [dB/Hz]SPCK
+SS
+Augmented SS and NNa
+b
+Fig. 8 Power spectral density of estimation vs. ground truth. aDLC
+1.2, rated wind speed at /CR=− 8ı,bDLC 1.3, vw=2 1 m s−1
+error metric, deﬁned as a measur e how strong a relationship
+is between two variables, which reads
+rxy=Pn
+i=1.xi−/SYNx/.yi−/SYNy/qPn
+i=1.xi−/SYNx/2qPn
+i=1.yi−/SYNy/2; (7)
+where xiandyiare the sample points, nis the number
+of samples in population, and /SYNx;/SYNyare the mean of the
+population.
+The regression of two load cases is demonstrated in
+Fig. 6, achieving 99% coefﬁcient of correlation.
+The investigation of the signals in the time and frequency
+domain helps understand the nature of the quantity to be
+predicted. Fig. 7shows the reference signal and the esti-
+mated signals of DLC 1.2 for wind speed vw=9 m s−1
+and an extract of 0.1 s. The linear state-space model doesnot capture the time-domain behavior well in comparison
+to the augmented state-space an d neural network approach.
+Fig. 8illustrates the power spectral density of two load
+cases, namely DLC 1.2 at rated wind speed
+vw=9 . 8 m s−1
+with yaw misalignment /CR=− 8ıand DLC 1.3 with wind
+speed vw=2 1 m s−1. The virtual sensor is capable of
+capturing the complete frequency response of the dynamic
+system with minimal mismatch.6 Conclusion and Further Work
+In this work a formulation of data-based virtual sensor wasachieved which can estimate the internal forces on mechan-
+ical components, namely the front bearing of the pinion
+shaft, with correlation reaching 99% in time and frequency
+domains. The proposed formulation is based on the aug-mentation of a linear state-space model with a non-linearfeed forward neural network. The data used for ﬁtting and
+training of the virtual sensor elements were generated using
+a high-ﬁdelity multibody simulation model of the wind tur-bine system. Sect. 5highlights an excerpt of the achieved
+results.
+The virtual sensor can be incorporated into a monitoring
+framework that can enhance the monitoring capabilities of
+the standard condition monitoring systems in which it canestimate the internal forces on the mechanical componentsusing the already availabl e and accessible measurements
+from SCADA and CMS systems. It can also be employed
+for online vibration monitoring in the frequency domain,where the signiﬁcant natural frequencies of the system canbe identiﬁed in an online manner highlighting any abnor-mal or excessive vibration in the system. In addition to the
+monitoring purposes, the virtual sensor can be integrated
+to sophisticated control systems such as model predictivecontrol frameworks, where the virtual sensor can providemeasurements of the forces th at can be used for optimiza-
+tion purposes such as damage accumulation on the critical
+mechanical components in order to extend the lifetime ofthe investigated component or minimize the maintenancecosts due to the beneﬁt of prediction of non-measurablequantities.
+Funding Open Access funding enabled and organized by Projekt
+DEAL.
+Open Access This article is licensed under a Creative Commons At-
+tribution 4.0 International License, which permits use, sharing, adapta-tion, distribution and reproduction in any medium or format, as long asyou give appropriate credit to the original author(s) and the source, pro-vide a link to the Creative Commons licence, and indicate if changeswere made. The images or other third party material in this article areincluded in the article’s Creative Commons licence, unless indicatedotherwise in a credit line to the material. If material is not includedin the article’s Creative Commons licence and your intended use is notpermitted by statutory regulation or ex ceeds the perm itted use, you will
+need to obtain permission directly from the copyright holder. To viewa copy of this licence, visit http://creativecommons.org/licenses/by/4.
+0/.
+References
+1. Anand A, Loew S, Bottasso CL (2022) Economic nonlinear model
+predictive control of fatigue for a hybrid wind-battery generationsystem. J Phys Conf Ser 2265(3):106–32. https://doi.org/10.1088/
+1742-6596/2265/3/032106
+K
+------------------------------End of the page -----------------------------------
+38 Forsch Ingenieurwes (2023) 87:31–38
+2. Azzam B, Schelenz R, Roscher B et al (2021) Development
+of a wind turbine gearbox virtual load sensor using multibodysimulation and artiﬁcial neural networks. Forsch Ingenieurwes85(2):241–250. https://doi.org/10.1007/s10010-021-00460-3
+3. Bortolotti P, Tarres HC, Dykes K et al (2019) IEA wind task
+37: systems engineering in wind energy – WP2.1 reference windturbines https://doi.org/10.2172/1529216 (https://www.osti.gov/
+biblio/1529216 )
+4. Boyd S, El Ghaoui L, Feron E, Balakrishnan V (1994) Linear ma-
+trix inequalities in syste m and control theory. Society for industrial
+and applied mathematics
+5. Branlard E, Giardina D, Brown CSD (2020) Augmented Kalman
+ﬁlter with a reduced mechanical model to estimate tower loads ona land-based wind turbine: a step towards digital-twin simulations.Wind Energ Sci 5(3):1155–1167. https://doi.org/10.5194/wes-5-
+1155-2020
+6. Branlard E, Jonkman J, Dana S et al (2020) A digital twin based on
+OpenFAST linearizations for real-time load and fatigue estimationof land-based turbines. J Phys Conf Ser 1618:22030. https://doi.org/
+10.1088/1742-6596/1618/2/022030
+7. Brunton SL, Kutz JN (2019) Data-driven science and engineering
+machine learning, dynamical systems, and control
+8. Clifton A, Barber S, Bray A et al (2022) Grand challenges in the
+digitalisation of wind energy. Wind Energy Science Discussions2022, pp 1–42 https://doi.org/10.5194/wes-2022-29 (https://wes.
+copernicus.org/preprints/wes-2022-29/ )
+9. Dassault Systèmes (2022) Simpack. https://www.3ds.com/products-
+services/simulia/products/simpack/ . Accessed 15.08.2022
+10. DIN 3990 (1987) Tragfähigkeitsberechnung von Stirnrädern; Ein-
+führung und allgemeine Einﬂußfaktoren. https://doi.org/10.31030/
+2069785
+11. Freire PJ, Srivallapanondh S, Napoli A et al (2022) Computational
+complexity evaluation of neural network applications in signal pro-cessing https://doi.org/10.48550/ARXIV .2206.12191 (https://arxiv.
+org/abs/2206.12191 )12. Gedon D, Wahlström N, Schön TB et al (2020) Deep state space
+models for nonlinear system identiﬁcation https://doi.org/10.1016/
+j.ifacol.2021.08.406
+13. IEC 61400-1 (2005) Wind turbines – Part 1: Design requirements14. Jonkman BJ, Buhl JML (2006) Turbsim user’s guide https://doi.org/
+10.2172/891594 (https://www.osti.gov/biblio/891594 )
+15. Jonkman J, Butterﬁ eld S, Musial W et al (2009) Deﬁn ition of a 5-
+mw reference wind turbine for offshore system development https://
+doi.org/10.2172/947422 (https://www.osti.gov/biblio/947422 )
+16. Kamel O, Hauptmann S, Bottasso CL (2022) Estimation of dam-
+age equivalent loads of Drivetrain of wind turbines using machinelearning. J Phys Conf Ser 2265(3):32075. https://doi.org/10.1088/
+1742-6596/2265/3/032075
+17. Ljung L, Andersson C, Tiels K et al (2020) Deep learning and sys-
+tem identiﬁcation. IFAC PapersOnLine 53(2):1175–1181. https://
+doi.org/10.1016/j.ifacol.2020.12.1329
+18. Mehlan FC, Nejad AR, Gao Z (2021) Estimation of wind turbine
+gearbox loads for Online fatigue monitoring using inverse methods.In: Ocean renewable energy, vol 9. American Society of Mechani-cal Engineers, In https://doi.org/10.1115/OMAE2021-62181
+19. Moriarty PJ, Hansen AC (2005) Aerodyn theory manual https://doi.
+org/10.2172/15014831 (https://www.osti.gov/biblio/15014831 )
+20. Popko W, Huhn ML, Robertson A et al (2018) Veriﬁcation of
+a numerical model of the offshore wind turbine from the AlphaVentus wind farm within OC5 phase III 10 https://doi.org/10.1115/
+OMAE2018-77589
+21. Popko W, Robertson A, Jonkman J et al (2019) Validation of nu-
+merical models of the offshore wind turbine from the Alpha Ventuswind farm against full-scale measurements within OC5 phase III.J Offshore Mech Arct Eng. https://doi.org/10.1115/1.4047378
+22. Wright AD, Fingersh LJ (2008) Advanced control design for wind
+turbines; part I: control design, implementation, and initial testshttps://doi.org/10.2172/927269 (http://www.osti.gov/servlets/purl/
+927269-8Bh5XU/ )
+K
+------------------------------End of the page -----------------------------------
