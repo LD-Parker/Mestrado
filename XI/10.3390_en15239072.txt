@@ -1,0 +1,1176 @@
+Citation: Zhang, Z.; Wang, S.; Wang,
+P .; Jiang, P .; Zhou, H. Research on
+Fault Early Warning of Wind Turbine
+Based on IPSO-DBN. Energies 2022 ,
+15, 9072. https://doi.org/10.3390/
+en15239072
+Academic Editor: Davide Astolﬁ
+Received: 11 November 2022
+Accepted: 29 November 2022
+Published: 30 November 2022
+Publisher’s Note: MDPI stays neutral
+with regard to jurisdictional claims in
+published maps and institutional afﬁl-
+iations.
+Copyright: © 2022 by the authors.
+Licensee MDPI, Basel, Switzerland.
+This article is an open access article
+distributed under the terms and
+conditions of the Creative Commons
+Attribution (CC BY) license (https://
+creativecommons.org/licenses/by/
+4.0/).
+energies
+Article
+Research on Fault Early Warning of Wind T urbine Based
+on IPSO-DBN
+Zhaoyan Zhang
+ , Shaoke Wang, Peiguang Wang *
+ , Ping Jiang and Hang Zhou
+College of Electronic Information Engineering, Hebei University, Baoding 071002, China
+*Correspondence: pgwang@hbu.edu.cn
+Abstract: Aiming at the problem of wind turbine generator fault early warning, a wind turbine fault
+early warning method based on nonlinear decreasing inertia weight and exponential change learning
+factor particle swarm optimization is proposed to optimize the deep belief network (DBN). With
+the data of wind farm supervisory control and data acquisition (SCADA) as input, the weights and
+biases of the network are pre-trained layer by layer. Then the BP neural network is used to ﬁne-tune
+the parameters of the whole network. The improved particle swarm optimization algorithm (IPSO)
+is used to determine the number of neurons in the hidden layer of the model, pre-training learning
+rate, reverse ﬁne-tuning learning rate, pre-training times and reverse ﬁne-tuning training times and
+other parameters, and the DBN predictive regression model is established. The experimental results
+show that the proposed model has better performance in accuracy, training time and nonlinear ﬁtting
+ability than the DBN model and PSO-DBN model.
+Keywords: wind turbine; deep belief network; improved particle swarm optimization algorithm;
+wind power generator
+1. Introduction
+In recent years, the wind power industry has developed rapidly, and the installed scale
+of wind power continues to expand [ 1–3]. According to the statistics of the global wind
+energy council (GWEC), the total installed capacity of global wind power in 2020 is 743 GW,
+among which China ranks ﬁrst in the world [ 4]. There are also great challenges behind the
+rapid development of the wind power industry. With the increase of the running time of
+wind turbines and the long-term working in the natural environment of changeable forces,
+difﬁcult conditions and complex working conditions, the failure rate of main components
+such as generator, gearbox, main bearing, yaw system and so on increased signiﬁcantly [ 5].
+Generator failure is one of the main causes of wind turbine outage [ 6]. The use of accurate
+detection technology for early fault early warning of generators can effectively reduce the
+failure rate of wind turbines and increase the beneﬁts of wind farms.
+Wind turbine is a system with strong internal correlation, the components inﬂuence
+each other, and the fault types are varied [ 7,8]. At present, the fault early warning methods
+of wind turbine mainly focus on the parameters such as temperature signal, acoustic
+emission signal, vibration signal, electrical signal and so on [ 9]. In reference [ 10], the
+generator temperature is modiﬁed by linear regression technology, and the generator
+condition monitoring based on temperature signal is realized. In reference [ 11], the spatial
+neighborhood coefﬁcient of data-driven threshold is used to avoid misdiagnosis caused
+by strong noise, and on this basis, an empirical wavelet transform generator bearing fault
+diagnosis method based on measured vibration signal is proposed. In reference [ 12], the
+minimum entropy deconvolution method and envelope analysis method are combined
+to realize the analysis and diagnosis of electric corrosion of generator bearings by using
+vibration signals.
+At present, with the great advantage of deep mining data abstract features and inherent
+rules, the deep learning algorithm has made remarkable achievements in the ﬁelds of speech
+Energies 2022 ,15, 9072. https://doi.org/10.3390/en15239072 https://www.mdpi.com/journal/energies
+------------------------------End of the page -----------------------------------
+Energies 2022 ,15, 9072 2 of 18
+recognition [ 13], image classiﬁcation [ 14] and target detection [ 15]. Because it can solve
+the problem of insufﬁcient feature extraction ability of traditional diagnosis methods, deep
+learning algorithm has been applied to the ﬁeld of fault diagnosis [ 16]. In reference [ 17],
+an improved deep learning model which combines SAE and depth neural network is
+proposed to realize the on-line condition monitoring of generator. In reference [ 18], the
+early fault early warning of wind turbine gearbox is realized by using depth variational
+self-coding network.
+Wang and Liu [ 19] proposed a data-driven wind turbine condition monitoring method
+based on a new multivariable state estimation technology (Multivariate State Estimation
+Technique, MSET), which realizes the fault early warning of wavelet transform components.
+Su et al. [ 20] proposed a wind turbine state modeling and fault identiﬁcation method based
+on a combined model on the basis of BP neural network and nonlinear state estimation
+method. Sun et al. [ 21] established a hidden Markov state monitoring model by using the
+characteristic variables of the supercapacitor of the pitch control system.
+To summarize, the current mainstream fault early warning methods usually have some
+defects, such as low sensitivity and accuracy, small predictable time range, poor real-time
+performance and so on. When selecting state variables, most machine learning methods
+rely too much on expert experience and are highly subjective. Usually, the parameters
+are independent of each other by default, but in practice, the parameters of the unit are
+often related to each other, which leads to the introduction of some redundant or useless
+quantities with the prediction object when determining the input parameters, which affects
+the results.
+In view of this, aiming at the problem of wind turbine fault early warning, an IPSO
+-DBN wind turbine fault early warning method is proposed in this paper. Firstly, multiple
+restricted Boltzmann machines (RBM) and one output layer are connected to form a depth
+conﬁdence network. The unsupervised greedy layer-by-layer algorithm is used to pre-
+train the weights and biases of the network to generate better network parameters, and
+then the BP back propagation algorithm is used to ﬁne-tune the whole network. For the
+problems that it is difﬁcult to determine the parameters such as the number of neurons in
+the hidden layer of the DBN network, the pre-training learning rate, the reverse ﬁne-tuning
+learning rate, the pre-training times and the reverse ﬁne-tuning training times, the IPSO
+algorithm is used to optimize it intelligently. When the generator deviates from the normal
+workspace, the reconstruction error sequence changes obviously and deviates seriously
+from the original dynamic stable state, based on which the early fault detection of the
+generator is realized.
+2. Particle Swarm Optimization Algorithm
+2.1. Basic Particle Swarm Optimization Algorithm
+Particle swarm optimization (PSO) is an intelligent population optimization method
+to ﬁnd the global optimal solution [ 22]. At present, it has been widely used in intelligent
+control [ 23], path planning [ 24], neural network training [ 25], image processing [ 26], feature
+selection [ 27] and other ﬁelds [ 28]. PSO randomly generates a batch of particles in the
+search space, which have no volume and mass, only position and speed, and update their
+positions according to their own memory and the information of other particles in the
+group. Through the competition and cooperation between particles, we continue to move
+closer to the historical optimal position of individuals and populations, so as to achieve the
+purpose of ﬁnding the optimal solution in the complex solution space. The velocity and
+position update formula of the particle is shown as follows [19].
+(
+vk+1
+id=wvk
+id+c1r1(pid xk
+id) +c2r2(pgd xk
+id)
+xk+1
+id=xk
+id+vk+1
+id(1)
+where vk
+idis the optimal solutions of the d-dimensional speed of the iparticle in the k-th
+iteration. xk
+idis the optimal solutions of the d-dimensional position of the iparticle in the
+------------------------------End of the page -----------------------------------
+Energies 2022 ,15, 9072 3 of 18
+k-th iteration. pidis the optimal solutions of the d-dimensional individual of the iparticle in
+thek-th iteration. pgdis the optimal solutions of the d-dimensional population history of the
+iparticle in the k-th iteration. vk+1
+idand xk+1
+idare the speed and position of the d-dimensional
+of the i-particle in the k+ 1 iteration, respectively. wis the inertia weight. c1and c2are
+the individual learning factor and population learning factor, respectively. r1and r2are a
+random number in the interval [0, 1].
+2.2. Improved Particle Swarm Optimization Algorithm
+When ﬁnding the global optimal solution of general problems, the basic PSO algorithm
+has a good performance, but for complex high-dimensional optimal problems, it is easy
+to fall into local convergence, premature convergence or even non-convergence [ 29–31].
+In order to solve these problems, an improved particle swarm optimization algorithm
+with nonlinear decreasing inertia weight and exponential learning factor is proposed
+in this paper.
+Inertia weight wis a very important parameter in PSO, which controls the local and
+global optimization ability of PSO, and determines the optimization effect of the algorithm
+to a great extent. When wis large, the global optimization ability is strong, the local
+optimization ability is weak, and the convergence speed is fast; when wis small, it is just the
+opposite. Therefore, in order to ensure the global optimization of the population with larger
+inertia weights in the early stage of the iteration, the refined optimization is realized with
+smaller inertia weights at the end of the iteration, and the nonlinear inertia weight strategy
+and control factors are introduced, and the inertia weights are shown in Equation (2).
+w(t) =wmax wminr
+1+
+Kt
+T+wmin (2)
+where w(t) is the inertia weight of the titeration. wmaxandwminare the maximum and
+minimum inertia weights, respectively. Tis the maximum number of iterations. Kis the
+weight control factor.
+Learning factor is also an important parameter in PSO. The larger the individual
+learning factor, the stronger the global search ability; the smaller the individual learning
+factor, the stronger the local search ability; and the population learning factor has the
+opposite attribute. At the beginning of the iteration, the individual learning factor should
+be larger and the population learning factor should be smaller; with the continuous increase
+of the number of iterations, the individual learning factor of particles gradually decreases
+and the group learning factor increases gradually. The use of exponential learning factors
+can well meet this requirement, and the updated formula is shown in Equation (3).
+(
+c1=c1min+ (c1max c1min)e 20(t
+T)6
+c2=c2max (c2max c2min)e 20(t
+T)6 (3)
+where c1minand c 2minare the minimum of individual learning factor and population
+learning factor, respectively. c1maxand c2maxare the maximum of individual learning factor
+and population learning factor, respectively.
+Four performance test functions such as Rastrigin, Griewank, Acklet and Rosenbrock
+are used to analyze and verify the performance of IPSO, and compared with the basic PSO.
+The maximum number of iterations Tis set to 300, and other parameters are shown in
+Table 1.
+The optimal convergence ability of PSO and IPSO in the four performance test func-
+tions is shown in Figure 1. The value of x-coordinate is the number of iterations, and the
+value of y-coordinate is the ﬁtness value (the average of 20 calculations).
+------------------------------End of the page -----------------------------------
+Energies 2022 ,15, 9072 4 of 18
+Table 1. PSO and IPSO parameter setting.
+Arithmetic Population Size (N) Dimension (D) w c1 c2
+PSO 100 30 0.8 2.0 2.0
+IPSO 100 30 0.9~0.4 2.5~0.5 0.5~2.5
+Energies 2022 , 15, x FOR PEER REVIEW  4 of 19  
+ Four performance test functions such as Rastrigin, Griewank, Acklet and 
+Rosenbrock are used to analyze and verify the performance of IPSO, and compared with 
+the basic PS O. The maximum number of iterations T is set to 300, and other parameters 
+are shown in Table 1.  
+Table 1. PSO and IPSO parameter setting.  
+Arithmetic  Population 
+Size  (N) Dimension  
+(D) ω c1 c2 
+PSO  100 30 0.8 2.0 2.0 
+IPSO  100 30 0.9~0.4  2.5~0.5  0.5~2.5  
+The optimal convergence ability of PSO and IPSO in the four performance test 
+functions  is shown in Figure 1. The value of x-coordinate is the number of iterations, and 
+the value of y-coordinate is the fitness value (the average of 20 calculations).  
+0 50 100 150 200 250 300
+Number of iteration050100150200250300350400Average fitness valuePSO
+IPSO
+ 
+0 50 100 150 200 250 300
+Number of iteration0100200300400500600Average fitness valuePSO
+IPSO  
+(a) (b) 
+0 50 100 150 200 250 300
+Number of iteration-22.3-22.2-22.1-22-21.9-21.8-21.7-21.6-21.5Average fitness valuePSO
+IPSO
+ 
+0 50 100 150 200 250 300
+Number of iteration010002000300040005000600070008000 Average fitness valuePSO
+IPSO  
+(c) (d) 
+Figure 1. PSO and IPSO optimization results. ( a) Fitness value under Rastrigin test function. ( b) 
+Fitness value under Griewank test function. ( c) Fitness value under Acklet test function. ( d) Fitness 
+value under Rosenbrock test function.  
+As can be seen from Figure 1, compared with PSO, IPSO has faster convergence 
+speed, higher accuracy and better sta bility.  
+3. Deep Belief Network  
+The deep belief  network proposed by Geoffrey Hinton et al. [32] overcomes the 
+problems of traditional neural network, such as low training efficiency, lack of small 
+sample processing ability, easy to fall into local optimal solution and so on. The structure 
+of the DBN ne twork is shown in Figure 2.  DBN is a deep Bayesian probability generation 
+Figure 1. PSO and IPSO optimization results. ( a) Fitness value under Rastrigin test function.
+(b) Fitness value under Griewank test function. ( c) Fitness value under Acklet test function.
+(d) Fitness value under Rosenbrock test function.
+As can be seen from Figure 1, compared with PSO, IPSO has faster convergence speed,
+higher accuracy and better stability.
+3. Deep Belief Network
+The deep belief network proposed by Geoffrey Hinton et al. [ 32] overcomes the
+problems of traditional neural network, such as low training efﬁciency, lack of small sample
+processing ability, easy to fall into local optimal solution and so on. The structure of the
+DBN network is shown in Figure 2. DBN is a deep Bayesian probability generation model
+composed of the input layer, multiple RBM and output layer [ 33]. The training process
+of the DBN model includes two parts: pre-training and parameter tuning [ 34]. First of
+all, the RBM is pre-trained layer by layer by unsupervised greed to generate better initial
+network parameters. Then the BP neural network is used to reverse ﬁne-tune the network
+parameters to make the model optimal.
+------------------------------End of the page -----------------------------------
+Energies 2022 ,15, 9072 5 of 18
+Energies 2022 , 15, x FOR PEER REVIEW  5 of 19  
+ model composed of the input layer,  multiple RBM and output layer [33]. The training 
+process of the DBN model includes two parts: pre -training and parameter tuning [34]. 
+First of all,  the RBM is pre -trained layer by layer by unsupervised greed to generate 
+better initial network parameters . Then the BP neural network is used to reverse 
+fine-tune the network parameters to make the model optimal.  
+...............
+......
+...
+n-tier RBMOutput layer
+Input layerReverse trimmingLayer -by-layer training
+Input data  xReconstruct output  x  ^
+ 
+Figure 2. DBN  network structure.  
+3.1. Pre-Training of the DBN Model  
+The pre -training of the DBN model uses the CD -k algorithm to train the weights and 
+biases of each RBM in the network layer by layer unsupervised [35]. RBM basic  structure 
+is shown in Figure 3.  RBM consists of a visible layer and a hidden layer . There is no  
+connection within the layer, and no full connection between layers [36] . 
+...
+...b1 b2 b3 b4 bm
+a1 a2 a3 an
+v1 v2 v3 vnh1 h2 h3 h4 hm
+Wnm
+ 
+Figure 3. RBM basic structure.  
+RBM is an energy -based model. When the energy is minimum and the network 
+reaches the best state, the construction of the n etwork is actually the process of 
+minimizing the energy function [37]. The definition of RBM energy function is shown in 
+Equation (4). 
+1 1 1 1( , )n m n m
+i i j j i ij j
+i j i jE v h b v c h v w h
+= = = == − − −  
+ (4) 
+where  θ = {wij, bi, cj}. vi is the i neuron state of the visible layer . hj is the j neuron state of the 
+hidden layer . wij is the connection weight between the i neuron of the visible layer and the 
+Figure 2. DBN network structure.
+3.1. Pre-Training of the DBN Model
+The pre-training of the DBN model uses the CD-k algorithm to train the weights and
+biases of each RBM in the network layer by layer unsupervised [ 35]. RBM basic structure
+is shown in Figure 3. RBM consists of a visible layer and a hidden layer. There is no
+connection within the layer, and no full connection between layers [36].
+Energies 2022 , 15, x FOR PEER REVIEW  5 of 19  
+ model composed of the input layer,  multiple RBM and output layer [33]. The training 
+process of the DBN model includes two parts: pre -training and parameter tuning [34]. 
+First of all,  the RBM is pre -trained layer by layer by unsupervised greed to generate 
+better initial network parameters . Then the BP neural network is used to reverse 
+fine-tune the network parameters to make the model optimal.  
+...............
+......
+...
+n-tier RBMOutput layer
+Input layerReverse trimmingLayer -by-layer training
+Input data  xReconstruct output  x  ^
+ 
+Figure 2. DBN  network structure.  
+3.1. Pre-Training of the DBN Model  
+The pre -training of the DBN model uses the CD -k algorithm to train the weights and 
+biases of each RBM in the network layer by layer unsupervised [35]. RBM basic  structure 
+is shown in Figure 3.  RBM consists of a visible layer and a hidden layer . There is no  
+connection within the layer, and no full connection between layers [36] . 
+...
+...b1 b2 b3 b4 bm
+a1 a2 a3 an
+v1 v2 v3 vnh1 h2 h3 h4 hm
+Wnm
+ 
+Figure 3. RBM basic structure.  
+RBM is an energy -based model. When the energy is minimum and the network 
+reaches the best state, the construction of the n etwork is actually the process of 
+minimizing the energy function [37]. The definition of RBM energy function is shown in 
+Equation (4). 
+1 1 1 1( , )n m n m
+i i j j i ij j
+i j i jE v h b v c h v w h
+= = = == − − −  
+ (4) 
+where  θ = {wij, bi, cj}. vi is the i neuron state of the visible layer . hj is the j neuron state of the 
+hidden layer . wij is the connection weight between the i neuron of the visible layer and the 
+Figure 3. RBM basic structure.
+RBM is an energy-based model. When the energy is minimum and the network
+reaches the best state, the construction of the network is actually the process of minimizing
+the energy function [37]. The deﬁnition of RBM energy function is shown in Equation (4).
+Eq(v,h) = n
+å
+i=1bivi m
+å
+j=1cjhj n
+å
+i=1m
+å
+j=1viwijhj (4)
+------------------------------End of the page -----------------------------------
+Energies 2022 ,15, 9072 6 of 18
+where q= {wij,bi,cj}.viis the ineuron state of the visible layer. hjis the jneuron state of the
+hidden layer. wijis the connection weight between the ineuron of the visible layer and the
+jneuron of the hidden layer. biis the offset of the ineuron of the visible layer. cjis the bias
+of the jneuron of the hidden layer.
+The state of neurons in the RBM network can be described by statistical probability.
+According to Equation (4), the joint probability distribution of state ( v,h) can be obtained,
+as shown in Equation (5).
+Pq(v,h) =1
+Zqe Eq(v,h)(5)
+where Zqis the distribution function, as shown in Equation (6).
+Zq=å
+v,he Eq(v,h)(6)
+Visible layer element distribution Pq(v) is the key to solve practical engineering prob-
+lems, which corresponds to the edge distribution of Pq(v,h). The speciﬁc deﬁnition is shown
+in Equation (7).
+Pq(v) =å
+he Eq(v,h)
+å
+v,he Eq(v,h)(7)
+Similar probability distributions with hidden layers:
+Pq(h) =å
+ve Eq(v,h)
+å
+v,he Eq(v,h)(8)
+In order to make the distribution under the RBM representation ﬁt the original sample
+distribution as much as possible, the K-L distance in the information theory is introduced.
+The smaller the K-L distance, the better the ﬁtting effect, so the real edge distribution can
+be transformed into the maximum likelihood estimation of some approximate distribution.
+In the RBM model, the likelihood function can be expressed as:
+lnL(q) =lnÕ
+vPq(v) =å
+vlnPq(v) (9)
+To require maximum likelihood, we need to derive the likelihood function.
+¶lnPq(v)
+¶q=¶lnå
+he Eq(v,h)
+¶q ¶lnå
+v,he Eq(v,h)
+¶q
+=1
+å
+he Eq(v,h)¶å
+he Eq(v,h)
+¶q 1
+å
+v,he Eq(v,h)¶å
+v,he Eq(v,h)
+¶q
+=å
+he Eq(v,h)( ¶Eq(v,h)
+¶q)
+å
+he Eq(v,h) å
+v,he Eq(v,h)( ¶Eq(v,h)
+¶q)
+å
+v,he Eq(v,h)(10)
+Bringing in the expressions of P(v,h) and P(h|v), Equation (11) is obtained:
+¶lnPq(v)
+¶q=å
+h(Pq(hjv)( ¶Eq(v,h)
+¶q)) å
+v,h(Pq(v,h)( ¶Eq(v,h)
+¶q))
+=EPq(hjv)( ¶Eq(v,h)
+¶q) EPq(v,h)( ¶Eq(v,h)
+¶q)(11)
+------------------------------End of the page -----------------------------------
+Energies 2022 ,15, 9072 7 of 18
+Replacing qwith w,b,cto derive respectively, and bringing into the E(v,h) expression,
+we can obtain:
+¶lnPq(v)
+¶wij=Pq(hi=1jv)vj å
+vPq(v)Pq(hj=1v)vj (12)
+¶lnPq(v)
+¶bi=vi å
+vPq(v)vi (13)
+¶lnPq(v)
+¶ci=Pq(hi=1jv) å
+vPq(v)Pq(hi=1jv) (14)
+Because there is no connection between RBM layers, the activation functions of RBM
+visible layer neurons and hidden layer neurons can be expressed as follows:
+Pq(vi=1jh) = f(bi+n
+å
+i=1wj,ivi) (15)
+Pq(hj=1jv) = f(cj+m
+å
+j=1wi,jhj) (16)
+f(x) =1
+1+ex(17)
+where f(x) is the activation function.
+The RBM parameters are updated by the CD-k algorithm, and the update criterion of
+q= {wij,bi,cj} can be obtained by combining the neuron activation functions of visible layer
+and hidden layer, as shown in Equation (18).
+8
+>>><
+>>>:wk+1
+ij=wk
+ij+#n
+vihj
+Pq(hjv) 
+vihj
+recono
+bk+1
+i=bk
+i+#n
+hviiPq(hjv) hviirecono
+ck+1
+j=ck
+j+#n
+hj
+Pq(hjv) 
+hj
+recono(18)
+where #is the learning rate. hiPq(h|v)is the expectation of the partial derivative under
+thePq(h|v) distribution.hirecon is the expectation of the partial derivative under the
+reconstructed model distribution.
+3.2. Fine Tuning of the DBN Model
+After the unsupervised layer-by-layer training of the DBN network using the contrast
+divergence algorithm, a better initial weight and bias of the model are obtained. Because
+the RBM of each layer is trained separately, it can only ensure that the feature extraction
+of the RBM visible layer of each RBM output layer is optimal but cannot guarantee the
+optimal feature vector mapping of the whole DBN network. Therefore, it is necessary to
+use the BP back propagation algorithm to ﬁne-tune the error between the output and input
+of the network from top to bottom to further optimize the weights and biases of the DBN
+network to optimize the parameters of the whole DBN.
+4. Fault Early Warning Method of Wind T urbine Generator Based on IPSO-DBN
+The fault early warning process of wind turbine generator based on IPSO-DBN is
+shown in Figure 4. As can be seen from Figure 4, it is mainly divided into: data input
+processing module, IPSO training module and IPSO-DBN fault early warning module.
+------------------------------End of the page -----------------------------------
+Energies 2022 ,15, 9072 8 of 18
+Energies 2022 , 15, x FOR PEER REVIEW  8 of 19  
+ 
+IPSO training
+Initialize the IPSO parameter and determine the 
+velocity extremum and position boundary of 
+each particle
+DBN pre -training for each particle
+BP algorithm reverse fine -tuning DBN network 
+parameters
+Calculate the fitness value and compare
+According to the fitness value , the individual 
+extreme value and group extreme value are 
+calculated
+Update the speed and position of each particle
+Whether the number of iterations has 
+been reached
+End of IPSOIPSO -DBN fault early warning
+Using the optimal value obtained by IPSO to 
+optimize the parameters of DBN network
+The input variables are reconstructed using 
+the trained IPSO -DBN model , and the 
+reconstruction error is calculated
+Calculation and reconstruction errorTraining DBN Network with optimal 
+parametersStart
+Collecting SCADA data of 
+wind turbine
+Data preprocessing
+DBN network initializationDivide the data into 
+training set and test set
+End of data processingSelect the input variables of 
+the model
+YNWhether the threshold is exceeded
+The generator is 
+running normallyAbnormal 
+operation state of 
+generator
+EndN Y 
+Figure 4. Forecasting results between before and after rough set correction.  
+4.1. Selection and Preprocessing of State Parameters  
+In order to establish the wind turbine generator fault early warning model, it is 
+necessary to reasonably select the SCADA variable as the input of the model . The 
+generator state parameters selected in this paper are shown in Table 2.  
+Table 2. Description of generator condition variables.  
+Variable Name  Numerical Value  Unit  
+Wind speed  vo m/s 
+Generator power  P kW 
+Generator speed  Ω r/min  
+Generator torque  Tt N· m  
+Air cooling temperature of generator  Tai °C 
+Temperature of generator front axle A Tba °C 
+Temperature of generator front axle B Tbb °C 
+Generator winding u1 temperature  Tu1 °C 
+Generator winding v1 temperature  Tv1 °C 
+Generator  winding w1 temperature  Tw1 °C 
+Side temperature of spindle impeller  Tssi °C 
+During the model  training, the SCADA data parameters in Table 2 generated by the 
+wind turbine generator in a certain time range are used as training samples to train the 
+DBN network. The input vector x can be expressed as:  
+Figure 4. Forecasting results between before and after rough set correction.
+4.1. Selection and Preprocessing of State Parameters
+In order to establish the wind turbine generator fault early warning model, it is
+necessary to reasonably select the SCADA variable as the input of the model. The generator
+state parameters selected in this paper are shown in Table 2.
+Table 2. Description of generator condition variables.
+Variable Name Numerical Value Unit
+Wind speed v o m/s
+Generator power P kW
+Generator speed W r/min
+Generator torque Tt Nm
+Air cooling temperature of generator TaiC
+Temperature of generator front axle A TbaC
+Temperature of generator front axle B TbbC
+Generator winding u1 temperature Tu1C
+Generator winding v1 temperature Tv1C
+Generator winding w1 temperature Tw1C
+Side temperature of spindle impeller TssiC
+During the model training, the SCADA data parameters in Table 2 generated by the
+wind turbine generator in a certain time range are used as training samples to train the
+DBN network. The input vector x can be expressed as:
+x= [vo,P,W,Tt,Tai,Tba,Tbb,Tu1,Tv1,Tw1,Tssi] (19)
+------------------------------End of the page -----------------------------------
+Energies 2022 ,15, 9072 9 of 18
+Data pre-processing is a very important step in the process of fault early warning mod-
+eling, which mainly includes two parts: elimination of outliers and data normalization. In
+order to eliminate the inﬂuence of attributes and dimensions between different parameters
+of SCADA data, the data are normalized by Formula (20).
+x
+i=xi xmin
+xmax xmin(20)
+where xiand x
+iare the data before and after normalization. xmaxand xminare the maximum
+and minimum value of the original data, respectively.
+4.2. Fitness Function
+When using the IPSO algorithm to optimize the DBN parameters globally , the Equation (21)
+is taken as the fitness function.
+ff itness =1
+nn
+å
+i=1m
+å
+j=1(ˆxij xij)2(21)
+where nis the number of data samples. mis the dimension of each piece of data. xijand
+ˆxijare the j-dimensional data of the ioriginal sample and the j-dimensional data of the i
+reconstructed sample, respectively.
+4.3. Reconstruction Error
+In the normal working state, the SCADA data of the wind turbine maintain relatively
+stable internal characteristic rules, and the reconstruction error Reis relatively stable; when
+the generator deviates from the normal workspace, the internal characteristic rules of SCADA
+data change, the DBN model constructed by the normal state data does not match with
+the current state, and the Re trend changes obviously. Therefore, Re can be selected as the
+generator condition detection index. The Re calculation method is shown in Equation (22).
+Re=kˆx xk2(22)
+where ˆxand xare the reconstructed data vector and the original data vector respectively.
+4.4. Reconstruction Error Threshold
+ Fixed threshold
+The fault of the wind turbine generator is judged by the reconstruction error threshold.
+The 3 sprinciple is introduced to set the threshold and calculate the mean value and root
+mean square error of Re.8
+>>><
+>>>:m=1
+NN
+å
+i=1Re(i)
+s=s
+1
+N 1N
+å
+i=1(Re(i) m)2(23)
+where Re(i) is the ireconstruction error. mandsare the mean and root mean square errors
+ofRe, respectively. Nis the length of Re, that is, the number of reconstruction errors.
+According to the 3 principle, the reconstruction error threshold Uthis set to:
+Uth=m+3s (24)
+If the reconstruction error does not exceed the threshold, the running state of the
+generator is normal. If the reconstruction error exceeds the threshold, the running state
+of the generator is abnormal, and the fault early warning information is issued at the
+same time.
+ Adaptive threshold based on sliding window
+------------------------------End of the page -----------------------------------
+Energies 2022 ,15, 9072 10 of 18
+In addition to the operation status of wind turbines, wind speed is also an important
+reason that affects the variation of SCADA parameters. Sometimes, even if the operation
+status of wind turbines is kept within the normal workspace, the trend of reconﬁguration
+error will have a great sudden change due to the change of wind speed. At this time, if a
+constant threshold is set, some poles may exceed the threshold, thus misjudging the status
+of the unit. Therefore, in order to prevent the disadvantages caused by the ﬁxed threshold,
+on the basis of the ﬁxed threshold, the adaptive threshold based on sliding window is
+introduced as the condition to judge the occurrence of wind turbine failure.
+Suppose that within a certain period of time, the reconstruction error order of some
+part of the unit is { Re(0),Re(1),,Re(N),,}. For this sequence, take a sliding window
+with N width, as shown in Figure 5. First, the mean and standard deviation of continuous
+N reconstruction error sequences in the window are calculated by using the Formula (23),
+and then the ﬁrst ﬁxed threshold is calculated according to the Formula (24), which is used
+as the threshold of the initial reconstruction error. Starting from the position of the ﬁrst
+sliding window, the thresholds of subsequent reconstruction errors are obtained according
+to the same method, and these thresholds are concatenated to form an adaptive threshold
+based on sliding window.
+Energies 2022 , 15, x FOR PEER REVIEW  10 of 19  
+ the generator is abnormal, and the fault early warning information is issued at the same 
+time.  
+• Adaptive threshold based on sliding window  
+In addition to the operation status of wind tur bines, wind speed is also an important 
+reason that affects the variation of SCADA parameters. Sometimes, even if the operation 
+status of wind turbines is kept within the normal workspace, the trend of reconfiguration  
+error will have a great sudden change d ue to the change of wind speed. At this time, if a 
+constant threshold is set, some poles may exceed the threshold, thus misjudging the 
+status of the unit. Therefore, in order to prevent the disadvantages caused by the fixed 
+threshold, on the basis of the f ixed threshold, the adaptive threshold based on sliding 
+window is introduced as the condition to judge the occurrence of wind turbine failure.  
+Suppose that within a certain period of time, the reconstruction error order of some 
+part of the unit is { Re(0), Re(1), ···, Re(N), · · · ,}. For this sequence , take a sliding window with 
+N width, as shown in Figure 5.  First, the mean and standard deviation of continuous N 
+reconstruction error sequences in the window are calculated by using the Formula (2 3), 
+and then the f irst fixed threshold is calculated according to the Formula ( 24), which is 
+used as the threshold of the initial reconstruction error. Starting from the position of the 
+first sliding window, the thresholds of subsequent reconstruction errors are obtained 
+according to the same method, and these thresholds are concatenated to form an 
+adaptive threshold based on sliding window.  
+Window 2Window 3
+Window 1
+0 1 2 3 N N+1 N+2    Reconstruction error window
+      
+Reconstruction error sequence
+ 
+Figure 5. Reconstruction error sliding window.  
+4.5. Evaluation Index  
+The root mean square error ( RMSE ), the mean absolute error ( MAE ) and the mean 
+absolute percent error ( MAPE ) of the reconstruction error  are calculated respectively to 
+quantitatively analyze  the model, and the performance of different models is compared. 
+The calculation method is as follows:  
+2
+111ˆ()nm
+ij ij
+ijRMSE x xn===−
+ (25) 
+111ˆ||nm
+ij ij
+ijMAE x xn===−
+ (26) 
+Figure 5. Reconstruction error sliding window.
+4.5. Evaluation Index
+The root mean square error ( RMSE ), the mean absolute error ( MAE ) and the mean
+absolute percent error ( MAPE ) of the reconstruction error are calculated respectively to
+quantitatively analyze the model, and the performance of different models is compared.
+The calculation method is as follows:
+RMSE =vuut1
+nn
+å
+i=1m
+å
+j=1(ˆxij xij)2 (25)
+MAE =1
+nn
+å
+i=1m
+å
+j=1ˆxij xij (26)
+MAPE =1
+nn
+å
+i=1m
+å
+j=1ˆxij xij
+ˆxij(27)
+------------------------------End of the page -----------------------------------
+Energies 2022 ,15, 9072 11 of 18
+where nand mare the number and dimension of data samples respectively. xijis the
+j-th dimensional data of the ioriginal sample. ˆxijis the j-th dimensional data of the i
+reconstructed sample.
+The smaller the value of the above three quantitative evaluation indicators, the
+higher the accuracy of the model reconstruction of the original data, and the better the
+network performance.
+5. Example Analysis
+5.1. Modeling Data Statement
+This paper takes the E15 wind turbine generator in a wind farm as the research object
+and uses the SCADA data from 00:00 on 23 December 2018 to 23:50 on 23 April 2019, as
+the data source to carry on the wind turbine fault early warning analysis. The data source
+contains 69 kinds and 17,567 pieces of information-rich 10-min sampling frequency data.
+5.2. Model Parameter Setting
+The IPSO-DBN model consists of four hidden layers, the optimization interval of the
+number of neurons in the hidden layer is [1, 100]. The optimization interval of learning rate
+is [0, 0.1], and the optimization interval of training times is [1, 500], pre-training 100 data
+per batch and reverse ﬁne-tuning 4 data per batch. The initial parameters of IPSO are as
+follows: the population size is 20, wmin= 0.45, wmax= 0.95, cmin= 0.45, cmax= 0.95. The
+maximum number of iterations is 40, and the weight control factor is 8. The optimization
+results are shown in Table 3.
+Table 3. IPSO optimization results.
+Parameters Numerical Value
+The number of neurons in the ﬁrst hidden layer 65
+The number of neurons in the second hidden layer 68
+The number of neurons in the third hidden layer 21
+The number of neurons in the fourth hidden layer 98
+Pre-training learning rate 0.0185
+Reverse ﬁne-tuning learning rate 0.0456
+Number of pre-training 27
+Number of reverse ﬁne-tuning 431
+5.3. Early Warning Analysis of Generator Fault
+5.3.1. Comparison of Learning Effects of Different Models
+The comparison results of evaluation indicators of different models are shown in
+Table 4.
+Table 4. Hidden layer neuron selection results.
+Model RMSE MAE MAPE
+DBN 0.1256 0.2638 8.0291
+PSO-DBN 0.0807 0.1685 16.0129
+IPSO-DBN 0.0623 0.1315 4.9700
+It can be seen from Table 4 that the IPSO-DBN wind turbine fault early warning model
+proposed in this paper has the best performance in RMSE, MAE and MAPE, compared
+with the DBN and PSO-DBN models.
+The learning effect of the three models is shown in Figure 6.
+------------------------------End of the page -----------------------------------
+Energies 2022 ,15, 9072 12 of 18
+Energies 2022 , 15, x FOR PEER REVIEW  12 of 19  
+ It can be seen from Table 4 that the IPSO -DBN wind turbine fault early warning 
+model proposed in this paper has the best performance in RMSE , MAE and MAPE,  
+compared with the DBN and PSO -DBN models.  
+The learning effect  of the three models is shown in Figure  6. 
+ 
+Figure 6. Reconstruction error results of different models.  
+From Figure 6, the reconstruction error sequence of the IPSO -DBN model is the 
+smallest, followed by the PSO -DBN model, and the reconstruction  error of the DBN 
+model is the largest. To sum up, the IPSO -DBN model proposed in this paper has 
+stronger nonlinear  fitting ability, stronger robustness and higher accuracy, and is more 
+suitable for early fault early warning of wind turbines.  
+5.3.2. Early Warning Model Testing under Normal Condition  
+The first 9100 groups of data of the data sample are selected as the t raining set. 
+Under the normal operation state of the wind turbine, the reconstruction error sequence 
+of the generator operation data is shown in Figure 7, and the red line in the figure is the 
+early warning threshold. Figure 7a is a fixed threshold, and Figure 7b is an adaptive 
+threshold based on the principle of sliding window. In this paper, the length of sliding 
+window is set to 300.  
+As can be seen from Figure  7b, under normal operating conditions, because the 
+wind speed is always fluctuating, there are fluctuations and a few extreme points in the 
+generator reconstruction error, but it is always within the threshold range . Based on the 
+sliding window method, the threshold changes with the change of reconstruction error, 
+and the threshold accuracy and effe ctiveness are higher.  
+  
+Figure 6. Reconstruction error results of different models.
+From Figure 6, the reconstruction error sequence of the IPSO-DBN model is the
+smallest, followed by the PSO-DBN model, and the reconstruction error of the DBN model
+is the largest. To sum up, the IPSO-DBN model proposed in this paper has stronger
+nonlinear ﬁtting ability, stronger robustness and higher accuracy, and is more suitable for
+early fault early warning of wind turbines.
+5.3.2. Early Warning Model Testing under Normal Condition
+The ﬁrst 9100 groups of data of the data sample are selected as the training set. Under
+the normal operation state of the wind turbine, the reconstruction error sequence of the
+generator operation data is shown in Figure 7, and the red line in the ﬁgure is the early
+warning threshold. Figure 7a is a ﬁxed threshold, and Figure 7b is an adaptive threshold
+based on the principle of sliding window. In this paper, the length of sliding window is
+set to 300.
+Energies 2022 , 15, x FOR PEER REVIEW  13 of 19  
+ 
+0 1000 2000 3000 4000 5000 6000 7000 8000 9000 10,000
+Time series-0.100.10.20.30.40.50.60.70.8Reconstruction errorReconstruction error
+Early warning threshold 
+(a) 
+0 1000 2000 3000 4000 5000 6000 7000 8000 9000 10,000-0.100.10.20.30.40.50.60.70.8
+Reconstruction error
+Early warning threshold
+Time seriesReconstruction error
+ 
+(b) 
+Figure 7. Training set reconstruction error . (a) Fixed threshold . (b) Adaptive threshold based on 
+sliding window.  
+5.3.3. Early Warning Model Testing in Fault State  
+The fault samples of the generator in the data source are input into the trained 
+IPSO -DBN fault early warning model, the reconstruction value is the output and the 
+reconstruction error is calculated, and the trend change diagram of the reconstruction  
+error sequence is obtained. Then the above fixed threshold and adaptive threshold based 
+on sliding window are used to verify and analyze the fault early warning function of the 
+model. Finally, the trend of residual sequence of generator related variables is analyzed 
+to judge the possible fault types of generator.  
+The following 3908 data samples of the training data set are inputted into the 
+IPSO -DBN model, and the calculated reconstruction  error sequence is shown in Figure 8 . 
+Figure 8a adopts a fixed early  warning threshold and Figure 8b adopts an adaptive 
+threshold based on sliding window.  In the state of generator failure, the fixed threshold is 
+set to 0.223, and the sliding window length of the adaptive threshold is set to 300.  
+It can be seen from Figure 8 that the reconstruction error sequence dynamically 
+changes within the early warning threshold for a period of time before the fault occurs 
+(about 3000 points), which proves that the generator does not deviate from the normal 
+workspace during this period of time. On the other hand, the reconstruction error 
+exceeds the early warning threshold at the ➀ point of Figure 8a and the X point of Figure 
+8b (which corresponds to the data sample point 3129 in the state of generator failure) , 
+and the fault early warning is triggered.  
+  
+Figure 7. Training set reconstruction error. ( a) Fixed threshold. ( b) Adaptive threshold based on
+sliding window.
+------------------------------End of the page -----------------------------------
+Energies 2022 ,15, 9072 13 of 18
+As can be seen from Figure 7b, under normal operating conditions, because the wind
+speed is always ﬂuctuating, there are ﬂuctuations and a few extreme points in the generator
+reconstruction error, but it is always within the threshold range. Based on the sliding
+window method, the threshold changes with the change of reconstruction error, and the
+threshold accuracy and effectiveness are higher.
+5.3.3. Early Warning Model Testing in Fault State
+The fault samples of the generator in the data source are input into the trained IPSO-
+DBN fault early warning model, the reconstruction value is the output and the recon-
+struction error is calculated, and the trend change diagram of the reconstruction error
+sequence is obtained. Then the above ﬁxed threshold and adaptive threshold based on
+sliding window are used to verify and analyze the fault early warning function of the
+model. Finally, the trend of residual sequence of generator related variables is analyzed to
+judge the possible fault types of generator.
+The following 3908 data samples of the training data set are inputted into the IPSO-
+DBN model, and the calculated reconstruction error sequence is shown in Figure 8. Figure 8a
+adopts a ﬁxed early warning threshold and Figure 8b adopts an adaptive threshold based
+on sliding window. In the state of generator failure, the ﬁxed threshold is set to 0.223, and
+the sliding window length of the adaptive threshold is set to 300.
+Energies 2022 , 15, x FOR PEER REVIEW  14 of 19  
+ 
+0 500 1000 1500 2000 2500 3000 3500 4000
+Time series-0.100.10.20.30.40.50.60.70.8
+Reconstruction error
+Early warning thresholdReconstruction error
+j
+  
+(a) 
+0 500 1000 1500 2000 2500 3000 3500 4000
+Time series-0.100.10.20.30.40.50.60.70.8Reconstruction errorReconstruction error
+Early warning threshold
+X
+ 
+(b) 
+Figure 8. Validation set reconstruction error. (a) Variation trend of residual wind speed. ( b) Change 
+trend of power residual.  
+Combined with the change of reconstruction error sequence of generator variables , 
+the fault early warning of generator is realized by setting the strategy of fixed threshold 
+and adaptive threshold  in this paper . The sampling period of SCADA data used in thi s 
+paper is too long to detect the slow change of generator -related variables, which leads to 
+a sudden and dramatic reconstruction error exceeding the early warning threshold in 
+Figure 8 . Thi s problem can be overcome by increasing the adoption period. For t he 
+SCADA system in wind turbine field, the data sampling period can usually reach 
+seconds, when it can be observed that the reconstruction error rises slowly some time 
+before the fault occurs, and then exceeds the set threshold before causing a serious fau lt 
+to achieve the purpose of detecting the potential fault of the wind turbine.  
+5.3.4. Residual Analysis of Each Variable  
+According to the change of the trend of the reconstruction error sequence and the set 
+early warning threshold, the fault can be predic ted, so that the staff can check the hidden 
+trouble in time and prevent the fault from getting worse. In order to determine  the 
+specific fault location as soon as possible and improve the maintenance efficiency, the 
+residual trend chart can be used to anal yze the SCADA parameters of each component of 
+the wind turbine to realize the preliminary judgment of the fault type and fault location. 
+The trend of wind speed residual series and active power residual series in the event of 
+wind turbine generator failure  is shown in Figure 9.  
+  
+Figure 8. Validation set reconstruction error. ( a) Variation trend of residual wind speed. ( b) Change
+trend of power residual.
+It can be seen from Figure 8 that the reconstruction error sequence dynamically
+changes within the early warning threshold for a period of time before the fault occurs
+(about 3000 points), which proves that the generator does not deviate from the normal
+workspace during this period of time. On the other hand, the reconstruction error exceeds
+the early warning threshold at the 1point of Figure 8a and the X point of Figure 8b (which
+------------------------------End of the page -----------------------------------
+Energies 2022 ,15, 9072 14 of 18
+corresponds to the data sample point 3129 in the state of generator failure), and the fault
+early warning is triggered.
+Combined with the change of reconstruction error sequence of generator variables,
+the fault early warning of generator is realized by setting the strategy of ﬁxed threshold
+and adaptive threshold in this paper. The sampling period of SCADA data used in this
+paper is too long to detect the slow change of generator-related variables, which leads
+to a sudden and dramatic reconstruction error exceeding the early warning threshold in
+Figure 8. This problem can be overcome by increasing the adoption period. For the SCADA
+system in wind turbine ﬁeld, the data sampling period can usually reach seconds, when it
+can be observed that the reconstruction error rises slowly some time before the fault occurs,
+and then exceeds the set threshold before causing a serious fault to achieve the purpose of
+detecting the potential fault of the wind turbine.
+5.3.4. Residual Analysis of Each Variable
+According to the change of the trend of the reconstruction error sequence and the set
+early warning threshold, the fault can be predicted, so that the staff can check the hidden
+trouble in time and prevent the fault from getting worse. In order to determine the speciﬁc
+fault location as soon as possible and improve the maintenance efﬁciency, the residual
+trend chart can be used to analyze the SCADA parameters of each component of the wind
+turbine to realize the preliminary judgment of the fault type and fault location. The trend
+of wind speed residual series and active power residual series in the event of wind turbine
+generator failure is shown in Figure 9.
+Energies 2022 , 15, x FOR PEER REVIEW  15 of 19  
+ 
+0 500 1000 1500 2000 2500 3000 3500 4000
+Time series-0.5-0.4-0.3-0.2-0.100.10.20.30.40.5Residual errorWind speed residual 
+(a) 
+0 500 1000 1500 2000 2500 3000 3500 4000
+Time series-0.5-0.4-0.3-0.2-0.100.10.20.30.40.5Residual errorPower residual error
+ 
+(b) 
+Figure 9. Test set reconstruction error. (a) Fixed threshold. ( b) Adaptive threshold based on sliding 
+window.  
+As can be seen from Figure 9, the wind speed and power residual series of wind 
+turbines always fluctuate slightly around zero in the early stage, and only fluctuate in a 
+slightly larger range in the later stage . On the whole, the fluctuation of their residuals is 
+always within the normal range, and the l arger changes in the later period must have 
+been affected by other  variables. Basically, it can be judged that the wind speed is always 
+in a steady change for a period of time before and after the generator failure. Therefore, 
+the generator failure caused by the natural environment can be ruled out.  There  is a fault 
+caused by the generator itself or by long -term operation.  
+The temperature residual change trend of generator stator winding u1, v1, w1 and 
+bearing temperature is shown in Figure 10.  
+It can be se en from Figure 10 a that the trend of temperature residual of generator 
+stator winding is not obviously abnormal, so the possibility  of failure of generator coil 
+winding can also be ruled out.  From Figure 10b, it can be seen that  the residual sequence 
+of ge nerator bearing temperature a (that is, generator front shaft) deviates obviously and 
+changes sharply, which proves the previous conjecture from the positive side. This is due 
+to the long sampling period and no slow temperature change process. Combined wit h 
+the fault records of the SCADA system, the report shows that the generator has the front 
+axle overheating. It is proved that the model proposed in this paper is effective for wind 
+turbine fault early warning.  
+  
+Figure 9. Test set reconstruction error. ( a) Fixed threshold. ( b) Adaptive threshold based on
+sliding window.
+As can be seen from Figure 9, the wind speed and power residual series of wind
+turbines always ﬂuctuate slightly around zero in the early stage, and only ﬂuctuate in a
+------------------------------End of the page -----------------------------------
+Energies 2022 ,15, 9072 15 of 18
+slightly larger range in the later stage. On the whole, the ﬂuctuation of their residuals
+is always within the normal range, and the larger changes in the later period must have
+been affected by other variables. Basically, it can be judged that the wind speed is always
+in a steady change for a period of time before and after the generator failure. Therefore,
+the generator failure caused by the natural environment can be ruled out. There is a fault
+caused by the generator itself or by long-term operation.
+The temperature residual change trend of generator stator winding u1, v1, w1 and
+bearing temperature is shown in Figure 10.
+Energies 2022 , 15, x FOR PEER REVIEW  16 of 19  
+ 
+0 500 1000 1500 2000 2500 3000 3500 4000
+Time series-0.2-0.15-0.1-0.0500.050.10.150.2Residual errorStator winding temperature  u1
+Stator winding temperature  v1
+Stator winding temperature  w1 
+(a) 
+0 500 1000 1500 2000 2500 3000 3500 4000
+Time series-0.8-0.7-0.6-0.5-0.4-0.3-0.2-0.100.10.20.3Residual errorGenerator bearing temperature  a
+Generator bearing temperature  b0.4
+ 
+(b) 
+Figure 10. Test set reconstruction error. (a) Variation trend of temperature residual of generator 
+stator windings. ( b) Variation trend of temperature residual of generator bearing.  
+6. Conclusions  
+Aiming at the problem of wind turbine fault early warning, the deep confidence 
+network is used to mine the characteristic information of SCADA data layer by layer 
+under the normal operation state of the generator and intelligently l earn the internal 
+relationship among the parameters, and a multivariable DBN reconfiguration network 
+model of wind turbine is proposed. For the problem that it is difficult to determine the 
+parameters of the DBN network, the improved particle swarm optimiz ation algorithm 
+can better solve this problem. The fault early warning of generator can be realized 
+through the reconstruction error of the IPSO -DBN model and the residual variation of 
+each input variable . Compared with the DBN wind turbine fault model and the 
+PSO -DBN wind turbine fault model, this model has better performance in accuracy, 
+training time and nonlinear fitting ability, so it can better meet the needs of practical 
+engineering.  
+Author Contributions: Conceptualization, Z.Z. and S.W.; me thodology, Z.Z.; software, P.J.; 
+validation, S.W. and P.J.; formal analysis, S.W.; investigation, H.Z.; resources, P.W.; data curation, 
+Z.Z.; writing —original draft preparation, S.W.; writing —review and editing, Z.Z.; visualization, 
+H.Z.; supervision, P.J.; project administration, P.W.; funding acquisition, P.W. All authors have 
+read and agreed to the published version of the manuscript.  
+Funding:  This work was financially supported by National Natural Science Foundation of China , 
+grant number 1 2171135;  S&T Program of Hebei , grant number 216Z2103G ; Natural Science 
+Foundation of Hebei Province , grant number A2020201021 ; Hebei Province High -level Talent 
+funding Project , grant number B2020005004 ; Baoding Science and Technology Plan Pr oject , grant 
+number 2163P036 . 
+Figure 10. Test set reconstruction error. ( a) Variation trend of temperature residual of generator stator
+windings. ( b) Variation trend of temperature residual of generator bearing.
+It can be seen from Figure 10a that the trend of temperature residual of generator
+stator winding is not obviously abnormal, so the possibility of failure of generator coil
+winding can also be ruled out. From Figure 10b, it can be seen that the residual sequence
+of generator bearing temperature a (that is, generator front shaft) deviates obviously and
+changes sharply, which proves the previous conjecture from the positive side. This is due
+to the long sampling period and no slow temperature change process. Combined with the
+fault records of the SCADA system, the report shows that the generator has the front axle
+overheating. It is proved that the model proposed in this paper is effective for wind turbine
+fault early warning.
+6. Conclusions
+Aiming at the problem of wind turbine fault early warning, the deep conﬁdence
+network is used to mine the characteristic information of SCADA data layer by layer under
+the normal operation state of the generator and intelligently learn the internal relationship
+among the parameters, and a multivariable DBN reconﬁguration network model of wind
+turbine is proposed. For the problem that it is difﬁcult to determine the parameters of the
+DBN network, the improved particle swarm optimization algorithm can better solve this
+------------------------------End of the page -----------------------------------
+Energies 2022 ,15, 9072 16 of 18
+problem. The fault early warning of generator can be realized through the reconstruction
+error of the IPSO-DBN model and the residual variation of each input variable. Compared
+with the DBN wind turbine fault model and the PSO-DBN wind turbine fault model, this
+model has better performance in accuracy, training time and nonlinear ﬁtting ability, so it
+can better meet the needs of practical engineering.
+Author Contributions: Conceptualization, Z.Z. and S.W.; methodology, Z.Z.; software, P .J.; valida-
+tion, S.W. and P .J.; formal analysis, S.W.; investigation, H.Z.; resources, P .W.; data curation, Z.Z.;
+writing—original draft preparation, S.W.; writing—review and editing, Z.Z.; visualization, H.Z.;
+supervision, P .J.; project administration, P .W.; funding acquisition, P .W. All authors have read and
+agreed to the published version of the manuscript.
+Funding: This work was ﬁnancially supported by National Natural Science Foundation of China,
+grant number 12171135; S&T Program of Hebei, grant number 216Z2103G; Natural Science Founda-
+tion of Hebei Province, grant number A2020201021; Hebei Province High-level Talent funding Project,
+grant number B2020005004; Baoding Science and Technology Plan Project, grant number 2163P036.
+Data Availability Statement: Not applicable.
+Conﬂicts of Interest: The authors declare no conﬂict of interest.
+Nomenclature
+Acronyms and abbreviations
+DBN deep belief network
+IPSO improved particle swarm optimization
+PSO particle swarm optimization
+SCADA supervisory control and data acquisition
+Indices
+i index of particle
+k number of iteration
+d number of dimensional
+Variables
+bi offset of the ineuron of the visible layer
+v particle speed
+x particle position
+pid optimal solutions of the d-dimensional individual of the iparticle
+pgdoptimal solutions of the d-dimensional population history of the
+iparticle
+w inertia weight
+c1 individual learning factor
+c2 population learning factor
+c1min minimum of individual learning factor
+c2max population learning factor
+c1min minimum of individual learning factor
+c2max population learning factor
+cj bias of the jneuron of the hidden layer
+r1 random number in the interval [0, 1]
+r2 random number in the interval [0, 1]
+wmax maximum inertia weights
+!min minimum inertia weights ﬂow of node
+T maximum number of iterations
+K weight control factor
+Eq RBM energy
+vi ineuron state of visible layer
+hj jneuron state of the hidden layer
+wijconnection weight between the ineuron of the visible layer and
+thejneuron of the hidden layer
+Pq joint probability distribution function
+------------------------------End of the page -----------------------------------
+Energies 2022 ,15, 9072 17 of 18
+Zq distribution function
+L(q) likelihood function
+f(x) activation function
+# learning rate
+n number of neurons
+vo wind speed
+P generator power
+W generator speed
+Tt generator torque
+Tai air cooling temperature of generator
+Tba temperature of generator front axle A
+Tbb temperature of generator front axle B
+Tu1 generator winding u1 temperature
+Tv1 generator winding v1 temperature
+Tw1 generator winding w1 temperature
+Tssi side temperature of spindle impeller
+xi data before normalization
+xI data after normalization
+Xmax maximum value of the original data
+xmin minimum value of the original data
+fﬁtness ﬁtness function
+n number of data samples
+m dimension of data samples
+xij j-dimensional data of the ioriginal sample
+ˆxij j-dimensional data of the ireconstructed sample
+Re reconstruction error
+ˆx reconstructed data vector
+X original data vector
+m mean errors of Re
+s root mean square errors of Re
+N length of Re
+Uth reconstruction error threshold
+References
+1. Fang, R.; Wu, M.; Guo, X.; Shang, R.; Shao, P . Identifying early defects of wind turbine based on SCADA data and dynamical
+network marker. Renew. Energy 2020 ,154, 625–635.
+2. Qian, P .; Zhang, D.; Tian, X.; Si, Y.; Li, L. A novel wind turbine condition monitoring method based on cloud computing. Renew.
+Energy 2019 ,135, 390–398. [CrossRef]
+3. Jin, Z.; Huo, Z.; Xu, C.; Guo, H.; Zhou, H. Fault diagnosis for wind turbine based on random forest and XGBoost. Renew. Energy
+Resour. 2021 ,39, 353–358.
+4. Hanumant, P .J.; Anand, K.B.; Ravinder, K.; Ahmadi, M.H.; Assad, M.E.H. RAM analysis and availability optimization of thermal
+power plant water circulation system using PSO. Energy Rep. 2021 ,7, 1133–1153.
+5. Ma, J.; Tang, B.; Han, Y. Design of networking condition monitoring and fault diagnosis for wind turbine transmission system. J.
+Chongqing Univ. 2015 ,38, 37–44.
+6. Zhao, H.; Liu, H.; Liu, H.; Lin, J. Condition monitoring and fault diagnosis of wind turbine generator based on stacked
+autoencoder network. Autom. Electr. Power Syst. 2018 ,42, 102–108.
+7. Yin, S.; Hou, G.; Hu, X.; Robu, V .; Flynn, D.; Barnes, M.; Keane, J.; Nenadic, G. Fault warning and identiﬁcation of front bearing of
+wind turbine generator. Chin. J. Sci. Instrum. 2020 ,41, 242–251.
+8. Li, D.; Mao, X.; Yin, P .; Wu, F. The rear bearing temperature of early warning method in wind turbine based on NSET. Sci. Technol.
+Eng. 2016 ,16, 205–209.
+9. Wang, Z. Research on Modeling Method of Condition Monitoring of Wind Turbine. Ph.D. Thesis, North China Electric Power
+University, Beijing, China, 2018.
+10. Huo, J.; Tang, G.; Liu, D.; Zhang, M. A novel monitoring method of wind turbine generator real-time reliability based on
+tempeture signals. Renew. Energy Resour. 2016 ,34, 408–412.
+11. Chen, J.; Pan, J.; Li, Z.; Zi, Y.; Chen, X. Generator bearing fault diagnosis for wind turbine via empirical wavelet transform using
+measured vibration signals. Renew. Energy 2016 ,89, 80–92. [CrossRef]
+12. Jiang, R.; Teng, W.; Liu, X.; Tang, S. Diagnosis of electrical corrosion fault in wind turbine generator bearing based on vibration
+signal analysis. Electr. Power 2019 ,52, 128–133.
+------------------------------End of the page -----------------------------------
+Energies 2022 ,15, 9072 18 of 18
+13. Schmidhuber, J. Deep learning in neural networks: An overview. Neural Netw. 2015 ,61, 85–117.
+14. Geng, J.; Jiang, W.; Deng, X. Multi-scale deep feature learning network with bilateral ﬁltering for SAR image classiﬁcation-
+ScienceDirect. ISPRS J. Photogramm. Remote Sens. 2020 ,167, 201–213. [CrossRef]
+15. Jeon, M.H.; Lee, Y.; Shin, Y.S.; Jang, H.; Kim, A. Underwater object detection and pose estimation using deep learning. IFAC-
+PapersOnLine 2019 ,52, 78–81. [CrossRef]
+16. Lei, J.; Liu, C.; Jiang, D. Fault diagnosis of wind turbine based on Long Short-term memory networks. Renew. Energy 2019 ,133,
+422–432. [CrossRef]
+17. Jin, X.; Xu, Z.; Sun, Y.; Shan, J. Online condition monitoring for wind turbines based on SCADA data analysis and sparse
+auto-encoder neural network. Acta Energ. Sol. Sin. 2021 ,42, 321–328.
+18. Ren, J.; Tang, B.; Yong, B.; Deng, L.; Zhang, K. Wind turbine gearbox fault warning based on depth variational autoencoders
+network fusion SCADA data. Acta Energ. Sol. Sin. 2021 ,42, 403–408.
+19. Chen, R.; Zhang, Y.; Liu, Q.; Liu, T. Optimal design of grid structure in a DC system based on a PSO algorithm. Power Syst. Prot.
+Control. 2021 ,49, 165–172.
+20. Zhang, Y.; Wang, L.; Zhou, H.; Zhao, H. Design and application of particle swarm optimization based on competitive learning.
+Comput. Meas. Control. 2021 ,29, 182–189.
+21. Liu, M.; Dong, M.; Jing, C. Scheduled completion learing based multi-objective particle swarm optimization algorithm. J. Comput.
+Appl. 2019 ,39, 330–335.
+22. Wang, S.; Liu, G. A nonlinear dynamic adaptive inertial weight particle swarm optimization. Comput. Simul. 2021 ,38, 249–253.
+23. Li, X.; Xiao, J.; Pan, Y.; Liu, S.; Deng, X. Research on leveling control system of fuzzy PID vehicle-mounted platform based on PSO.
+Mod. Manuf. Eng. 2021 ,2, 58–65.
+24. Hui, S.L.; Fan, S.; Chin, C.; Chai, S.; Bose, N.; Kim, E. Constrained path planning of autonomous underwater vehicle using
+selectively-hybridized particle swarm optimization algorithms. IFAC-PapersOnLine 2019 ,52, 315–322.
+25. Rui, J.; Zhang, H.; Zhang, D.; Han, F.; Guo, Q. Total organic carbon content prediction based on support-vector-regression
+machine with particle swarm optimization. J. Pet. Sci. Eng. 2019 ,180, 699–706. [CrossRef]
+26. Zhu, L.; Shao, S.; Jing, W.; Liu, L. PSO-optimized-fast segmentation algorithm for 3D Otsu forest canopy image. J. Harbin Univ.
+Sci. Technol. 2019 ,24, 128–133.
+27. Engelbrecht, A.P .; Grobler, J.; Langeveld, J. Set based particle swarm optimization for the feature selection problem. Eng. Appl.
+Artif. Intell. 2019 ,85, 324–336. [CrossRef]
+28. Li, Q. Power big data anomaly detection method based on an improved PSO-PFCM clustering algorithm. Power Syst. Prot.
+Control. 2021 ,49, 161–166.
+29. Li, Z.; Liang, C.; Wang, M. Short-term power generation output prediction based on a PSO-DBN neural network. Power Syst. Prot.
+Control. 2020 ,48, 149–154.
+30. Hua, Y.; Wang, S.; Bai, G.; Li, B. An improved particle swarm optimization algorithm based on nonlinear decreasing inertial
+weights. J. Chongqing Technol. Bus. Univ. (Nat. Sci. Ed.) 2021 ,38, 1–9.
+31. Sheng, H.; Yang, J.; Zhang, G.; Yang, Y.; Geng, H.; Lu, L. Optimal conﬁguration of micro energy network based on improved PSO
+algorithm. Power Syst. Clean Energy 2021 ,37, 23–31.
+32. Khosravi, A.; Nunes, R.O.; Assad, M.E.H.; Machado, L. Comparison of artiﬁcial intelligence methods in estimation of daily global
+solar radiation. J. Clean. Prod. 2018 ,194, 342–358. [CrossRef]
+33. Dai, J. Research on Transformer State Assessment Based on Deep Learning. Ph.D. Thesis, Shanghai Jiao Tong University, Shanghai,
+China, 2018.
+34. Yang, W.; Yin, K.; Bao, Y.; Yi, X.; Xu, B. Fault types identiﬁcation of power grid based on deep belief network. Electr. Power Eng.
+Technol. 2012 ,40, 113–117.
+35. Ding, S.; Li, X.; Hang, J.; Wang, Y.J.; Wang, Q.J. Deep learning theory and its application to fault diagnosis of an electric machine.
+Power Syst. Prot. Control. 2020 ,48, 172–187.
+36. Peng, B.S.; Xia, H.; Liu, Y.K.; Yang, B.; Guo, D.; Zhu, S.M. Research on intelligent fault diagnosis method for nuclear power plant
+based on correlation analysis and deep belief network. Prog. Nucl. Energy 2018 ,108, 419–427. [CrossRef]
+37. Li, B.; Zeng, H. Application of improved deep belief network in electric spindle fault diagnosis. Mech. Sci. Technol. Aerosp. Eng.
+2021 ,40, 1051–1057.
+------------------------------End of the page -----------------------------------

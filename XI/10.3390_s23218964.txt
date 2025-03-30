@@ -1,0 +1,784 @@
+Citation: Lyu, Q.; He, Y.; Wu, S.; Li,
+D.; Wang, X. Anomaly Detection of
+Wind Turbine Driveline Based on
+Sequence Decomposition Interactive
+Network. Sensors 2023 ,23, 8964.
+https://doi.org/10.3390/s23218964
+Academic Editor: Chelakara S.
+Subramanian
+Received: 20 September 2023
+Revised: 21 October 2023
+Accepted: 31 October 2023
+Published: 3 November 2023
+Copyright: © 2023 by the authors.
+Licensee MDPI, Basel, Switzerland.
+This article is an open access article
+distributed under the terms and
+conditions of the Creative Commons
+Attribution (CC BY) license (https://
+creativecommons.org/licenses/by/
+4.0/).
+sensors
+Article
+Anomaly Detection of Wind T urbine Driveline Based on
+Sequence Decomposition Interactive Network
+Qiucheng Lyu1,†, Yuwei He1,†, Shijing Wu1,2, Deng Li1,2,*
+and Xiaosun Wang1,*
+1School of Power and Mechanical Engineering, Wuhan University, Wuhan 430072, China
+2Hubei Key Laboratory of Waterjet Theory and New Technology, Wuhan University, Wuhan 430061, China
+*Correspondence: 2008lee@whu.edu.cn (D.L.); wxs@whu.edu.cn (X.W.)
+†These authors contributed equally to this work.
+Abstract: Aimed at identifying the health state of wind turbines (WTs) accurately by using the
+comprehensive spatio and temporal information from the supervisory control and data acquisition
+(SCADA) data, a novel anomaly-detection method called decomposed sequence interactive network
+(DSI-Net) is proposed in this paper. Firstly, a DSI-Net model is trained using preprocessed data from
+a healthy state. Subsequences of trend and seasonality are obtained by DSI-Net, which can dig out
+underlying features both in spatio and temporal dimensions through the interactive learning process.
+Subsequently, the trained model processes the online data and calculates the residual between true
+values and predicted values. To identify anomalies of the WTs, the residual and root mean square
+error (RMSE) are calculated and processed by exponential weighted moving average (EWMA).
+The proposed method is validated to be more effective than the existing models according to the
+control experiments.
+Keywords: anomaly detection; condition monitoring; interactive learning; sequence decomposition;
+wind turbines
+1. Introduction
+The dilemma of the energy crisis and the potential of various energy sources have
+stimulated more advancements in renewable energy such as hydropower, solar power and
+wind power. Wind power, in particular, has seen a growing contribution to the global energy
+mix. However, due to the challenging working environment and complex conditions, WTs
+often incur high costs for maintenance and downtime checks [ 1–3]. Therefore, it is greatly
+necessary to develop an efﬁcient and reliable method for the condition monitoring of WTs.
+Anomaly detection of WTs includes the process of continuously observing if certain
+indicators deviate from normal behaviors [ 4], which can detect anomalies of WTs in the
+early stage [ 5,6]. If the indicators consistently surpass the threshold for an extended period
+of time, the WT will be regarded as abnormal and undergo a shutdown to check the
+components and resolve the malfunction.
+The SCADA system captures the life-cycle information of WTs including temperature,
+voltage, rotation speed and vibration, as time sequences. This data is used to describe
+the operating condition and can be leveraged for condition monitoring by establishing a
+mapping between operating states and online data. Li et al., for instance, introduced a new
+method based on the vector autoregression (VAR) model, removing the autocorrelation
+so as to reduce false alarms. Additionally, a multivariate exponentially weighted moving
+average (MEWMA) control chart is employed to monitor the residual vector, enabling
+accelerated anomaly detection [7].
+Deep learning methods offer the ability to optimize the parameters of the model
+by using back propagation algorithms, enabling robust feature extraction and nonlinear
+expression [ 8]. So, there have been quantities of research into the condition monitoring
+of WTs combining SCADA data with deep learning networks. Dhiman et al. formulated
+Sensors 2023 ,23, 8964. https://doi.org/10.3390/s23218964 https://www.mdpi.com/journal/sensors
+------------------------------End of the page -----------------------------------
+Sensors 2023 ,23, 8964 2 of 17
+an anomaly-detection method for wind turbine gearboxes based on adaptive threshold
+and twin support vector machine (TWSVM). To minimize false alarms and missed failures,
+adaptive threshold-based binary classiﬁcations are proposed and proved based on mea-
+sured SCADA data [ 9]. Addressing the issue of overﬁtting caused by non-interpretable
+model architectures, Tian et al. proposed an alternative and cost-effective methodology
+based on the group method of data handling (GMDH) neural network. With the automag-
+ical organization of the neural network, it averts the overﬁtting problems in ANN [ 10].
+Kong et al. introduced a novel method that combines convolutional neural networks (CNN)
+with gated recurrent units (GRU) to enhance the accuracy of condition monitoring through
+spatio-temporal feature fusion [11].
+As mentioned above, the anomaly detection of WTs during condition monitoring
+mainly depends on time series forecasting (TSF). TSF assists decision making in the fore-
+seeing future tendency of evolution, which is generally used in scientiﬁc and engineer-
+ing applications like business intelligence [ 12], interval forecasting [ 13] and price trend
+analysis [ 14]. Traditional methods like the autoregressive integrated moving average
+(ARIMA) model [ 15] and Holt–Winters seasonal method [ 16] pay more attention to single-
+variable forecasting, while lacking the applications to complex raw time series data. How-
+ever, with advancements in data computing, it has been shown that new methods that ad-
+dress multivariate forecasting and multiple seasonalities achieve superior performance [ 17].
+Additionally, several kinds of deep neural networks used for sequence modeling are shown
+to be more reliable and effective, such as temporal convolutional network (TCN) [ 18] and
+long short-term memory (LSTM) [ 19]. Moreover, Duan et al. proposed a graph neural
+network with neural Granger causality, namely CauGNN. Each variable is regarded as a
+graph node and each edge means the casual relationship. It is conﬁrmed for multivariate
+time series forecasting in the dataset of appliances energy consumption [20].
+Owing to the severe working environment of WTs, there are obvious seasonal tenden-
+cies and nonlinear characteristics in SCADA data like vibration, temperature and pressure,
+presenting a great challenge for prediction and anomaly detection. However, sequence
+decomposition makes it possible to analyze different components of the time series, includ-
+ing seasonality, trend and irregular signal, namely STL decomposition. By extracting the
+seasonal factor and mitigating the effects of seasonal ﬂuctuations, some traditional models
+like RNNs are utilized to make forecasts. This approach has been successfully applied
+in various domains, including renewable energy generation forecasting [ 21], short-term
+load forecasting for distribution networks [ 22] and fault diagnosis for electro-mechanical
+actuators [23].
+Inspired by the approaches mentioned above, we propose a novel neural network
+named decomposed sequence interactive network (DSI-Net) for the condition monitoring
+of WTs. STL is utilized to downsample the input time series to the sequences of trend
+and seasonality, reﬂecting the changing tendency and cycle features, respectively. And the
+interactive structure with a residual shortcutting is designed for the extraction of spatio-
+temporal features using CNN and GRU [ 24] blocks. After the extraction, we incorporate
+interactive learning between the two sub-sequences and the original sequence to offset the
+loss of information. After all the downsample-convolve-interact operations, we realign
+and concatenate all the low-resolution components into a new sequence representation.
+The main contributions are as follows:
+(1) Novel models for the feature extraction with sequence decomposition: We propose
+a TSF framework, DSI-Net, for the condition monitoring of WTs by using the distinctive
+attributes of time series data from SCADA. Sequence decomposition is introduced to obtain
+the subsequences of trend and seasonality. By extracting and interactively exchanging
+spatio-temporal features, we demonstrate the effectiveness of our framework through
+experiments based on gearbox oil temperature (GOT) and generator bearing temperature
+(GBT) datasets.
+(2) Interactive network structure: To compensate for the probable loss of information
+after downsampling, an interactive learning structure is applied in condition monitoring for
+------------------------------End of the page -----------------------------------
+Sensors 2023 ,23, 8964 3 of 17
+the ﬁrst time. The deep characteristics can be interchanged between the original sequence
+and subsequences, digging for the afﬁne transformation parameters from each other.
+(3) Extracting blocks for spatio-temporal features: As the extracting blocks, the archi-
+tectures of CNN and GRU are introduced into an interactive learning block to establish the
+deep learning model for fusing spatio-temporal features in SCADA data.
+The remainder of this paper is organized as follows. The theoretical track for this
+research is provided in Section 2. In Section 3, we expound on SCADA data and prepro-
+cessing applied in this paper. The methodologies and model structure are introduced in
+Section 4. The validation and results of the experiment are shown in Section 5. Ultimately,
+the study is concluded in Section 6.
+2. General Flow of Condition Monitoring of Wind T urbines
+Generally, the theoretical track of condition monitoring of WTs is based on TSF by
+extracting the sensitive monitoring indicators and the comparison with the setting alarming
+threshold. The indicators, such as some statistical indexes, provide insights into the
+operating conditions of WTs. And the alarm threshold is obtained from the historical data
+of WTs under different operating conditions. When the monitored indicators exceed the
+predeﬁned threshold for a period, it triggers an alarm indicating an anomaly in the system.
+Based on the proposed method, the ﬂow of condition monitoring is shown in Figure 1.
+In the ﬁrst module, the raw data from the SCADA system are preprocessed by missing
+values ﬁlling, using the selection of corresponding variables to create time series datasets.
+The training dataset will be decomposed into subsequences according to trend and sea-
+sonality, respectively entering the model training. And then the best-trained model will
+be obtained. After that, the online test dataset will be fed into the model for condition
+monitoring. The evaluating factors and warning thresholds are calculated using EWMA to
+assist in discriminating abnormal conditions.
+Data acquisition 
+and TransmissionData
+Preprocessing
+Model Training
+(Offline)Model Training and
+Residual Calculation
+Missing Value FillingFeature Selection
+Model Testing
+(Online)Residual
+CalculationThreshold
+Definition
+Re>Th?
+FaultResidual
+CalculationHealthy Status 
+Judgement
+Sensor 1
+Sensor 2
+Sensor n...
+Figure 1. The ﬂow of condition monitoring of wind turbines.
+3. Data Preprocessing
+The wind turbine gearbox used in this study has the compact mechanics of a one-stage
+planetary (2K-H) and two-stage parallel axis helical architecture to realize space-saving
+without losing the high speed-increasing ratio. There are several useless or missing data in
+the collected sequences because of the failure of acquisition and unscheduled downtime.
+So the raw data will be preprocessed ﬁrst before training the model to assure accuracy.
+3.1. Missing Value Filling
+Due to the failure during the transmission and storage, some missing values and
+blanks break the integrality of the raw data. In order to keep the continuity in the temporal
+dimension of the data, it is required to ﬁll the missing information of time sequence datasets.
+------------------------------End of the page -----------------------------------
+Sensors 2023 ,23, 8964 4 of 17
+To retain the tendency over time, the ﬁlling values are calculated by the local mean method,
+shown in (1),
+xp
+i=t 1
+å
+i=t k 1xp
+i+t+k+1
+å
+i=t+1xp
+i
+k(1)
+where xp
+iis the t-th missing value of the p-th time sequence variable. kis the length of the
+ﬁlling window. As for the proposed method, kis set to 6.
+3.2. Selection of Corresponding Variables
+The presence of redundant SCADA data can negatively impact the accuracy and efﬁ-
+ciency of time series forecasting. To address this issue, it is important to carefully select the
+variables based on their relevance to the target variables. Variables that have a signiﬁcant
+impact on the target variables should be prioritized during the model construction and
+training process. Statistically, the relevance of variables could be indicated by correlation
+analysis methods such as the Spearman correlation coefﬁcients. It was initially proposed
+by Charles Spearman in 1904, and deﬁned as a nonparametric measure of the dependence
+of two variables. Jan Hauke and Tomas Kossowski [ 25] compared the values and signiﬁ-
+cance of the Pearson and Spearman correlation coefﬁcients for the same dataset, proving
+the reliability of the Spearman correlation coefﬁcients when facing the nonparametric or
+distribution-free problems. The Spearman correlation coefﬁcients ris a nonparametric
+or distribution-free rank statistical metric of the strength and the direction of the random
+monotonic relevancy between two variables. In the gross, the Spearman correlation coef-
+ﬁcient is simply a special modality of the Pearson coefﬁcient, transforming the samples
+into ranks before calculations of correlation coefﬁcients. But there is no need to make an
+assumption of linear relation and frequency proﬁle. On the basis of the residual of two
+ranked variables, rcan be expressed as [26]:
+r=1 6åd2
+i
+N(N2 1)(2)
+where di=X0
+i Y0
+i, meaning the residual between each pair of the ranked variables. N
+is the number of samples. The positive and negative values of rmean the corresponding
+correlations. For complete monotone correlations, the absolute value is 1.
+4. Methodology
+4.1. Sequence Decomposition
+Due to the changeable natural condition, there are plenty of instabilities in the collected
+SCADA data, impacting the time series forecasting severely. What is more, the general
+models for predicting, including RNN and Transformer, can catch the long-term dependen-
+cies of time series and extract temporal features adaptively. However, when facing the lack
+of abundant training data or lopsidedness, the deep learning network may be overﬁtting
+with a poor generalization performance. Therefore, to tackle this dilemma, this paper
+utilizes a sequence decomposing block as an inner operation, enabling the extraction of the
+long-term stationary features from predicted intermediate hidden variables stage by stage.
+Virtually, as a classic method in signal processing [ 27], the analysis of multi-resolution
+has been used in time series processing like classiﬁcation [ 28] tasks and so on. In this
+paper, speciﬁcally, we adapt the moving average to smoothen periodic ﬂuctuations and
+emphasize the long-term trends. For input sequence X2RLd, the calculations [ 29] are
+shown as below.
+Xpadding =Padding (X) (3)
+Xt=AvgPool (Xpadding ) (4)
+Xs=X Xt (5)
+------------------------------End of the page -----------------------------------
+Sensors 2023 ,23, 8964 5 of 17
+where Xpadding ,Xs,Xt2RLddenote the sequences after padding, seasonality subse-
+quences, and trend subsequences, respectively. Landdare set to 32 and 12 in this paper.
+The AvgPool ()is utilized to extract trend information in the sequences. In conclusion,
+the above calculations are summarized as Xs,Xt=SeriesDecomp (X)in the block of se-
+quence decomposition.
+4.2. Interactive Learning
+After dividing the raw data into sequences of trend and seasonality, the component
+with high predictability can be insulated from the periodic effect and ﬂuctuant noise.
+But some drawbacks also cannot be neglected because the decomposed subsequences
+usually have a similar tendency on both sides of a time point. So, we introduce an interac-
+tive learning structure combined with sequence decomposition to dig the characteristics
+thoroughly. Liu et al. [ 30] proposed sample convolution and interaction network (SCINet)
+for the time series forecasting task, which uses an interactive learning method to achieve
+high-precision forecasts on various time series datasets. Inspired by their work, this paper
+raised a novel interactive learning structure combined with spatio and temporal feature
+extraction methods, which is shown in Figure 2.
+Figure 2. The structure of the interactive learning block.
+The decomposed sequence and the original sequence are input to the spatio feature
+extraction module simultaneously, enabling the model to capture the underlying features
+through the interactive learning process between two sequences. After being pre-activated
+by the ReLU function, various spatio features are extracted with assigned weights in the
+one-dimensional convolutional layer. And the hyperbolic tangent (Tanh) is deployed to
+make a nonlinear mapping as an activating function. As mentioned above, the spatio
+feature extraction can be formulated as:
+V(x) =Tanh(Conv (ReLU (x))) (6)
+Moreover, interactive dot multiplication is introduced as a step of interactive learning.
+After the operation of an exponential (exp) function, the output sequences of spatio feature
+extraction are guaranteed to be positive vectors, which are then entered into the interactive
+dot multiplication. The decomposed sequences Xdecomp are multiplied with the result of
+the original sequence Xoriginal from CNN and obtain the feature vector with an unaltered
+length. Correspondingly, the original sequence Xoriginal also undergoes the same interactive
+operation to learn the extracted feature mutually so as to mine for the hidden information.
+The process is shown as:
+Xs
+original =Xoriginalexp(V(Xdecomp )) (7)
+Xs
+decomp =Xdecompexp(V(Xoriginal )) (8)
+------------------------------End of the page -----------------------------------
+Sensors 2023 ,23, 8964 6 of 17
+wheremeans the dot product operation. After that, the results of the interactive process
+will enter the GRU module for temporal feature extraction. As one of the variants of LSTM,
+gated recurrent unit (GRU) makes a simpliﬁcation of gates, enabling the enhancement of
+efﬁciency while maintaining excellent temporal feature capture. And the feed-forward layer
+is set with two fully connected layers, making the high–low dimension transformation,
+where two results of temporal feature extraction modules are multiplied. In particular,
+the shortcut connection introduces Xdecomp to the adding operation instead of dot multi-
+plication, where the residual architecture lowers the risk of overﬁtting. The formulas are
+as follows:
+y(x) =Tanh(GRU(ReLU (x))) (9)
+Xf
+decomp=y(XS
+original)y(XS
+decomp) (10)
+Ydecomp =Xf
+decomp+Xdecomp (11)
+where yexpresses the temporal feature extraction process. Xf
+decompis the output of the tem-
+poral feature extraction module. Ydecomp is the ﬁnal output of the interactive learning block.
+In summary, the above equations are summarized as Ydecomp =InterLearning (Xdecomp )as
+the interactive learning process.
+4.3. DSI-Net
+Based on the mentioned sequence decomposition and interactive learning, the novel
+DSI-Net is established as shown in Figure 3.
+SeriesDecomp
+Original sequence
+Seasonal sequencezeroSeasonal feature extractionTrend feature extraction
+Trend sequencemeanInteractiveLearningInteractiveLearning
+Projection LayerOutput
+Figure 3. The structure of DSI-Net.
+There are three main blocks in the network, namely Series Decomp ,Interactive Learning
+andProjection Output . The original sequence is decomposed in the ﬁrst block, with the
+subsequences entering feature extractions of trend and seasonality. The extractions after
+division contribute to the interpretability and high precision of the predicting model. To
+improve the robustness of the network, the ﬁrst and last points of the time series are
+duplicated. This duplication ensures that the sequences have the same dimensions and
+helps maintain consistency throughout the analysis.
+Two subsequences Xoriginal andXdecomp , can interact with the original time series in
+the block of interactive learning respectively so as to acquire the spatio-temporal features
+hidden in the deep-seated scale. Two interactive sequences engage mutually between CNN
+module and GRU module, which are used for spatio and temporal feature extractions
+correspondingly. After the output of the feed-forward layer, a skipping connection, namely
+residual connection [31], is added to prevent overﬁtting.
+After interactive learning, the output Ydecomp will be added together and fed into the
+projection layer, where the eigenvector can be mapped from the primordial dimension to the
+------------------------------End of the page -----------------------------------
+Sensors 2023 ,23, 8964 7 of 17
+required dimension adapting to the condition monitoring task through the convolutional
+layer with a kernel size of 1. The process of the projection layer is represented below.
+Yt=Yseasonality +Ytrend (12)
+Y=Projection (Yt) (13)
+where Yseasonality and Ytrend are the output of the seasonal and trend feature extraction
+modules, respectively. Ytrepresents the sum of them, and Y2RLoutddenotes the output
+of the DSI-Net, in which Loutanddare both set to 12 in this paper.
+4.4. General Procedures of the DSI-Net
+The DSI-Net is developed for the condition monitoring of WTs. As shown in Figure 4,
+the general procedures of the DSI-Net are shown below.
+Step 1: Collect data from the SCADA system.
+Step 2: Preprocess the data and divide them into training, validation and test datasets.
+Step 3: Decompose the sequences into trend sequences and seasonality sequences by
+Series Decomp block.
+Step 4: Extract underlying spatio and temporal features through the Interactive Learning
+block.
+Step 5: Sum the outputs of the trend and seasonal feature extraction modules and
+project the vector to the required dimension.
+Step 6: Calculate the residual and judge the working condition of WTs.
+Sensor 1Sensor 2Sensorn...DataacquisitionAndTransmission
+Seasonalfeature extractionData Preprocessing
+Original sequence
+Trendsequencemean
+Seasonal sequencezeroInteractiveLearningInteractiveLearningSeriesDecomp
+ProjectionResidualCalculationRe>Th?FaultTrendfeatureextractionOutputNormalYesNo
+Figure 4. General procedures of the DSI-Net.
+5. Validation
+5.1. Dataset Description
+The SCADA data used in this paper were collected from one wind farm located in Hubei,
+China, with records of the operation state of the No. 2, No. 19 and No. 22 WTs from January
+2021 to November 2021. The dataset contains temperature data from 14 measure points,
+as shown in Table 1. The sample interval is set as 10 min. The variable names and their
+corresponding abbreviations are shown in Table 1. And the on-site pictures of the condition
+monitoring system for WTs are shown in Figure 5, including the picture of the installation
+position of certain sensors (Figure 5a), home page of the system (Figure 5b), data visualization
+and processing page (Figure 5c) and fault pre-warning and record page (Figure 5d).
+------------------------------End of the page -----------------------------------
+Sensors 2023 ,23, 8964 8 of 17
+Table 1. Sample data of the SCADA system.
+No. Variable Name No. Variable Name
+T1 Gearbox inlet oil temperature T8 Generator winding U2 temperature
+T2 Gearbox input shaft temperature T9 Generator winding V1 temperature
+T3 Gear oil temperature T10 Generator winding V2 temperature
+T4 Gearbox shaft temperature T11 Generator winding W1 temperature
+T5 Generator bearing A temperature T12 Generator winding W2 temperature
+T6 Generator bearing B temperature T13 Main bearing gearbox side temperature
+T7 Generator winding U1 temperature T14 Main bearing rotor side temperature
+(a)
+MENU BAR
+Alarm messages (b)
+Condition monitoring system for wind turbines
+MENU BAR
+Sensors
+Sensors
+Sensors
+Sensors
+Sensor 1
+Sensor 2
+Sensor 3
+Sensor 4
+Sensor 5  
+Sensor 6
+Sensor 7
+Sensor 8
+Sensor 9Real-time dataData Trends Raw data
+Data AnalysisRotation speed Data analysis menu
+(c)
+ (d)
+Figure 5. Pictures of the monitoring system and sensors in the ﬁeld: ( a) the installation position of
+certain sensors, ( b) home page of the system, ( c) data visualization and processing page, ( d) fault
+pre-warning and record page.
+5.2. Data Preprocessing
+To advance the convergence rate and accuracy of the deep learning model, data
+preprocessing methods including missing values ﬁlling and selection of corresponding
+variables are necessary and vital. As mentioned in Section 3, the method of the Spear-
+man correlation coefﬁcients is utilized in this paper to select the features that are of
+great inﬂuence on the status of WTs, and the heatmap of the coefﬁcients is shown in
+Figure 6. The observations indicate that T13 and T14 have few correlations with the work-
+ing condition of WTs. Therefore, the input eigenvector can be selected and expressed by
+X= [T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12 ].
+------------------------------End of the page -----------------------------------
+Sensors 2023 ,23, 8964 9 of 17
+Figure 6. The heatmap of the Spearman correlation coefﬁcients.
+5.3. Experiments Based on the DSI-Net
+In this research, contrast experiments based on different WTs are formulated to verify
+the capability of prediction both in accuracy and in generalization. According to the running
+log, there was no over-temperature record of the No. 2 WT. The GOT of the No. 19 WT
+alarmed on 13 May, and the GBT of the No. 22 WT alarmed on 14 June. Therefore, the data
+of the No. 2 WT from January to August are chosen as the training dataset (34,992 pieces of
+data). The validation is based on the datasets of the No. 2 WT in Sep (4320 pieces of data).
+The data of the No. 2 and No. 19 WTs in October serve as the test datasets (8928 pieces of data).
+5.3.1. Validation of the Data Preprocessing Method
+Data preprocessing methods have a signiﬁcant impact on the convergence of the deep
+learning models: some control experiments based on DSI-Net are utilized to verify the
+Spearman feature selection method. Principal Component Analysis (PCA) [ 32] is a feature
+dimension reduction method that is widely used for data preprocessing, but mainly for
+tasks with plenty of features. It can be observed in Figure 6 that the Spearman coefﬁcient
+between some features is 1, indicating a high correlation. While enhancing the diversiﬁed
+expression of health information, these features also pose a risk of feature redundancy.
+So experiments that delete the features T8–T12 are conducted to validate its effectiveness.
+The experiment without feature selection or feature dimension reduction is also carried
+out, and the results are presented in Figure 7. It can be analyzed that the Spearman feature
+selection method achieves the highest prediction accuracy compared to other experimental
+groups, which validates the effectiveness of the feature selection method. The R2 of
+the experimental group using the PCA method is signiﬁcantly less than other groups.
+The limitations of the PCA method include its ability to only handle linear relationships
+between features and the potential for information loss during the reduction process. Given
+the complexity of the relationships between SCADA data and the limited features available,
+PCA may not be the optimal method.
+------------------------------End of the page -----------------------------------
+Sensors 2023 ,23, 8964 10 of 17
+GBT of theN
+o.2 WTGOT of theN
+o.2 WTGBT of theN
+o.19 WTGOT of theN
+o.19 WT0.900.920.940.960.981.00T
+ypes of predicted temperaturesR2 Spearman     PCA       Without Selection  Delete Certain Features
+Figure 7. Comparison of the data preprocessing methods for DSI-Net: (red) the Spearman method,
+(blue) the PCA method, (yellow) without feature selection, (green) delete the features T8–T12.
+5.3.2. Validation of Effectiveness of Blocks in the DSI-Net
+As mentioned above, there are two feature extraction modules based on CNN and
+GRU in interactive learning: digging out the hidden features both in spatio and temporal
+dimensions, respectively. The inner operation of the sequence decomposing block assists in
+learning the complex temporal patterns in long-term forecasting context in the interactive
+learning block. The contrast experiments based on healthy data are utilized to further
+verify the effectiveness of the interactive learning and the sequence decomposition blocks
+in the DSI-Net.
+For the GOT and GBT datasets from No. 2 and No. 19 WT, a comparison of three
+different feature extraction methods in the DSI-Net for spatio–temporal features, spatio
+features and temporal features, namely Method A, B and C, respectively, is shown in
+Figure 8. Obviously, due to the fusion of the spatio and temporal information through the
+interactive learning process, the proposed method obtains a better performance than others.
+GBT of theN
+o.2 WTGOT of theN
+o.2 WTGBT of theN
+o.19 WTGOT of theN
+o.19 WT0.00.10.20.30.40.50.60.70.80.9T
+ypes of predicted temperaturesRMSE Method A  Method B  Method C
+(a)
+GBT of theN
+o.2 WTGOT of theN
+o.2 WTGBT of theN
+o.19 WTGOT of theN
+o.19 WT0.950.960.970.980.991.00T
+ypes of predicted temperaturesR2 Method A  Method B  Method C (b)
+Figure 8. Comparison of prediction accuracy of different feature extraction methods in the DSI-Net:
+(a) the RMSE value, ( b) the R2 value.
+The effectiveness of the trend-seasonal decomposition can be veriﬁed, as shown in
+Figure 9. It turned out to be valid that the proposed method has a more outstanding
+------------------------------End of the page -----------------------------------
+Sensors 2023 ,23, 8964 11 of 17
+accuracy with a lower RMSE value and a higher R2 value compared with the methods
+making seasonal subsequences constant (the SSC method) or making trend subsequences
+constant (the TSC method). It is worth noting that the accuracy of the DSI-Net only slightly
+decreases when forbidding the decomposed seasonal sequence, rather than a dramatic
+decline occurring when forbidding the decomposed trend sequence. This can be explained
+by the fact that the trend information of a sequence plays a more important role in the
+prediction process, predicting the overall trend of the eigenvalues. Based on it, the seasonal
+information further enhances the accuracy of the prediction. The DSI-Net effectively
+combines these two pieces of information, resulting in improved performance.
+GBT of theN
+o.2 WTGOT of theN
+o.2 WTGBT of theN
+o.19 WTGOT of theN
+o.19 WT0.00.51.01.52.02.53.03.5T
+ypes of predicted temperaturesRMSE The Proposed Method  
+The SSC Method  
+The TSC Method 
+(a)
+GBT of theN
+o.2 WTGOT of theN
+o.2 WTGBT of theN
+o.19 WTGOT of theN
+o.19 WT0.80.91.0T
+ypes of predicted temperaturesR2 The Proposed Method  
+The SSC Method  
+The TSC Method (b)
+Figure 9. Comparison of prediction accuracy of different decomposition methods in the DSI-Net:
+(a) the RMSE value, ( b) the R2 value.
+5.3.3. Validation of Healthy Data
+The validation is based on the test dataset from the No. 2 WT, and the actual and
+predicted value curves of GBT are shown in Figure 10. It is illustrated that two curves
+coincide approximately, demonstrating the outstanding performance of the DSI-Net on the
+predicting task. It is worth noting that the temperature ﬂuctuates speedily on 13 October,
+22 October and 29 October, which means instability for the prediction model. However,
+the trained DSI-Net ﬁts the sharp change that appeared in the actual curve primely, verify-
+ing the advantageous extraction of the spatio and temporal features using DSI-Net.
+Figure 10. Comparison of predicting and actual value for GBT on the No. 2 WT.
+Analogously, DSI-Net has an excellent performance on the predicting task of GOT
+and ﬁts the actual curve well, which is shown in Figure 11. In general, DSI-Net has an
+outstanding predicted ability on different temperatures of WTs.
+------------------------------End of the page -----------------------------------
+Sensors 2023 ,23, 8964 12 of 17
+Figure 11. Comparison of predicting and actual value for GOT on the No. 2 WT.
+5.3.4. Validation of Anomaly Detection
+To further verify the robustness of the proposed method, the abnormal data are input
+to the trained DSI-Net, including the GBT with anomaly of the No. 22 WT from 12 June to
+15 June and the GOT with an anomaly of the No. 19 WT from 12 May to 15 May. The results
+of the prediction cannot reﬂect the condition visually. So we introduce residuals between
+the true values and the predicted values to represent the healthy status of WTs. In this
+paper, the root mean squared error (RMSE) is selected to process the residual for a more
+stable value, which can be expressed as [33].
+RMSE t=vuut1
+kt
+å
+i=t k(ˆyi yi)2(14)
+where kis the length of RMSE window, which is set as 6. And yi,ˆyidenote the true and
+predicted values respectively at the point i.
+Meanwhile, the exponentially weighted moving averages (EWMA) method [ 34] is
+applied to smoothen the curve while keeping a great sensitivity to extremely small changes,
+which can be calculated by
+RES t=lRMSE t+ (1 l)RES t 1 (15)
+where tis the time step and RMSE tis the RMSE value at the time t.lis a constant from
+0 to 1, reﬂecting the effect from the prior data. RES 0is initially the mean of the output
+residual and the RES tis the result of EWMA. Then, the EWMA control chart is utilized
+to determine the upper control limit (UCL) for condition monitoring. And the warning
+threshold is calculated as follows [11]:
+UCL(t) =me+Kser
+l
+2 l[1 (1 l)2t] (16)
+where meandseare the mean and standard deviation of RES of the training data. Kandl
+are parameters that control the range of the threshold.
+The result of GBT with a RES curve and the UCL is shown in Figure 12. The average
+value of RES for GBT in the healthy period is 0.67 and the UCL is 1.25. It is illustrated that
+the RES value ﬂuctuates slightly under the UCL on 12 June and 13 June. But an abrupt
+peak appears sharply at the end of 13 June and exceeds the UCL at 0:00, 14 June. Then it
+ﬂuctuates above the UCL for a while and falls down to the UCL at 14:50, 14 June, regarded
+as abnormal. According to the running log of the No. 22 WT, the anomaly of GBT ﬁrst
+appeared at 7:10, and the overtemperature alarm is removed at 11:10. It is worth noting
+that the DSI-Net detects the GBT anomaly and sets off an alarm 7.2 h in advance with
+great reliability.
+------------------------------End of the page -----------------------------------
+Sensors 2023 ,23, 8964 13 of 17
+Figure 12. The RES curve (after EWMA) of GBT on the No. 22 WT.
+The GOT monitoring result with a RES curve and the UCL are shown in Figure 13.
+The average value of RES for GOT in the healthy period is 0.71 and the UCL is 1.45. From
+12 May to 14 May, it can be observed that the abnormal change comes into being when the
+RES value goes beyond the UCL at 13:30, 13 May and declines at 16:00, 13 May. According
+to the operating log of the No. 19 WT, it can be indicated that the anomaly of GOT occurred
+between 14:10 and 15:40. The result of experiments shows that the proposed method
+monitors the anomaly of GOT effectively and alerts in advance.
+Figure 13. The RES curve (after EWMA) of GOT on the No. 19 WT.
+As mentioned above, with the assistance of sequence decomposition, the proposed
+method has a supreme ability in component extraction focused on more predictable ingre-
+dients. Additionally, the structure of interactive learning enables the identiﬁcation and
+extraction of hidden features by leveraging similar trends from both sides of a single point.
+The great sensitivity to characteristic changes enhances the accuracy of anomaly detection
+with the implementation of DSI-Net.
+5.4. Comparative Study of Models
+The proposed model obtains further validation based on comparisons between the
+DSI-Net and a variety of typical models such as GRU [ 35], LSTM [ 36], CNN-LSTM [ 37],
+and SCI-Net [30].
+5.4.1. Validation of Healthy Data
+Quantitatively speaking, the mean absolute error (MAE), mean square error (MSE),
+root mean square error (RMSE) and determination coefﬁcient ( R2) are applied as the
+evaluating index to assess the ability of the models for condition monitoring. The dataset of
+veriﬁcation is from SCADA of the No. 2 and No. 19 WTs in September. And the parameter
+conﬁguration and operating environment of all comparative experiments are consistent.
+The results based on healthy GBT and GOT are shown in Tables 2 and 3, respectively.
+The DSI-Net has demonstrated excellent performance in forecasting tasks for both the
+No. 2 and No. 19 WTs. It outperforms other models with higher R2and lower MAE, MSE,
+and RMSE. When validating the data from the No. 19 WT by using the trained model
+based on the No. 2 WT, the evaluating indicators experience a little degradation due to
+variations in the installation sites of sensors, location of WTs, working condition of WTs,
+etc. The residual connection added in the interactive learning block enables avoiding
+overﬁtting, which boosts the accuracy compared with other existing models.
+------------------------------End of the page -----------------------------------
+Sensors 2023 ,23, 8964 14 of 17
+Table 2. The results of the comparative experiments based on healthy GBT data.
+ModelEvaluation Indicators
+MAE MSE RMSE R2
+No. 2 No. 19 No. 2 No. 19 No. 2 No. 19 No. 2 No. 19
+GRU 0.7395 1.4893 1.2894 2.9295 1.1355 1.7115 0.9688 0.9018
+LSTM 0.9484 1.6118 1.6777 3.4010 1.2952 1.8441 0.9594 0.8860
+CNN-LSTM 1.0116 1.0546 1.8194 1.8230 1.3488 1.3502 0.9560 0.9389
+SCI-Net 0.5731 0.7697 0.4706 0.7943 0.6860 0.8912 0.9725 0.9733
+DSI-Net 0.3728 0.4442 0.2053 0.2852 0.4531 0.5340 0.9904 0.9879
+Table 3. The results of the comparative experiments based on healthy GOT data.
+ModelEvaluation Indicators
+MAE MSE RMSE R2
+No. 2 No. 19 No. 2 No. 19 No. 2 No. 19 No. 2 No. 19
+GRU 1.9581 1.3458 5.2674 3.0874 2.295 1.7571 0.9211 0.9135
+LSTM 1.5600 1.4737 3.8110 4.6292 1.9526 2.1515 0.943 0.8704
+CNN-LSTM 1.4312 1.3580 2.8642 2.8949 1.6924 1.7014 0.9571 0.9189
+SCI-Net 0.7892 0.8255 0.8725 1.0011 0.9341 1.0005 0.9596 0.9719
+DSI-Net 0.5180 0.5642 0.4099 0.4710 0.6402 0.6863 0.9868 0.9810
+5.4.2. Validation of Anomaly Detection
+The GBT monitoring results of control models are shown in Figure 14. As shown in
+Figure 14a,c,d, it can be seen that curves of GRU, CNN-LSTM and SCI-Net are similar,
+in which the RES value exceeds the UCL at around 0:00, 14 June and falls below the UCL
+at around 3:00, 14 June. After an undulation under the UCL, the RES value goes over the
+line again at about 7:50, 14 June. But according to the operating log, the GBT anomaly
+occurred between 7:10 and 11:10. The GBT monitoring results of GRU and CNN-LSTM
+can be regarded as false alarms. The GBT monitoring results of LSTM shown in Figure 14b
+indicates that it alarms between 0:10 and 1:50. The RES value ﬂuctuates in a small range
+above the UCL at 6:40 and falls below it rapidly, indicating there is no anomaly on WTs.
+The monitoring result of LSTM is not consistent with the operating status of the No. 22 WT,
+which shows poor dependability.
+(a)
+ (b)
+(c)
+ (d)
+Figure 14. Comparison of the GBT monitoring results: ( a) the result of GRU, ( b) the result of LSTM,
+(c) the result of CNN-LSTM, ( d) the result of SCI-Net.
+------------------------------End of the page -----------------------------------
+Sensors 2023 ,23, 8964 15 of 17
+The GOT monitoring results of GRU, LSTM and CNN-LSTM shown in
+Figure 15a–c indicate that the RES value is under the UCL from 12 May to 14 May without
+fault alarm. However, according to the working log, the GOT anomaly from 14:10 to 15:40 is
+not detected. The result of SCI-Net in Figure 15d shows that the detection of anomaly has a
+great delay of several hours. Moreover, owing to the lack of predicting accuracy, the thresh-
+old value of GRU, LSTM and CNNLSTM is larger than that of SCI-Net and DSI-Net. This
+instability in condition monitoring of wind turbines is attributed to the shallow structures
+of these models, which fail to effectively extract underlying features from the SCADA data,
+resulting in poor prediction accuracy. On the other hand, the SCI-Net has an unsatisfactory
+performance on the GBT monitoring task. Due to the stacked interactive learning process of
+two split sequences, the SCI-Net achieves a higher predicting accuracy and lower threshold
+of RES compared with other mentioned models. But it only pays attention to digging out
+the temporal information hidden in the sequence, which results in inadequate usage of the
+spatio and temporal features and the abnormal ﬂuctuation of RES value.
+Differing from the above-mentioned, the proposed DSI-Net shows a splendid perfor-
+mance on the condition monitoring of WTs, especially on anomaly detection. The decom-
+position of trend and seasonality helps to focus on the spatio-temporal features. Meanwhile,
+the original and decomposed sequences, which are similar in terms of the time step, make inter-
+active learning take full advantage of the extracted features. The results confirm its effectiveness.
+(a)
+ (b)
+(c)
+ (d)
+Figure 15. Comparison of the GOT monitoring results: ( a) the result of GRU, ( b) the result of LSTM,
+(c) the result of CNN-LSTM, ( d) the result of SCI-Net.
+6. Conclusions
+In this paper, a DSI-Net model is proposed and applied for the condition monitor-
+ing of WTs by predicting the tendency of GOT and GBT. Compared with the existing
+models, the proposed model enhances the accuracy and capability of anomaly detection.
+The conclusions are as follows:
+Firstly, a TSF framework, DSI-Net, is proposed for the condition monitoring of WTs
+based on SCADA data. Especially, we take sequence decomposition as one of the prepro-
+cessing methods to create the subsequences of trend and seasonality, which can dig out the
+hidden features from spatio and temporal dimensions. After that, to compensate for the
+possible loss after down sampling of data, an interactive learning structure is utilized for
+feature extraction. A continuous interchange of features between the original sequence and
+subsequences enables the exploration of the afﬁne transformation parameters.
+For the inner structure of the interactive learning block, we choose CNN and GRU as
+the extracting units to establish the deep learning model to fuse spatio-temporal features
+in SCADA data. Additionally, to enhance the generation ability of the model and avoid
+overﬁtting during the training, a residual connection is also introduced in the ﬁnal step
+------------------------------End of the page -----------------------------------
+Sensors 2023 ,23, 8964 16 of 17
+of the interactive learning block. What is more, based on the raw data from the No. 2
+and No. 19 WTs of a wind farm in Hubei, China, the experiments focus on TSF tasks
+of gearbox oil temperature and generator bearing temperature datasets. The proposed
+model is veriﬁed with higher accuracy and a superior generalization compared with other
+existing models. Ultimately, based on datasets including anomalies, contrast experiments
+between DSI-Net and other existing models are listed. With the advancement in sequence
+decomposition and interactive learning module, the DSI-Net model presents excellent
+feasibility on the condition monitoring of WTs.
+This paper focuses on the condition monitoring of WTs. The SCADA system and
+monitoring system mentioned above are actually insulated from the Internet. However,
+the monitoring results will be severely inﬂuenced if the data are disturbed by a malicious
+attack from the Internet, so the network safety of monitoring systems will be a potential
+research direction. Additionally, following the existing research, fault classiﬁcation and
+grading will also be the focus of future research, which is of great signiﬁcance to the smart
+operation of WTs.
+Author Contributions: Methodology, Q.L.; Software, Q.L.; Supervision, D.L. and X.W.; Validation,
+Q.L.; Writing—original draft, Q.L. and Y.H.; Writing—review and editing, Q.L., Y.H., S.W., D.L. and
+X.W. All authors have read and agreed to the published version of the manuscript.
+Funding: This work was supported by the National Natural Science Foundation of China
+(Grant No. 52075392).
+Institutional Review Board Statement: Not applicable.
+Informed Consent Statement: Not applicable.
+Data Availability Statement: Not applicable.
+Acknowledgments: The authors would like to thank the editor and referees for their valuable comments.
+Conﬂicts of Interest: The authors declare no conﬂict of interest.
+References
+1. Wang, Z.; Li, G.; Yao, L.; Qi, X.; Zhang, J. Data-driven fault diagnosis for wind turbines using modiﬁed multiscale ﬂuctuation
+dispersion entropy and cosine pairwise-constrained supervised manifold mapping. Knowl.-Based Syst. 2021 ,228, 107276.
+[CrossRef]
+2. Liu, J.; Wang, X.; Wu, S.; Wan, L.; Xie, F. Wind turbine fault detection based on deep residual networks. Expert Syst. Appl. 2023 ,
+213, 119102. [CrossRef]
+3. Kou, L.; Wu, J.; Zhang, F.; Ji, P .; Ke, W.; Wan, J.; Liu, H.; Li, Y.; Yuan, Q. Image encryption for offshore wind power based on
+2D-LCLM and Zhou Yi eight trigrams. Int. J. Bio-Inspired Comput. 2023 ,22, 53–64. [CrossRef]
+4. Zhang, C.; Hu, D.; Yang, T. Research of artiﬁcial intelligence operations for wind turbines considering anomaly detection, root
+cause analysis, and incremental training. Reliab. Eng. Syst. Saf. 2024 ,241, 109634. [CrossRef]
+5. Zhang, Y.; Li, M.; Dong, Z.Y.; Meng, K. Probabilistic anomaly detection approach for data-driven wind turbine condition
+monitoring. CSEE J. Power Energy Syst. 2019 ,5, 149–158. [CrossRef]
+6. Liu, J.; Wang, X.; Xie, F.; Wu, S.; Li, D. Condition monitoring of wind turbines with the implementation of spatio-temporal graph
+neural network. Eng. Appl. Artif. Intell. 2023 ,121, 106000. [CrossRef]
+7. Li, Y.; Wu, Z. A condition monitoring approach of multi-turbine based on VAR model at farm level. Renew. Energy 2020 ,
+166, 66–80. [CrossRef]
+8. He, C.; Shi, H.; Si, J.; Li, J. Physics-informed interpretable wavelet weight initialization and balanced dynamic adaptive threshold
+for intelligent fault diagnosis of rolling bearings. J. Manuf. Syst. 2023 ,70, 579–592. [CrossRef]
+9. Dhiman, H.S.; Deb, D.; Muyeen, S.; Kamwa, I. Wind turbine gearbox anomaly detection based on adaptive threshold and twin
+support vector machines. IEEE Trans. Energy Convers. 2021 ,36, 3462–3469. [CrossRef]
+10. Tian, X.; Jiang, Y.; Liang, C.; Liu, C.; Ying, Y.; Wang, H.; Zhang, D.; Qian, P . A Novel Condition Monitoring Method of Wind
+Turbines Based on GMDH Neural Network. Energies 2022 ,15, 6717. [CrossRef]
+11. Kong, Z.; Tang, B.; Deng, L.; Liu, W.; Han, Y. Condition monitoring of wind turbines based on spatio-temporal fusion of SCADA
+data by convolutional neural networks and gated recurrent units. Renew. Energy 2020 ,146, 760–768. [CrossRef]
+12. Vaiciukynas, E.; Danenas, P .; Kontrimas, V .; Butleris, R. Two-step meta-learning for time-series forecasting ensemble. IEEE Access
+2021 ,9, 62687–62696. [CrossRef]
+------------------------------End of the page -----------------------------------
+Sensors 2023 ,23, 8964 17 of 17
+13. Silva, P .C.; Sadaei, H.J.; Guimaraes, F.G. Interval forecasting with fuzzy time series. In Proceedings of the 2016 IEEE Symposium
+Series on Computational Intelligence (SSCI), Athens, Greece, 6–9 December 2016; pp. 1–8.
+14. Cruz-Ramírez, A.S.; Martínez-Gutiérrez, G.A.; Martínez-Hernández, A.G.; Morales, I.; Escamirosa-Tinoco, C. Price trends of
+Agave Mezcalero in Mexico using multiple linear regression models. Ciência Rural 2023 ,53, e20210685. [CrossRef]
+15. Box, G.E.; Jenkins, G.M. Some recent advances in forecasting and control. J. R. Stat. Soc. Ser. C Appl. Stat. 1968 ,17, 91–109.
+[CrossRef]
+16. Cipra, T.; Trujillo, J.; Robio, A. Holt-Winters method with missing observations. Manag. Sci. 1995 ,41, 174–178. [CrossRef]
+17. Trull, O.; García-Díaz, J.C.; Troncoso, A. Initialization methods for multiple seasonal Holt–Winters forecasting models. Mathematics
+2020 ,8, 268. [CrossRef]
+18. Betthauser, J.L.; Krall, J.T.; Kaliki, R.R.; Fifer, M.S.; Thakor, N.V . Stable electromyographic sequence prediction during movement
+transitions using temporal convolutional networks. In Proceedings of the 2019 9th International IEEE/EMBS Conference on
+Neural Engineering (NER), San Francisco, CA, USA, 20–23 March 2019; pp. 1046–1049.
+19. Qian, P .; Tian, X.; Kanfoud, J.; Lee, J.L.Y.; Gan, T.H. A novel condition monitoring method of wind turbines based on long
+short-term memory neural network. Energies 2019 ,12, 3411. [CrossRef]
+20. Duan, Z.; Xu, H.; Huang, Y.; Feng, J.; Wang, Y. Multivariate time series forecasting with transfer entropy graph. Tsinghua Sci.
+Technol. 2022 ,28, 141–149. [CrossRef]
+21. Zhang, X.; Tang, L.; Chen, J. Fault diagnosis for electro-mechanical actuators based on STL-HSTA-GRU and SM. IEEE Trans.
+Instrum. Meas. 2021 ,70, 1–16. [CrossRef]
+22. Fan, M.; Hu, Y.; Zhang, X.; Yin, H.; Yang, Q.; Fan, L. Short-term load forecasting for distribution network using decomposition
+with ensemble prediction. In Proceedings of the 2019 Chinese Automation Congress (CAC), Hangzhou, China, 22–24 November
+2019; pp. 152–157.
+23. Wang, J.; Li, T.; Xie, R.; Wang, X.-m.; Cao, Y.-y. Fault feature extraction for multiple electrical faults of aviation electro-mechanical
+actuator based on symbolic dynamics entropy. In Proceedings of the 2015 IEEE International Conference on Signal Processing,
+Communications and Computing (ICSPCC), Ningbo, China, 19–22 September 2015; pp. 1–6.
+24. Wang, Y.; Liao, W.; Chang, Y. Gated recurrent unit network-based short-term photovoltaic forecasting. Energies 2018 ,11, 2163.
+[CrossRef]
+25. Hauke, J.; Kossowski, T. Comparison of values of Pearson’s and Spearman’s correlation coefﬁcients on the same sets of data.
+Quaest. Geogr. 2011 ,30, 87–93. [CrossRef]
+26. Zar, J.H. Signiﬁcance testing of the Spearman rank correlation coefﬁcient. J. Am. Stat. Assoc. 1972 ,67, 578–580. [CrossRef]
+27. Mallat, S. A theory for multi-resolution approximation: The wavelet approximation. IEEE Trans. PAMI 1989 ,11, 674–693.
+[CrossRef]
+28. Cui, Z.; Chen, W.; Chen, Y. Multi-scale convolutional neural networks for time series classiﬁcation. arXiv 2016 , arXiv:1603.06995v4.
+29. Wu, H.; Xu, J.; Wang, J.; Long, M. Autoformer: Decomposition transformers with auto-correlation for long-term series forecasting.
+Adv. Neural Inf. Process. Syst. 2021 ,34, 22419–22430.
+30. Liu, M.; Zeng, A.; Xu, Z.; Lai, Q.; Xu, Q. Time series is a special sequence: Forecasting with sample convolution and interaction.
+arXiv 2021 , arXiv:2106.09305v1.
+31. He, K.; Zhang, X.; Ren, S.; Sun, J. Deep residual learning for image recognition. In Proceedings of the IEEE Conference on
+Computer Vision and Pattern Recognition, Las Vegas, NV , USA, 27–30 June 2016; pp. 770–778.
+32. Pozo, F.; Vidal, Y. Wind turbine fault detection through principal component analysis and statistical hypothesis testing. Energies
+2015 ,9, 3. [CrossRef]
+33. Jia, X.; Han, Y.; Li, Y.; Sang, Y.; Zhang, G. Condition monitoring and performance forecasting of wind turbines based on denoising
+autoencoder and novel convolutional neural networks. Energy Rep. 2021 ,7, 6354–6365. [CrossRef]
+34. Abbas, N.; Riaz, M.; Does, R.J. An EWMA-type control chart for monitoring the process mean using auxiliary information.
+Commun. Stat.-Theory Methods 2014 ,43, 3485–3498. [CrossRef]
+35. Cho, K.; Van Merriënboer, B.; Bahdanau, D.; Bengio, Y. On the properties of neural machine translation: Encoder-decoder
+approaches. arXiv 2014 , arXiv:1409.1259v2.
+36. Gers, F.A.; Schmidhuber, J.; Cummins, F. Learning to forget: Continual prediction with LSTM. Neural Comput. 2000 ,12, 2451–2471.
+[CrossRef] [PubMed]
+37. Han, S.; Zhong, X.; Shao, H.; Xu, T.; Zhao, R.; Cheng, J. Novel multi-scale dilated CNN-LSTM for fault diagnosis of planetary
+gearbox with unbalanced samples under noisy environment. Meas. Sci. Technol. 2021 ,32, 124002. [CrossRef]
+Disclaimer/Publisher’s Note: The statements, opinions and data contained in all publications are solely those of the individual
+author(s) and contributor(s) and not of MDPI and/or the editor(s). MDPI and/or the editor(s) disclaim responsibility for any injury to
+people or property resulting from any ideas, methods, instructions or products referred to in the content.
+------------------------------End of the page -----------------------------------
