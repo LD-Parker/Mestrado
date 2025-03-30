@@ -1,0 +1,629 @@
+5—9 June2023, MontréalThe 36th Canadian Conference on Artificial Intelligence
+Anomaly Detection and Explanation of Wind Turbine Main
+Bearings using Autoencoder and Bayesian Network Models
+Ahmed Mabrouk†,*
+†CSAI Lab CRIGEN, ENGIE Group, Stains, France
+*ahmed.mabrouk@engie.comAbstract
+The installation of wind turbines presents several challenges and difficulties for op-
+erators. Indeed, wind turbines often face harsh environmental conditions and complex
+operational requirements, leading to high costs for operation and maintenance (O&M).
+Unexpected component failures can result in unscheduled maintenance that can be ex-
+pensive to achieve. To address these issues, we propose an approach for anomaly detec-
+tionandexplanationbasedonSupervisoryControlandDataAcquisition(SCADA)data.
+In this study, we focus our attention on a critical component of the wind turbine system
+called the main bearing. The approach involves two main steps: training an autoencoder
+model to detect anomalies in main bearing observations and using a probabilistic graph-
+ical model to gain insights into the relationships between system components and the
+main causes of failures. The robustness and benefits of this method compared to other
+fault detection techniques are demonstrated through numerical experiments.
+Keywords: Anomaly, main bearing, autoencoder, explainable AI, Bayesian models
+This article is ©2023 by author(s) as listed above. The article is licensed under a Creative Commons
+Attribution (CC BY 4.0) International license (https://creativecommons.org/licenses/by/4.0/legalcode),
+except where otherwise indicated with respect to particular material included in the article. The article
+should be attributed to the author(s) identified above.1.Introduction
+Providing green and economical energy is quickly becoming one of the main goals in the
+energy sector. Renewable energy refers to the energy obtained from alternative sources (free
+of CO2 emissions) such as wind, solar, hydroelectric, etc. The high demand for renewable
+energy can present several control and maintenance challenges. In fact, wind turbines are
+often subject to harsh operating conditions that increase the risk of various faults. The wind
+turbine, although quite adapted to its particular task and environment, it remains very brit-
+tle to extreme climate conditions. Unscheduled maintenance caused by unexpected faults
+can be very costly due to the maintenance support and the lost production time. According
+to [1], the operating and maintenance (O&M) costs lie between 20% and 25% of the overall
+levelized (LCOE) cost of electricity of current wind power systems. To further extend the
+installation of wind turbines, the improvement of wind energy performance as well as the
+reduction of operating and maintenance costs are crucial. To do so, a meticulous evaluation
+of the reliability of the different components of the wind turbine during the whole life cycle
+is required. In the last decade, numerous efforts have been devoted to overcome the limita-
+tion of current maintenance strategies, which are mainly based on preventive and corrective
+maintenance. These approaches allow real-time monitoring rather than costly time inter-
+val intervention and performance tune-ups. Feedback from various industries shows that
+condition monitoring techniques can detect anomalies before they turn into system-critical
+faults, allowing therefore maintenance to be well scheduled. The wind industry nowadays
+employs various condition-monitoring techniques to detect a failure at a sufficiently early
+stage. These techniques include acoustic monitoring [2], oil monitoring [3], thermal moni-
+toring [4], etc. However, the widespread implementation of these methods is often infeasible
+due to the high cost of installing custom sensors and the complex communication infrastruc-
+ture and protocols needed to manage their data. To address these limitations, numerous
+data-driven approaches based on SCADA data have been provided. In [5], an unsupervised
+------------------------------End of the page -----------------------------------
+2
+main bearing fault prognosis approach is presented. In this approach, only healthy SCADA
+is collected and an artificial neural network is used to predict the low-speed shaft temper-
+ature. An anomaly detection threshold is then established based on the residuals between
+the predicted and real values. Authors in [6] proposed a semi-supervised method based on
+a one-class support vector machine classifier. The method detects anomalies in the main
+bearing by using a decision function that categorizes real-time data as similar or dissimilar
+to the safe data. Other unsupervised anomaly detection approaches have been proposed
+in [7–9]. While these methods are efficient, they cannot point out the sensor observations
+responsible for the failure. Note that this information is required in the planning of diag-
+nosis and maintenance actions. In [10] a supervised machine learning approach is proposed
+to detect failures on the gearbox component. Unfortunately, the training process of the
+anomaly model needs historical faulty data to be tagged, which is a time-consuming and
+error-prone task. Additionally, the highly imbalanced nature of gearbox fault observations
+in the SCADA data may lead to other performance issues. In this study, we shall focus our
+discussion on the main bearing component. According to the European Academy of Wind
+Energy, main bearing failures have been identified as a critical issue in terms of increasing
+wind turbine reliability [11]. Therefore, a special attention should be given to this compo-
+nent. in order to prevent severe consequences. We propose a two-phase anomaly detection
+algorithm. The first phase aims to train an autoencoder model using only safe SCADA
+data. In the second phase, we propose an algorithm based on the Bayesian network (BN)
+model to interpret and explain the anomaly results returned by the autoencoder. In this
+context, beyond the wish of using the BN to identify the main sources of the anomaly, there
+is also the will to understand and validate the already detected failure in the main-bearing
+component. The rest of the paper is organized as follows: Section 2 introduces the wind
+turbine system. Then, the main bearing failure modes are reviewed in section 3. We discuss
+the used SCADA data in section 4. In section 5, we present a new approach based on an
+autoencoder and a BN for detecting and explaining main bearing failures. Its effectiveness
+is proven through experiments in section 6. Finally, some concluding remarks are given.
+2.Wind turbine overview
+A wind turbine is a device that converts the kinetic energy of wind into mechanical
+energy. The mechanical energy is then transformed into electrical energy by a generator.
+The electrical energy produced by a wind turbine depends mainly on three factors: the
+design and size of the blades, wind speed, and outdoor temperature, which directly affect
+the density of the air. The wind power P(in Watts) is computed as follows: P=1
+2Aρw3,
+where Ais the rotor swept area in m2,ρis the air density in Kg/m3andwis the wind
+speed in m/s. The wind turbine consists of three major parts: a tower, a nacelle, and rotor
+blades. It is also equipped with a pitch control system to reduce failures while improving
+safety and reliability. In fact, the pitch control is used to adjust the angle of the blades by
+rotating them to achieve specific rotor speeds and power output. Moreover, it serves as a
+protective mechanism by ensuring the safety of the wind turbine during high winds, loss of
+electrical load, or other extreme conditions.
+The wind farm SCADA data provides a rich source of continuous-time observations about
+(a) (b) (c) (d)
+Figure 1. (a) Fatigue failure (subsurface-initiated) (b) Fatigue failure (surface-initiated)
+(c) Corrosion failure (Moisture) (d) Corrosion failure (fretting).
+------------------------------End of the page -----------------------------------
+3
+different components of the system, as well as the environmental conditions. Together with
+the pitch system, the SCADA data can be used to ensure wind turbine performance.
+3.Main bearing failures
+The main bearing is a critical component inside the wind turbine that can be damaged in
+a variety of ways. The Svenska KullagerFabriken (SKF) classified the main bearing failure
+into 6 main modes: fatigue, wear, corrosion, electrical erosion, plastic deformation, and
+fracture and cracking1. These modes are divided into sub-modes.
+For fatigue failure, there are two sub-modes: subsurface-initiated fatigue and surface-
+initiated fatigue (see Fig.1 (a) and (b)). The subsurface-initiated phenomenon is charac-
+terized by the buildup of residual stresses that alter the material at the contact surface,
+transforming its structure from a randomly oriented grain to a fracture plane. It occurs
+beneath contact surfaces of the raceways and rolling elements. The surface-initiated fatigue
+occurs as a result of indentations on the rolling contact surface asperities, which are typically
+caused by inadequate lubrication.
+The wear failures can be divided into two sub-modes: abrasive wear and adhesive wear.
+Abrasive wear refers to the gradual removal of surface material caused by poor lubrication
+or the entry of solid contaminants. Adhesive wear is a form of damage that takes place
+between two mating surfaces due to a lubrication issue. It is characterized by the transfer
+of material from one surface to the other. This mode of failure is often accompanied by
+friction-generated heat, which can occasionally temper or re-harden the mating surfaces.
+In the category of corrosion failures, there are three types: moisture corrosion, fret-
+ting corrosion, and false brinelling. Moisture corrosion occurs when water and aggressive
+liquid contaminants penetrate the bearing, resulting in the formation of rust (as seen in
+Fig.1(d)). Fretting corrosion is caused by repeated sliding between bearing surfaces, while
+falsebrinelling, whichoccursinthecontactarea, istheresultofprolongedabsenceofrelative
+movement, vibrations, or small oscillations.
+Regarding the electrical erosion failure mode, there are two sub-modes: excessive current
+erosion and current leakage erosion. Excessive current erosion occurs due to electric current
+flowing from one ring to the other through the rolling elements. At the contact surfaces, the
+process is similar to electric arc welding. In that case, the material is heated to temperatures
+ranging from tempering to melting levels. This process leads in the generation of discol-
+ored regions where the material has been tempered, rehardened, or melted. Conversely, the
+damage caused by current-leakage erosion occurs when the current intensity is compara-
+tively low. It is characterized by shallow craters that are closely spaced on the surface and
+have a smaller size compared to those caused by excessive current erosion. Fifth, plastic
+deformation occurs due to an overload or indentations caused by the debris. The overlead
+deformation is basically caused by one of the following events: (i) static overloading, (ii)
+shock loads, or (iii) improper handling. In all cases, the resulting damage is the same. Re-
+garding the indentations from debris, solid contaminants can enter a bearing through the
+seals and/or lubricant. In some cases, they can result from wear or damage that affects an
+adjacent component to the main bearing. Finally, the bearing can be affected by a frac-
+ture and cracking which results from forced fracture, fatigue fracture, or thermal cracking.
+The forced fracture occurs when the stress concentrations exceed the material’s resistance
+strength. The fatigue fracture appears when the fatigue capacity of a material is exceeded
+under cyclic bending. Repeated bending movements causes a hairline crack which propa-
+gates until the ring or cage develops through the crack. Finally, thermal cracking happens
+due to the heat generated by the sliding of two surfaces against each other. If the sliding is
+important, the heat can lead to cracks, and eventually, the ring will crack through.
+1https://www.skf.com
+------------------------------End of the page -----------------------------------
+4
+4.Available data
+The SCADA data provides a rich source of continuous-time observations about several of
+condition variables. The wind turbines considered in this study are located on a wind farm
+situated in the northeast region of France. The datasets consist of environmental, electri-
+cal, component temperature, hydraulic, and control variables. The environmental-related
+variables include ambient temperature (◦C), nacelle temperature (◦C), wind speed (m/s),
+and turbulence index. These variables are highly correlated with the electrical and compo-
+nent temperature variables. For instance, the distribution of the main bearing temperature
+changes significantly between winter and summer. Among all environmental variables, it
+is important to emphasize that the wind speed variable is considered the most influential
+variable on the wind turbine subsystems. When the wind speed is below its rated speed (13
+m/s), an increase in rotor speed due to higher wind speeds will raise the output power and
+the temperature of all mechanical components.
+The electrical variables group encompasses active power (kW), phase voltage (V), power
+factor, reactive power (kW), and electric network frequency (Hz). These variables describe
+the power generated by the wind turbine before it enters the distribution grid. The active
+power curve is very sensitive to small variations in the wind speed output of the nacelle
+anemometer. Electrical network frequency and phase voltage measurements are obtained to
+control potential fluctuations, while reactive power and power factor measurements provide
+insight into the efficiency of electric power utilization. The goal for wind turbine control is
+to maintain a power factor as close to 1 as possible.
+The component temperature variables correspond to temperature signals (in◦C) from
+several key locations in the nacelle, such as the gearbox, generator, and main bearing.
+Componenttemperaturesareoneofthemainconditionparametersthatarecloselyrelatedto
+the performance of the wind turbine. In this study, we will focus our discussion on detecting
+anomalies in the main bearing. Hence, the rotor bearing temperature is considered the most
+important variable as it is the closest sensor to the component under study. Note that the
+temperature of the main bearing is strongly influenced by the temperatures of components
+located near it, as well as environmental conditions. Additionally, control variables such as
+rotor speed can be a reliable indicator of the main bearing’s operating regime.
+Hydraulic variables describe observations of the general accumulator, brake pressure,
+general accumulated pressure of the blades, and hydraulic group pressure. These parameters
+are generally used to control the pitch, yaw, and braking systems of the wind turbine.
+The pitch cylinder for each blade is actuated using a hydraulic accumulator for different
+operations, such as blade engagement and blade safety position.
+Controlvariablesarerelatedtoallcontrolsystemsthatguaranteesafeoperation, optimize
+power output, and ensure the long structural life of the wind turbine. The wind turbine is
+equipped with blade pitch control, which allows to maintain the optimum blade angle to
+achieve certain rotor speeds. The yaw controller is another important control system that
+is responsible for the rotation of the entire wind turbine. It ensures that the wind turbine is
+constantly facing the wind to fully capture the incoming wind power. Additionally, the rotor
+and generator speeds are two key parameters that must be controlled for power limitation
+and optimization. In addition to the SCADA data, we can access extra information that
+keeps track of the ordinary and extraordinary maintenance interventions required by each
+wind turbine over its lifetime. These details are typically stored in Excel files, where a
+descriptionoftherepairactions,togetherwithatimestampofthedateonwhichithappened,
+are reported. Based on this aforementioned information, it is known that anomalies in the
+main bearing have been reported in the wind turbine WT 1at the studied wind farm from
+January 1, 2014 to June 30, 2015. These anomaly details are used hereafter to test whether
+the proposed approach can correctly detect the appearance of the fault.
+------------------------------End of the page -----------------------------------
+5
+Variable name Range Unit
+Wind speed (W) [0,25] m/s
+Ambiant temperature (A) [-5, 40]◦C
+Nacelle Temperature (N) [0, 120]◦C
+Main bearing temperature (M) [0, 120]◦C
+Median main bearing temperature (MM) [0, 120]◦C
+Delta main bearing temperature ( ∆M) [0, 120]◦C
+Rotor Speed (R) [0,1800] rpm
+Table 1. Selected variables of the prediction models
+5.Anomaly detection and explanation methodology
+In this section, we illustrate the details of the developed method to handle main bearing
+failure detection and explanation. The approach involves four key steps. First, the SCADA
+data is preprocessed and filtered. Second, the selected data is partitioned into training,
+validating, and testing datasets. Third, the normality models for each wind turbine in the
+wind farm are constructed based on two complementary models: autoencoder and Bayesian
+network. Finally, a novel anomaly detection and explanation method is proposed.
+5.1.SCADA data preprocess
+The SCADA dataset used in this study includes a large number of parameters with vary-
+ing outliers, incomplete observations, and mismatches in time and date stamps. Therefore,
+preprocessing operations are crucial to obtain a clean dataset that is suitable for machine
+learning algorithms. The first step is to select the set of variables to be included in the
+model training phase. It is important to choose the most important features that provide
+valuable insights into the main bearing behaviors. According to domain experts, the mean
+values of environmental measurements, rotor speed, and the temperatures of the main bear-
+ing should be exploited. To justify the preference for exogenous variables, it is important to
+note that in wind turbine systems, component states are strongly correlated. As a result,
+selecting temperature features that are related to other components rather than just the
+one under investigation can reveal additional failures in components that are closely linked
+to the variables used. In such situations, the model may lose its ability to differentiate be-
+tween the failures of interest and those occurring in other related components. We enhance
+the existing data by automatically generating new features related to the median of main
+bearing temperatures in the wind farm and the difference between the calculated median
+and the current temperature of the main bearing under study. Under the normal behav-
+ior of the main bearing, the difference between both temperatures is roughly equal to 0.
+Consequently, a large deviation between the two temperatures indicates a high likelihood of
+main bearing failure in the studied wind turbine. Tab.1 shows the list of selected variables.
+For each variable, we generate the lagged (t-1) and (t-2) variables to represent the temporal
+dimension during model learning. Overall, 21 variables are used to build our models. After
+the feature selection process, a data cleaning pre-processing step is executed to eliminate
+outliers and sensor measurement errors in the selected features. These abnormal observa-
+tions do not contain valuable guidance in detecting anomalies. To address this issue, a
+variety of cleaning methods for wind turbine abnormal observations based on wind power
+have been proposed in previous research [12]. In our study, we initiate the cleaning process
+by removing out-of-range values for each selected variable, as shown in Table 1. To eliminate
+any remaining outliers, the second step of the cleaning process employs the quartile method.
+Specifically, the wind speed values are sorted and divided into several small and regularly
+spaced intervals. Next, we compute the lower and upper quartiles for each selected variable,
+------------------------------End of the page -----------------------------------
+6
+represented respectively by Q1andQ3. The difference between these two quartiles is known
+as the interquartile range, which we denote as IQR. This is given by IQR =Q3−Q1.
+To detect outliers in a given wind speed interval, we proceed as follows: if xiis less than
+Q1−1.5IQR, then it can be considered too small; if it is greater than Q3+ 1.5IQR, then it
+is considered too large. After identifying the outliers, they are treated as missing values and
+filled using a cubic Hermite interpolating polynomial (CHP) [13]. This method ensures that
+the interpolated values maintain the monotonic shape of the function. In situations where
+the dataset contains missing values at the boundaries, we suggest the use of the nearest
+available values before or after the missing values. Finally, we deal with the very different
+magnitudes of the selected features. For a fair training process, every variable Xis scaled
+using the min-max normalization process: x′
+i= (xi−min(X))/(max(X)−min(X)). Car-
+rying out these preprocessing procedures, we end up with an effective SCADA data quality
+that can be used by machine learning algorithms.
+5.2.SCADA data splitting
+Selecting the appropriate datasets for training, validation, and testing is a crucial step in
+developing an accurate main-bearing normality model. Therefore, it is essential to consider
+all operational and environmental conditions that the wind turbine may encounter, such as
+different wind velocities and seasonal conditions. To train and validate our one-class healthy
+data model, we only used SCADA data without main bearing failures. Specifically, we used
+data from 2011 and 2012 to train and validate the model, respectively, and we used the
+data from the entire year of 2014 to test the model’s accuracy. Notably, the maintenance
+interventions file showed that a main bearing failure has been detected on the WT 1machine
+on January 1, 2014. By testing the model’s performance against these different observations,
+we can ensure that it accurately distinguishes between normal and abnormal observations,
+regardless of the season and environmental conditions.
+5.3.Auto-encoder-construction
+Autoencoder (AE), also referred to as autoassociator, is a highly effective type of artificial
+neural network for diagnostic tasks that has been applied in various real-world applications
+[14]. Unlikesupervisedpredictivemodels, autoencodersofferaprominentflexiblemodelthat
+can represent complex functions without requiring labeled data during the learning process.
+An AE is an unsupervised and symmetrical neural network that consists of two primary
+components: an encoder f:Rn→Re, which compresses the input data ( xi) into a lower
+latent representation ( h), and a decoder g:Re→Rn, which maps the latent representation
+back to the original data ( ˜xi), i.e., ˜xi≈xi. Then, the desired output is the input itself, i.e.,
+h=f(xi)and˜xi=g(f(xi)) =g(h). The number of neurons in the input has the same size
+astheoutput, whichcorrespondstothenumberofselectedvariables(seeTab.1). Toperform
+thetaskofmainbearinganomalydetection, weadopttheundercompletearchitecture, which
+has shown advantages in monitoring the health of wind turbines as reported in [15]. This
+AE architecture is designed to encode the most important features of the input data using
+fewer dimensions while ensuring that we can still get back to the original input values. The
+model parameters ( fθandgθ) are estimated by minimizing the reconstruction error (RE)
+between the original and reconstructed data, which we achieve by using the mean square
+error (MSE). Our model setup includes a five-layer architecture, which has been shown to
+be effective in detecting anomalies in wind turbines. The number of neurons in every hidden
+layer has been estimated through the use of Bayesian hyper-parameter optimization [16].
+Optimal results were obtained with layers of 10, 6, 3, 6, and 10 neurons. We used the Keras
+implementation of the adam optimizer, as illustrated in [17]. The learning rate value is set
+to 0.001. We used the exponential linear unit ( elu) activation function. The number of
+------------------------------End of the page -----------------------------------
+7
+epochs is set to 20. Finally, the mini-batch size during the gradient descent executed by the
+adam optimizer is set to 64 samples. After the training phase, the model is used to detect
+anomalies by comparing the input and the output data. The anomaly detection method
+will be described in detail in section 5.5.
+Although the AE is often effective in detecting anomalies in SCADA data, it is neverthe-
+less unable to reveal which features are the root causes of the anomaly. Roughly speaking,
+the deviation of only one of the considered input features is enough to cause the propagation
+of the error through the AE network, resulting in a significant reconstruction error in most
+other features as well. To address this limitation, we introduce a novel method based on
+the Bayesian network to help us figure out which features are responsible for the anomaly.
+5.4.Bayesian network-construction
+The issue highlighted previously immediately raises the question as to whether the de-
+viation of one sensor other than those related to the main bearing temperature can trigger
+false positive alarms. To tackle this issue, we propose an anomaly explanation model based
+on the Bayesian network model [18] (BN). Unlike autoencoder, the BN is a type of prob-
+abilistic graphical model that uses a graph-based representation to compactly represent a
+high dimensional distribution over complex systems.
+Definition 1 (Bayesian network) .A BN is a pair (G,Θ)whereG= (V,A)is a directed
+acyclic graph (DAG), Vrepresents a set of random variables, Ais a set of arcs, and Θ =
+{θXi|Pa(Xi)}Xi∈Vis the set of the conditional probability distributions (CPD) of the nodes
+/ random variables XiinGgiven their parents Pa(Xi), i.e. θXi|Pa(Xi)=P(Xi|Pa(Xi)).
+The BN encodes the joint probability over Vas:
+P(V) =Y
+Xi∈VP(Xi|Pa(Xi)) (5.1)
+By their graphical structure, BNs encode an independence model, i.e., a set of conditional
+independencies between variables, characterized by the d-separation property [18]. Several
+approachesforlearningtheBNgraphhavebeenproposedintheliterature. Thesealgorithms
+can be divided into 3 classes: i) the search-based approaches that focus on optimizing
+the scoring function of the structure [19]; ii) the constraint-based approaches that exploit
+statistical independence tests to find the best structure [20]; iii) the hybrid methods that
+exploit a combination of both [21]. Although these approaches are effective, they often
+fail to identify all causal directions in the graph. To cope with this problem, we decide to
+use an alternative approach which consists in exploiting experts’ knowledge together with
+a score-based approach to optimize the causal discovery. In our situation, experts provide
+their knowledge about some causal relations between variables. This knowledge is about
+the existence or absence of arcs and is expressed as hard structural constraints, i.e., the BN
+learning algorithm is not allowed to modify these relations. Expert knowledge is also used
+after learning to modify, add or reverse mistaken causal relations. We now describe the
+proposed method to detect and explain the anomaly using AE and BN models.
+5.5.Fault detection and explanation
+The first stage involves the use of the AE to detect anomalies in the SCADA observations.
+To quantify the deviation between the input and output of the AE, we used the reconstruc-
+tion error (RE), which is calculated as the absolute difference between the reconstructed and
+original data, i.e., |˜xi−xi|. The threshold ϵis determined based on the distribution of the
+different REithat are computed using the validation dataset. In our case, observations are
+considered anomalous if the reconstruction error associated with an input set xis greater
+than three times the standard deviation above the mean.
+------------------------------End of the page -----------------------------------
+8
+W R
+AM
+...P(M|R)
+M
+R m 0m1m2
+r00.7 0.29 0.01
+r10.3 0.5 0.2
+r20.01 0.39 0.6P(R|W,A)
+R
+W A r 0 r1 r2
+w2a10.1 0.4 0.5
+w2a20.0001 0.25 0.7499
+w2a30.0001 0.1199 0.88
+...
+Figure 2. An extract of a BN and CPDs for nodes MandR
+After detecting the anomaly using the AE, we rely on the inference engine of the BN to
+perform a detailed analysis of the sensors that are responsible for the anomaly. To do so,
+the conditional probability query is used. This query consists of two parts: (i) the evidence
+variablesE=ewhich is a subset of variables in the BN and their values, ii) the query
+variable Qwhich is a variable in the network, where Q∈V\E. The goal of the conditional
+probability query is to compute:
+P(Q|E=e) =P(Q,E=e)
+P(E=e)(5.2)
+Notethattheevidencevariablesrepresentinformationthatiscurrentlyavailableaboutsome
+part of the studied system (symptoms, measurement results, etc.). A second important type
+of probabilistic reasoning with BN is to find the most likely assignment q∗in the domain
+ofQ(ΩQ) given the evidence E=e:MAP (Q|E=e) = arg max qP
+ZP(Q=q|E=e),
+whereZ⊆V\ {E, Q}. This type of query is called maximum a posterior (MAP). Given
+conditional probability and MAP equations, it is useful to view the probabilistic reasoning
+query in our case as a flow in the graph. Thus, intuitively, whenever an active trail between
+two nodes XiandXjexists inG, the influence of Xican flow to Xjalong the trail and
+vice-versa, i.e., Xi⇄, ..., X k,⇄, ..., X j. This property is challenging in our task since an
+outlier or an anomaly in the evidence values is likely to lead to misleading fault anomaly
+diagnoses on query variables. As a concrete example, consider the simple BN illustrated in
+Fig.2. By using the chain rule for BNs, the joint P(W, A, R, M )(see Tab.1) decomposes as:
+P(V) =P(W)P(A)P(R|W, A)P(M|R) (5.3)
+Letξi= (w(i)
+2, a(i)
+2, r(i)
+2, m(i)
+2)be the ithassignments for variables W,A,R, and Min the
+dataDrespectively, E={W, A, R }, ande(i)= (w(i)
+2, a(i)
+2, r(i)
+2). We assume that assignments
+do not contain anomalous measurements. By using the MAP query, the BN allows to show
+the most probable value m∗ofMwould have had given E=e(i):
+MAP (M|E=e(i)) = arg max
+m∈ΩMP(M=m|E=e(i)) (5.4)
+Under normal condition, the conditional probability associated with m(i)
+2(inξi) givene
+should be close to m∗returned by MAP (see Eq.5.4). Hence, the ratio between both
+probabilities, denoted by D(m(i)
+2||m∗), satisfies the following property:
+D(m(i)
+2||m∗) = log 
+ΦE(m(i)
+2)
+ΦE(m∗)!
+≈0 (5.5)
+where ΦE(m(i)
+2)andΦE(m∗)denote P(M=m(i)
+2|E=e(i))andP(M=m∗|E=e(i))
+respectively. Let’s consider a different scenario where there’s an anomaly on the rotor
+component ( R), which is part of the evidence E. In this case, the magnitude of rotation
+significantly deviates from the most probable value r∗. It’s important to note that in the
+wind energy domain, lower wind speeds lead to lower rotor speed rates. Additionally, the
+------------------------------End of the page -----------------------------------
+9
+deceleration of rotor speed causes a decrease in the main bearing temperature. Let ξj=
+(w(j)
+2, a(j)
+2, r(j)
+0, m(j)
+0)2an example of assignments for the considered variables, where e=
+{w(j)
+2, a(j)
+2, r(j)
+0}. According to (5.3), the conditional probability P(M=m(j)
+0|E=e(j))is
+computed as follows:
+ΦE(m(j)
+0) =P(w(j)
+2)P(a(j)
+2)P(r(j)
+0|w(j)
+2, a(j)
+2)P(m(j)
+0|r(j)
+0)
+P
+MP(w(j)
+2)P(a(j)
+2)P(r(j)
+0|w(j)
+2, a(j)
+2)P(M|r(j)
+0)(5.6)
+The direct path between R→Min the network allows the impact of an anomaly occurring
+onRto propagate to M, as both variables are not d-separated by any subset of E. The
+conditional probability of a low rotor speed ( r0) given a high wind speed ( w2) and a high
+ambient temperature ( a2) is extremely unlikely (0.0001) as can be seen in the CPD of Rin
+Fig.2. Therefore, even in the absence of a main bearing anomaly, the conditional probability
+given in Eq. 5.6 is extremely small, resulting in D(m(j)
+0||m∗)→+∞.
+To avoid the issues mentioned, we can make the assumption that the evidence includes
+only safe measurements. In this scenario, environmental variables seem to be a good choice
+for this purpose, as their observations are unaffected by anomalies in the system, and can
+be easily collected and verified. In addition, environment variables are the causes (or roots)
+of the wind turbine’s component variables. Having entered evidence values about ’environ-
+ment variables’, we typically use the BN inference engine to query gradually the state of
+each variable in the network. That, by itself, however, is not enough; if we perform vari-
+able diagnoses in an arbitrary order. In this case, we can easily fail to capture the right
+explanation of the anomaly, particularly in highly correlated systems such as wind turbines.
+Let us return to the anomalous scenario of the rotor. According to the previous assump-
+tion, evidence variables become E={W, A}ande={w2, a2}. As discussed earlier, as
+the rotation magnitude is not behaving as expected, the main bearing temperature tends
+to follow the rotation regime. Hence, the reported temperature ( m0) is far away from the
+expected temperatures under normal conditioning. Thus, even in the absence of an anom-
+aly in the main bearing, a high value for D(m(j)
+0||m∗)is obtained. To address this issue,
+we follow the variable ordering within the causal Bayesian network during diagnosis, where
+cause variables are examined before consequences. For instance, in the previous example, it
+is more beneficial to examine the rotor bearing ( R), which is the root anomaly before the
+main bearing ( M).
+Definition 2 (Variables ordering) .LetGbe a Bayesian network and an ordering ≺Gover
+V. Whenever we have that Xi≺GXj, we say that Xiprecedes Xjin the graph, i.e., Xi
+can be either a direct parent (cause) or an ancestor of XjinG.
+LetEandQ(whereQ⊆X\E) be a set evidence and query variables, where E≺GQ.
+At a particular iteration t, we analyze a set of new variables K⊆Qthat is in the same
+causal hierarchy within the Bayesian network. In other words, the set of variables Ksatisfies
+the following condition: E≺GK and ∀Ki∈K,∄k′⊆K\ {Ki}where Ki≺Gk′. The
+chronological order of diagnosing variables allows us to gain insights into the propagation
+path of anomalies within the system, thus enabling us to determine the optimal sequence of
+diagnostic steps.
+Although the formula in equation (5.5) enables us to calculate the distance between the
+probability of expected and observed values, it is quite intricate to use in our scenario. In
+reality, a threshold τneeds to be adjusted w.r.t. the form of the posterior distribution of
+each variable Q. The difficulty of defining a generic threshold τthat would allow us to
+classify any observation of a variable Qas anomalous is a key factor that motivates the need
+for more sophisticated techniques. To tackle this problem, we propose to use a probabilistic
+2The index 0of an assignment of a variable Xrefers always to the smallest value in ΩX.
+------------------------------End of the page -----------------------------------
+10
+Figure 3. Density of normal (2012) and anomalous (2014) encoded observations
+framework to locate the conditional probability associated with qiw.r.t. P(Q|E=q). For
+a given assignment qiofQand the computed posterior P(Q|E=e), we collect all posterior
+value’s probabilities that are less or equal to ΦE(qi):F(qi) ={qj∈ΩQ: ΦE(qj)≤ΦE(qi)}.
+Given the set of elements in F(qi)we calculate the probability G(qi)which is correspond to
+the probability that P(Q|E=e)being less or equal to ΦE(qi):
+G(qi) =X
+qj∈F(qi)ΦE(qj) (5.7)
+IfG(qi)≤τ, where τis set to 0.3, then the observation qiis classified as anomalous (or
+unusual). We consider a window wof one month of the SCADA data for our analysis.
+When the mean values of {G(qi)}w
+i=1, the sensor associated with variable Qis considered as
+anomalous. If a variable Qis diagnosed as safe, it can be added to the evidence set for the
+next step of variable analysis. However, it should not be included in the analysis of variables
+at the same hierarchy level as Qin the Bayesian network
+6.Experiments
+In this section, we demonstrate the efficiency of our approach by testing it on normal
+and anomalous main bearing observations. We investigate the importance of the use of the
+explainable BN model to enhance the understanding of the anomaly and eliminate false
+positive alarms. To do so, we use the SCADA data from the considered wind farm. It is
+an onshore park composed of 5 wind turbines. The data from 2011 and 2012 were used to
+train and validate the normality model, while data from 2014 was utilized to evaluate the
+effectiveness of anomaly detection. Recall that an anomaly on the main bearing has been
+reported on the machine WT 1during the whole test period (2014). During the training
+phase of the BN, all data was discretized using expert knowledge. To detect anomalies we
+compute the RE for every row in the dataset. These RE results are transformed into binary
+predictions, i.e. if the RE of the row iis greater than the fixed threshold ϵ, the anomaly
+prediction is equal to 1, otherwise, it is set to 0. This results in Ntuple values that can
+be used to compute the accuracy score and then measure anomaly detection performance
+measure. Results in Tab.4(a) display the accuracy of the AE on the used data. The results
+show that the trained AE is highly effective in detecting main bearing anomalies with a
+score of 88% achieved for the testing data of the machine WT 1. High scores are obtained
+for the other machines under normal behaviors. This highlights the model’s efficiency in
+distinguishing between anomalous and normal observations. The distribution of compressed
+representation (bottleneck) of normal and anomalous testing observations shown in Fig.3
+also validates the model’s ability to accurately differentiate between normal and abnormal
+main bearing data. The comparison with other classic methods (see Tab.4(b)) proves the
+reliabilityofusingtheAEmodeltodetectanomaliesonthemainbearing. Toemphasizethe
+efficiency of utilizing a BN model in our context, we evaluated our approach in two distinct
+scenarios: (i) the presence of data containing anomalous main bearing ( WT 1, January
+------------------------------End of the page -----------------------------------
+11
+Dataset (WT) Train Validation Test
+WT 1 0.99 0.95 0.88
+WT 2 0.84 0.85 0.85
+WT 3 0.85 0.86 0.86
+WT 4 0.85 0.85 0.87
+WT 5 0.86 0.85 0.86Method Safe (MB) Anomaly (MB) AUC
+Isolation Forest 0.79 0.69 0.71
+LocalOutlierFactor 0.98 0.11 0.55
+Gradient Boosting 0.82 0.91 0.82
+Auto-encoder 0.95 0.80 0.87
+Figure 4. (a) Anomaly detection in the studied wind farm (b) Comparison of several
+approaches
+(a) (b)
+(c) (d)
+Figure 5. Two scenarios of anomaly explanation: data with a true main bearing anomaly
+(a,c), data with a safe main bearing, and added noise to the rotor speed (b,d).
+2014), and (ii) the presence of data from a healthy main bearing ( WT 2, January 2014), but
+withaddednoiseontherotorspeedobservations. Inbothscenarios, weplottheprobabilities
+associated with each sensor observation ( G(qi)) (see Fig5(a)(b)) and summarize them by
+calculating the mean Fig5(c)(d). As seen in Fig5(a)(c), the BN enables to detect correctly
+least probable sensors, which are those related to the temperature of the main bearing. In
+contrast, although the AE indicated that there is an anomaly on the main bearing in the
+second scenario, the BN clearly indicates that these anomalies are not related to the main
+bearing sensor, but instead to the rotor speed (see Fig. 5.(b),(d)). Then, the use of the
+BN helps to prevent false positive alarms in the second scenario, this demonstrating the
+effectiveness of our approach in detecting the true anomalies on the main bearing.
+7.Conclusion
+In this paper, we have proposed a new main bearing anomaly detection and explication
+based on two heterogeneous models (AE and BN). This approach relies on a very effective
+way to exploit BN properties to provide more details about the anomalies detected by the
+deep learning model. As shown in the experimentation, our method reaches a very high
+correctness score on the used SCADA data. For future works, we plan to develop a generic
+approach that handles several anomalies at the same time and also represents the inherent
+uncertainty in the SCADA data using a variational AE.
+------------------------------End of the page -----------------------------------
+12
+References
+[1] C. Wang. “Health Monitoring and Fault Diagnostics of Wind Turbines”. In: (2016).
+[2] T. Bouno, T. Yuji, T. Hamada, and T. Hideaki. “Failure forecast diagnosis of small wind
+turbine using acoustic emission sensor”. In: KIEE International Transaction on Electrical
+Machinery and Energy Conversion Systems 5.1 (2005), pp. 78–83.
+[3] J. Zhu, J. Yoon, D. He, B. Qiu, and E. Bechhoefer. “Online condition monitoring and remain-
+ing useful life prediction of particle contaminated lubrication oil”. In: 2013 IEEE Conference
+on Prognostics and Health Management (PHM) (2013), pp. 1–14.
+[4] P. Guo, D. Infield, and X. Yang. “Wind turbine generator condition-monitoring using tem-
+perature trend analysis”. In: IEEE Transactions on sustainable energy 3.1 (2011), pp. 124–
+133.
+[5] Encalada-Dávila, B. Puruncajas, C. Tutivén, and Y. Vidal. “Wind Turbine Main Bearing
+Fault Prognosis Based Solely on SCADA Data”. In: Sensors 21.6 (2021). issn: 1424-8220.
+doi:10.3390/s21062228 .url:https://www.mdpi.com/1424-8220/21/6/2228 .
+[6] C. Tutivén, Y. Vidal, A. Insuasty, L. Campoverde-Vilela, and W. Achicanoy. “Early fault
+diagnosis strategy for WT main bearings based on SCADA data and one-class SVM”. In:
+Energies 15.12 (2022), p. 4381.
+[7] L. Campoverde-Vilela, M. C. Feijóo, Y. Vidal, J. Sampietro, and C. Tutivén. “Anomaly-Based
+Fault Detection in Wind Turbine Main Bearings”. In: Wind Energy Science Discussions 2023
+(2023), pp. 1–29. doi:10 . 5194 / wes - 2022 - 111 .url:https : / / wes . copernicus . org /
+preprints/wes-2022-111/ .
+[8] M. Li, S. Wang, S. Fang, and J. Zhao. “Anomaly detection of wind turbines based on deep
+small-world neural network”. In: Applied Sciences 10.4 (2020), p. 1243.
+[9] H. Zhao, H. Liu, W. Hu, and X. Yan. “Anomaly detection and fault analysis of wind turbine
+components based on deep learning network”. In: Renewable energy 127 (2018), pp. 825–834.
+[10] F. Elasha, S. Shanbr, X. Li, and D. Mba. “Prognosis of a Wind Turbine Gearbox Bearing
+Using Supervised Machine Learning”. In: Sensors 19.14 (2019). issn: 1424-8220. doi:10.
+3390/s19143092 .url:https://www.mdpi.com/1424-8220/19/14/3092 .
+[11] E. Hart, B. Clarke, G. Nicholas, A. Kazemi Amiri, J. Stirling, J. Carroll, R. Dwyer-Joyce,
+A. McDonald, and H. Long. “A review of wind turbine main bearings: design, operation,
+modelling, damage mechanisms and fault detection”. In: Wind Energy Science 5.1 (2020),
+pp. 105–124.
+[12] G. Liang, Y. Su, F. Chen, H. Long, Z. Song, and Y. Gan. “Wind power curve data cleaning by
+imagethresholdingbasedonclassuncertaintyandshapedissimilarity”.In: IEEE Transactions
+on Sustainable Energy 12.2 (2020), pp. 1383–1393.
+[13] S. Lu, Y. Wang, and Y. Wu. “Novel high-precision simulation technology for high-dynamics
+signal simulators based on piecewise Hermite cubic interpolation”. In: IEEE Transactions on
+Aerospace and Electronic Systems 54.5 (2018), pp. 2304–2317.
+[14] G. E. Hinton and R. R. Salakhutdinov. “Reducing the dimensionality of data with neural
+networks”. In: science313.5786 (2006), pp. 504–507.
+[15] M.-A. Lutz, S. Vogt, V. Berkhout, S. Faulstich, S. Dienst, U. Steinmetz, C. Gück, and A.
+Ortega.“Evaluationofanomalydetectionofanautoencoderbasedonmaintenaceinformation
+and SCADA-data”. In: Energies 13.5 (2020), p. 1063.
+[16] T. O’Malley, E. Bursztein, J. Long, F. Chollet, H. Jin, L. Invernizzi, et al. “Keras Tuner”. In:
+(2019).
+[17] D. P. Kingma and J. Ba. “Adam: A method for stochastic optimization”. In: arXiv preprint
+arXiv:1412.6980 (2014).
+[18] J.Pearl. Probabilistic reasoning in intelligent systems: networks of plausible inference .Morgan
+kaufmann, 1988.
+[19] D. Heckerman, D. Geiger, and D. M. Chickering. “Learning Bayesian networks: The combi-
+nation of knowledge and statistical data”. In: Machine learning 20 (1995), pp. 197–243.
+[20] P. Spirtes and C. Glymour. “An algorithm for fast recovery of sparse causal graphs”. In: Social
+science computer review 9.1 (1991), pp. 62–72.
+[21] I.Tsamardinos,L.E.Brown,andC.F.Aliferis.“Themax-minhill-climbingBayesiannetwork
+structure learning algorithm”. In: Machine learning 65 (2006), pp. 31–78.
+------------------------------End of the page -----------------------------------
