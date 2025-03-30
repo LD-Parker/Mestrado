@@ -1,0 +1,638 @@
+Wind Turbine Pitch System Fault
+Detection Using ssODM-DSTA
+Mingzhu Tang1†, Jiahao Hu1, Huawei Wu2* and Zimin Wang3†
+1School of Energy and Power Engineering, Changsha University of Science and Technology, Changsha, China,2Hubei Key
+Laboratory of Power System Design and Test for Electrical Vehicle, Hubei University of Arts and Science, Xiangyang, China,
+3School of Computer Science and Information Security, Guilin University of Electronic Technology, Guilin, China
+A fault detection method of wind turbine pitch system using semi-supervised optimal
+margin distribution machine (ssODM) optimized by dynamic state transition algorithm(DSTA) [ssODM-DSTA] was proposed to solve the problem of obtaining the optimalhyperparameters of the fault detection model for the pitch system. This method wasadopted to input the three hyperparameters of the ssODM into the dynamic state transitionalgorithm in the form of a three-dimensional vector to obtain the global optimalhyperparameters of the model, thus improving the performance of the fault detectionmodel. Using a random forest to rank the priority of features of the pitch system fault data,the features with large weight proportions were retained. Then, the Pearson correlationmethod is used to analyze the degree of correlation among features, ﬁlter redundant
+features, and reduce the scale of features. The dataset was divided into a training datasetand a test dataset to train and test the proposed fault detection model, respectively. Thereal-time wind turbine pitch system fault data were collected from domestic wind farms tocarry out fault detection experiments. The results have shown that the proposed methodhad a positive fault rate (FPR) and fault negative rate (FNR), compared with otheroptimization algorithms.
+Keywords: fault detection, wind turbine, pitch system, dynamic state transition algorithm, semi-supervised optimal
+margin distribution machine, random forest
+INTRODUCTION
+China ’s energy structure is unceasingly transforming towards low carbon and environmental
+protection by striving to build a new energy system and vigorously advocating the developmentof renewable energy industry to achieve the overall objective of carbon emission peak by 2030 andcarbon neutrality by 2060 ( Li and Bo, 2020 ;Qian and Wang, 2020 ;Sun et al., 2015 ). Renewable
+energy is a kind of clean and green energy that can replace traditional energy. The emergence of thisenergy has made a great contribution to reducing pollution and emission in the world. Renewable
+energy power systems ( Zhang et al., 2021 ;Zhang and Ruan, 2019 ) mainly include wind power
+generation, solar power generation, and hydropower generation. Wind power, as an indispensablepart of renewable energy, continues to expand in scale. By the end of 2020, China ’s installed capacity
+of grid-connected wind power has reached 281.53 million kW, increasing by 34.6% year over year,accounting for 12.79% of the total installed capacity ( Blaabjerg et al., 2012 ;Blaabjerg and Ke Ma,
+2013 ). However, as the wind power industry is rapidly developing, the maintenance and repair
+pressure of wind turbines is also increasing. The operating environment of wind turbines is relativelybad. Abnormal climate, unstable wind speed, and other factors often lead to the faults of windturbines and the shutdown ( Song et al., 2021 ;Yang et al., 2021 ). The fault rate and complexity of theEdited by:
+Qiuye Sun,
+Northeastern University, China
+Reviewed by:
+Xuguang Hu,
+Northeastern University, China
+Franklin Chang,
+Nanyang Technological University,
+Singapore
+*Correspondence:
+Huawei Wu
+whw_xy@hbuas.edu.cn
+†These authors have contributed
+equally to this work
+Specialty section:
+This article was submitted to
+Smart Grids,
+a section of the journal
+Frontiers in Energy Research
+Received: 31 July 2021
+Accepted: 17 August 2021
+Published: 20 October 2021
+Citation:
+Tang M, Hu J, Wu H and Wang Z
+(2021) Wind Turbine Pitch System
+Fault Detection Using ssODM-DSTA.
+Front. Energy Res. 9:750983.
+doi: 10.3389/fenrg.2021.750983
+Frontiers in Energy Research | www.frontiersin.org October 2021 | Volume 9 | Article 750983 1ORIGINAL RESEARCH
+published: 20 October 2021
+doi: 10.3389/fenrg.2021.750983
+------------------------------End of the page -----------------------------------
+pitch system, an important part of the wind turbine, are higher
+than those of the main shaft, gearbox, and generator ( Wang et al.,
+2021 ). In case of any fault, the power generation rate of the wind
+turbine will be directly affected, leading to damage to the wind
+turbine and huge economic losses. For this reason, effective fault
+detection is of great signi ﬁcance for wind turbine pitch systems.
+In the wake of the era of big data and emerging machine
+learning, fault detection and fault diagnosis methods for windturbines based on machine learning algorithms have graduallymatured in recent years ( Hu et al., 2021 ;Tang et al., 2021 ; Long
+et al., 2020). With the wind turbine fault data in the SCADAsystem, which can collect, monitor, and control the operationdata of wind turbines in real-time, it is a common and reliablemethod to choose an appropriate machine learning algorithm forthe fault detection of wind turbines. Machine learning algorithms
+mainly include supervised learning, unsupervised learning, semi-
+supervised learning, and reinforcement learning. Generally,classi ﬁcation methods for wind turbine fault detection include
+support vector machine (SVM), arti ﬁcial neural networks
+(ANNs) ( Xi et al., 2021 ), and Large margin distribution
+machine (LDM) ( Zhang and Zhou, 2014 ). In the literature
+(Tuerxun et al., 2021 ), a SVM based on a sparrow search
+algorithm (SSA) was used for wind turbine fault diagnosis andhad achieved excellent results. Moreover, a fault diagnosismethod based on stochastic subspace identi ﬁcation and
+multinuclear SVM was proposed to identify bearing faults of
+wind turbines ( Zhao et al., 2019 ). The ANNs and empirical mode
+decomposition (EMD) were used to effectively identify differentturbine imbalance faults in ( Malik and Mishra, 2017 ). In ( Zhang
+and Wang, 2014 ), the arti ﬁcial neural networks had a great
+diagnosis effect on the main bearing of the wind turbineduring early fault prediction. The cost-sensitive large margindistribution machine (CLDM) proposed in ( Tang et al., 2019 ) can
+better deal with the classi ﬁcation imbalance data and
+misclassi ﬁcation cost inequality of wind turbine datasets.
+The above methods are only applicable to the input data with
+characteristic values and tags. However, tags are usually scarce
+and expensive in the actual wind turbine data, which can be
+effectively dealt with using the semi-supervised learning method.Commonly used semi-supervised learning methods includetransductive support vector machine (TSVM), safe semi-supervised support vector machine (S4VM), and Laplaciansupport vector machine (LaSVM) ( Chong et al., 2020 ). In
+(Shen et al., 2012 ), a gear reducer fault diagnosis model based
+on EMD and TSVM was proposed to solve the problem ofinsufﬁcient tags of gear reducer data samples, and results have
+shown a high fault diagnosis accuracy. In ( Li, 2010 ), graph theory
+and transductive support vector machine (GTSVM) was used to
+solve the problem of insuf ﬁcient fault samples for training in
+mechanical fault diagnosis, and results have shown that thismethod improved the accuracy of fault diagnosis. A new faultalarm rule based on the upper bound of S4VM generalized errorproposed in ( Mao et al., 2020 ) can self-adaptively identify the
+occurrence of early bearing faults. In ( Dai et al., 2017 ), a rolling
+bearing fault diagnosis method based on composite multi-scaleentropy (CMSE), sequential forward modeling selection, andLaSVM was proposed to solve the problem of the large samplesize of and tagging dif ﬁculty in rolling bearing fault diagnosis, and
+results have shown that the effect of fault diagnosis was improved.
+The semi-supervised optimal margin distribution machine
+(Zhang and Zhou, 2018 ) was a classi ﬁcation algorithm with
+high generalization ability, proposed for generalization ability
+based on optimal margin distribution machine (ODM) ( Tan
+et al., 2020 ).“Lables ”
+were given to the samples without lables
+and the semi-supervised learning was transformed into“supervised learning ”viathis algorithm. On this basis, on the
+premise of optimizing the minimum margin and maximizing thehyperplane, the distribution of sample margin was fullyconsidered and the mean value and variance between sampleswere introduced to improve the classi ﬁcation ability of the
+algorithm.
+The reasonable selection of hyperparameters can signi ﬁcantly
+affect the fault detection performance during fault detection for
+wind turbine pitch systems based on a machine learningalgorithm. For this reason, the optimal hyperparameters of thefault detection model should be obtained by optimizing theparameter optimization algorithm ( Long et al., 2021a ;2021b ).
+In (Zhang et al., 2020 ), a particle swarm optimization algorithm
+(PSO) was used to optimize SVM for fault diagnosis of windturbine gearbox bearings, and results have shown that theprecision and accuracy of diagnosis were improved. In ( Chen,
+2020 ), backpropagation neural network (BPNN) and long short-
+term memory network (LSTMN) were combined with PSO and
+great fault diagnosis results were obtained in wind turbine rolling
+bearing fault diagnosis. In ( Odoﬁn et al., 2018 ), a genetic
+algorithm (GA) was adopted to optimize the machine learningalgorithm to improve the reliability of the wind turbine energysystem. In ( Zhang et al., 2018 ), GA was introduced into anomaly
+identi ﬁcation of wind turbine state parameters to successfully
+optimize the anomaly identi ﬁcation results. In ( Yao et al., 2021 ),
+grid search (GS) was used to optimize the fault classi ﬁcation
+algorithm during battery fault diagnosis and the fault diagnosisaccuracy was improved. In ( Zhang and Sheng, 2021 ), GS was used
+to optimize the hyperparameters and kernel functions of support
+vector machines to improve the accuracy of the motor fault
+diagnosis.
+With a design based on a state transition algorithm (STA)
+(Zhou et al., 2012 ), the DSTA ( Zhou et al., 2018 ) is a dynamic
+stochastic intelligent global optimization method with its ownriskp
+riskand restoration in probability prestadjustment strategy.
+For the fault detection model of wind turbine pitch system withhigh complexity, using some of the above-mentioned commonoptimization algorithms to optimize its hyperparameters is ofteneasy to fall into local optimization because the scale ofoptimization object is too large and the optimization problem
+is too complex. Facing these problems, DSTA can use a dynamic
+adjustment strategy to surpass local optimization, and theoptimization algorithm provides four search operators andnovel update and selection methods to support its excellentsearchability according to the different needs of optimizationobjectives. Using DSTA to optimize the fault detection model ofthe wind turbine pitch system can carry out global search andconverge quickly. It is a novel optimal combination of faultdetection models.
+Frontiers in Energy Research | www.frontiersin.org October 2021 | Volume 9 | Article 750983 2Tang et al. WT Fault Detection (ssODM-DSTA)
+------------------------------End of the page -----------------------------------
+For complex and variable pitch system faults, it is often
+difﬁcult to select the optimal parameters for the fault detection
+model of the wind turbine pitch system. Meanwhile, variablepitch fault data without tags will lead to unsatisfactory fault
+detection results. For this problem, a method of optimizing a
+ssODM based on a DSTA was proposed.
+SEMI-SUPERVISED OPTIMAL MARGIN
+DISTRIBUTION MACHINE
+Suppose the mean margin value of training dataset samples after
+normalization is /hatwiderm. The difference between the margin of the
+sample ( xi,yi) after normalization and the mean margin value was/vextendsingle/vextendsingle/vextendsingle/vextendsingle/hatwidec(xi,yi)−/hatwidecm/vextendsingle/vextendsingle/vextendsingle/vextendsingle. So the variance between the maximum mean
+margin value and the minimum mean margin value could berepresented in the following form:
+max
+ω,/hatwideξi,/hatwideϵiρ/hatwidec2
+m−1
+m/summationdisplaym
+i/equals1/parenleftbigg/hatwideξ2
+i+/hatwideϵ2
+i/parenrightbigg
+s.t./hatwidec/parenleftbigxi,yi/parenrightbig≥/hatwidecm−/hatwideξi
+/hatwidec/parenleftbigxi,yi/parenrightbig≤/hatwidecm+/hatwideϵi,∀i∈[m],(1)
+where the parameter ρwas used to weigh two priorities. As /hatwidec(xi,yi)
+could not be more than and less tha n the mean value at the same time,
+there were a nonnegative value and a non-zero value in/hatwideξi,/hatwideϵi.T h e
+second item of the objective function was the margin variance. ξi/equalsω/hatwideξi
+and ϵi/equalsω/hatwideϵi. The above equation could be rewritten as follows:
+max
+ω,ξi,ϵiρ/hatwidec2
+m
+ω2−1
+m/summationdisplaym
+i/equals1ξ2
+i+ϵ2
+i
+ω2
+s.t.yiωTϕ(xi)≥cm−ξi
+yiωTϕ(xi)≤cm+ϵi,∀i∈[m],(2)
+where cmdid not affect the optimization. When cmwas scaled,
+ω,ξiand ϵiwere scaled on the same scale. In this case, the
+constraint was still satis ﬁed, and the objective function value
+remained unchanged. Set cm/equals1; the equation could be further
+rewritten as follows:
+max
+ω,ξi,ϵi1
+ω2⎛⎝1−1
+m/summationdisplaym
+i/equals1ξ2
+i+ϵ2
+i⎞⎠s.t.yiωTϕ(xi)≥1−ξiyiωTϕ(xi)≤1+ϵi,∀i∈[m].
+(3)
+As the maximum objective function was equal to the minimum ω2and
+/summationtextm
+i/equals1ξ2
+i+ϵ2
+i, there was a constant λto make the above optimization
+equation have the same solution as the following equation:
+max
+ω,ξi,ϵi1
+2ω2+λ
+m/summationdisplaym
+i/equals1/parenleftBigξ2
+i+ϵ2
+i/parenrightBig
+s.t.yiωTϕ(xi)≥1−ξi
+yiωTϕ(xi)≤1+ϵi,∀i∈[m].(4)
+A parameter μ∈(0,1) was introduced to weigh the deviation loss in
+two different directions between the sample margin and the meanmargin value 1. A parameter θ-insensitive loss was introduced to
+control model sparsity. Thus, the ﬁnal equation form was as follows:
+max
+ω,ξi,ϵi1
+2ω2+λ
+m/summationdisplaym
+i/equals1/parenleftBigξ2
+i+μϵ2
+i/parenrightBig
+(1−θ)2
+s.t.yiωTϕ(xi)≥1−θ−ξi
+yiωTϕ(xi)≤1+θ+ϵi,∀i∈[m].(5)
+/hatwidey/equals[/hatwideyi,... ,/hatwideym∈{±1}m]was unlabeled. The ssODM could be
+converted into the following form:
+min
+/hatwidey∈Bmin
+ω,ξi,ϵi1
+2ω2+λ1
+l/summationdisplayl
+i/equals1ξ2
+i+μϵ2
+i
+(1−θ)2+λ2
+u/summationdisplayl+u
+i/equalsl+1ξ2
+i+μϵ2
+i
+(1−θ)2
+s.t.yiωTϕ(xi)≥1−θ−ξi
+yiωTϕ(xi)≤1+θ+ϵi,∀i∈[m].(6)
+whereB/equals/braceleftBigg/hatwidey/vextendsingle/vextendsingle/vextendsingle/vextendsingle/vextendsingle/vextendsingle/vextendsingle/vextendsingleeT/hatwideyU
+m−l/equalseTyL
+l/bracerightBiggwas equilibrium constraint to prevent
+the occurrence of trivial solutions. λi/equalsλ1(m−l)−λ2l
+l(m/equalsl)1i∈L+λ2
+m−l.
+λ1andλ2were loss parameters to weigh the tagged and untagged
+data. The above questions could be further written as follows:
+min
+/hatwidey∈Bmin
+ω,ξi,ϵi1
+2ω2+/summationdisplaym
+i/equals1λiξ2
+i+μϵ2
+i
+(1−θ)2
+s.t./hatwideyiωTϕ(xi)≥1−θ−ξi
+/hatwideyiωTϕ(xi)≤1+θ+ϵi,∀i∈[m].(7)
+Theﬁnal dual form of ssODM is as follows:
+min
+μ∈Mmax
+α∈Aφ/parenleftbigμ,α/parenrightbig. (8)
+When a dataset containing a large number of unlabeled samples is
+input into ssODM, the saddle point ( /hatwideμ,/hatwideα) of the above problem
+can be obtained by the random mirror proximal descent method,and the category label of unlabeled samples can be predicted
+according to sign(/summationtext
+k:/hatwideyk∈Bμp
+k/hatwideyk).
+DYNAMIC STATE TRANSITION
+ALGORITHM
+The expression framework of the dynamic state transition
+a l g o r i t h mi sa sf o l l o w s :
+/braceleftBiggxk+1/equalsAkxk+Bkuk
+yk+1/equalsf(xk+1), (9)
+where xk/equals[x1,x2,... ,xn]Tis the candidate solution of the
+optimization problem and AkandBkare the state transformation
+operators. ukrepresents the control variable, that is, the current and
+historical state function. f(·)r e p r e s e n t st h e ﬁtness function.
+The four transformation operators of the dynamic state
+transition algorithm covered the fast rotation transformationoperator, translation transformation operator, expansiontransformation operator, and axesion transformation operator.
+Frontiers in Energy Research | www.frontiersin.org October 2021 | Volume 9 | Article 750983 3Tang et al. WT Fault Detection (ssODM-DSTA)
+------------------------------End of the page -----------------------------------
+Fast Rotation Transformation Operator
+xk+1/equalsxk+α/hatwideRru
+u2, (10)
+where αrepresents the rotation factor and /hatwideRr∈Rn×nis the
+uniformly distributed random matrix. urepresents the random
+variable that was uniformly distributed on [ −1,1]./bardbl·/bardbl2is the
+second norm of the vector. It was found that the fast rotationtransformation operator was provided with lower computational
+complexity, local searchability, and a hypersphere with a radius of
+αbeing the search range through the comparison with the
+rotation change operator.
+Translation Transformation Operator
+xk+1/equalsxk+βRtxk−xk−1
+xk−xk−12, (11)where βrepresents the translation factor. The values of Rt∈Rwere
+uniformly distributed with the range of [0 ,1]. The translation
+transformation operator was a heuristic search operatorperforming the linear search with βbeing the maximum step length.
+Expansion Transformation Operator
+xk+1/equalsxk+cRexk, (12)
+where crepresents the stretching factor. Re∈Rn×nis the diagonal
+matrix whose element value was not equal to zero and was in linewith Gaussian distribution. The stretching transformationoperator was a global search operator that could stretch allelements in x
+kto ( −∞ ,+∞) to further search the whole space.
+Axesion Transformation Operator
+xk+1/equalsxk+δRaxk, (13)
+FIGURE 1 | Flowchart of dynamic state transition algorithm.
+Frontiers in Energy Research | www.frontiersin.org October 2021 | Volume 9 | Article 750983 4Tang et al. WT Fault Detection (ssODM-DSTA)
+------------------------------End of the page -----------------------------------
+`where δrepresents the axesion factor. Ra∈Rn×nis the sparse
+random diagonal matrix whose value was not equal to zero andwas in line with Gaussian distribution. The axesiontransformation operator was also a heuristic search operator
+that could carry out a one-dimensional search along thecoordinate axis.
+FIGURE 2 | Fault detection flowchart of wind turbine pitch system based on ssODM-DSTA.
+Frontiers in Energy Research | www.frontiersin.org October 2021 | Volume 9 | Article 750983 5Tang et al. WT Fault Detection (ssODM-DSTA)
+------------------------------End of the page -----------------------------------
+Theﬂowchart of the DSTA is shown in Figure 1 .
+FAULT DETECTION FOR WIND TURBINE
+PITCH SYSTEM
+Concerning the fault detection process of the wind turbine pitch
+system, it was roughly made of data screening, data preprocessing,feature selection, data segmentation, training fault detection modeland hyperparameter optimization, fault detection model testing,and detection result evaluation. The fault detection ﬂowchart of the
+ssODM-DSTA wind turbine pitch system is shown Figure 2 .
+Dataset Description
+The experimental data originated from the real-time operation
+data of the SCADA system of 1.5 MW double-fed wind turbinesin the domestic wind farm for one year. The data samplinginterval was 1 s. The data of the wind turbines in the wind farm inthe 12th month were selected and the data of three kinds of windturbines ’pitch faults from half an hour before the start of the
+faults to half an hour after the end of the faults were interceptedaccording to the fault codes. Three kinds of pitch system faults areused as fault detection targets: emergency stop fault of the pitchsystem, CAN communication fault of the blade 1 servo driver,and low-temperature fault of the blade 2 axle box of the pitch,
+respectively.
+A pitch emergency stop fault is a fault triggered when the pitch
+safety chain acts. The treatment method of this fault is to checkwhether the pitch safety chain is closed and check the pitch faultspeciﬁcally.
+CAN communication fault of the blade 1 servo driver is the
+CANBUS communication fault between pitch PLC andpitchmaster of blade 1. The troubleshooting method is tocheck the wiring between the main control cabinet EL6751and the X5 terminal on the pitchmaster in the shaft cabinet 2;check whether there is 24V DC voltage between x5-6 and x5-9;
+check the resistance between x5-2 and x5-7 (60 Ω); check whether
+the axis 2 servo driver is normal.The low-temperature fault of the blade 2 axle box of the pitch
+is a temperature fault of the pitch system. The starting reason isgenerally the sensor fault. The fault can be eliminated andhandled by checking various indicators of the sensor. Thethree fault data structures are shown in Table 1 .
+Data Cleaning and Preprocessing
+The data of the wind turbine pitch system was fed back to the
+SCADA system in the form of a signal after the information wascollected through various sensors such as current, voltage, andspeed. The sensors were precision components. They were easilydisturbed by the environment and their abnormalities in themonitoring process, which often led to abnormalities andvacancies in the data output of SCADA. The fault detectionmodel had high requirements for the quality of data, so it wasnecessary to preprocess the data such as standardization,
+normalization, elimination of outliers, vacancy values, and all
+“0”eigenvectors ( Tang M et al., 2020 ;Tang S et al., 2020 ).
+Feature selection belongs to a data dimensionality reduction
+process. The commonly used feature selection methods cover therandom forest method ( C h a r v e n te ta l . ,2 0 2 1 ), extreme gradient
+boosting (XGBoost)method ( Chen et al., 2020 ), Pearson ’s correlation
+analysis method ( Jebli et al., 2021 ), and categorical boosting
+(CatBoost) method ( Yuan et al., 2021 ). The random forest
+algorithm was used for ranking the importance of all sub-featuresof the preprocessed fault data of the pitch system with the wind speedas the target feature. Then, the threshold (mean value of all feature
+importance scores) was set to screen the features that were highly
+related to the target variable. On t he premise of ensuring no loss of
+data information content, the number of features of the original datawas reduced from 58 to 30, which effectively reduced the dif ﬁculty of
+learning the fault detection model of the wind turbine pitch system.The feature importance ranking of the fault data of the pitch systembased on the random forest is shown in Table 2 (the bold part of No.
+1–No. 30 was the 30 features that were saved after screening).
+As redundant features with a high correlation may exist
+between features and the Pearson-related analysis methodcould be used for ensuring the equal relationship between
+TABLE 2 | Feature importance ranking of the fault data of the pitch system based on the random forest.
+Serial number Feature variable name Random forest feature importance score
+1 main_loop_rotor_speed_demand 0.056641
+2 pitch_position_1 0.05585630 converter_power 0.00957357 pitch_Atech_SG1_error_code_3 0.001598
+58 average_wind_speed_30s 0.001518
+The bold part of No. 1 –30 was the 30 features that were saved after screening.TABLE 1 | Data structures of three faults of pitch system.
+Fault type Number of data samples Number of data features
+Emergency stop fault of pitch system 1,158 58
+CAN communication fault of blade 1 servo driver 1,679 58Low-temperature fault of the blade 2 axle box of the pitch 2,144 58
+Frontiers in Energy Research | www.frontiersin.org October 2021 | Volume 9 | Article 750983 6Tang et al. WT Fault Detection (ssODM-DSTA)
+------------------------------End of the page -----------------------------------
+features and analyzing the correlation degree between features,
+the Pearson-related analysis method was adopted to analyze the
+feature correlation of 30 pieces of screened fault data of the pitch
+system and remove the redundant features with a high correlationfor further reducing the data capacity. The correlation resultsbetween the features are shown in Table 3 .
+Pearson correlation coef ﬁcient was an index describing the
+intensity of feature correlation with a value range of [-1, 1]. Thecloser the absolute value of the coef ﬁcient was to “1”, the stronger
+the correlation was. The bold parts of Table 3 show that the
+feature correlation between different parts of the pitch system wasalso extremely high and the correlation coef ﬁcient between these
+features was close to “1”with basically the same effect in the
+dataset. These features that belonged to redundant features were
+eliminated in the fault dataset of the pitch system and theremaining features were constructed into a new sampledataset. The ﬁnal data structure is shown in Table 4 .
+Improved Semi-supervised Optimal Margin
+Distribution Machine
+The ssODM was equipped with three hyperparameters λ,μ,and
+θrepresenting the margin variance balance hyperparameter,
+margin deviation balance hyperparameter, and insensitive lossfunction, respectively. The meaning and value range of ssODM
+hyperparameters are shown in Table 5 .
+The dynamic state transition algorithm was adopted to optimize
+the three hyperparameters of ssODM. The classi ﬁcation accuracy
+of ssODM was taken as the ﬁtness function to determine the
+update and selection of hyperparameters by the dynamic statetransition algorithm. The pseudo-code of the improved ssODM is
+shown in Algorithm 1 .
+Algorithm 1 Improved semi-supervised optimal margin
+distribution machine.
+1:Best←Best
+0(λ0;μ0;θ0)
+2:repeat
+3:ifα(β,c,δ)<αmin(βmin ,cmin ,δmin) then
+4:α(β,c,δ)←αmax(βmax ,cmax ,δmax)
+5:end if
+6:λ←Best(1)
+7:μ←Best(2)
+8:θ←Best(3)
+9: ssODM ←(λ,μ,θ,training dataset)
+10:accuracy (ssODM) ←testing dataset
+11:funfcn←accuracy (ssODM)
+12: [ Best ,fBest ]←rotation fast(funfcn ,Best ,SE ,α,β)
+13: [ Best ,fBest ]←expansion( funfcn ,Best ,SE ,β,c)
+14: [ Best ,fBest ]←axesion( funfcn ,Best ,SE ,β,δ)
+15: if fBest<fBestpthen
+16:Bestp←Best
+17:fBestp←fBest
+18: end if19: if rand<p
+restthen # prest: restoration in probability
+20:Bestp←Best
+21:fBestp←fBest
+22: end if
+23:α(β,c,δ)←α(β,c,δ)
+fc24:Until the speci ﬁed termination criterion is met
+25:Output BestTABLE 3 | Correlation results between the features.
+Pearson correlation coef ﬁcient main_loop_rotor_speed_demand pitch_position_1 pitch_Atech_position_target_1 pitch_position_target_1
+converter_motor_speed 0.993101 −0.9962 −0.99644 −0.99646
+pitch_Atech_actual_pitch_angle_2 −0.99292 0.999211 0.999689 0.9997
+average_pitch_position_blade_10m 0.396733 −0.37188 -0.37148 −0.37142
+The bold parts show that the feature correlation between different parts of the pitch system was also extremely high and the correlation coef ﬁcient between these features was close to “1”
+with the basically same effect in the data set.
+TABLE 4 | Final data structures of 3 faults of pitch system after feature selection.
+Fault type Number of data samples Number of data features
+Emergency stop fault of the pitch system 1,158 24
+Can communication fault of the blade 1 servo driver 1,679 24Low-temperature fault of the blade 2 axle box of the pitch 2,144 24
+TABLE 5 | Meaning and value range of ssODM Hyperparameters.
+Hyperparameter Meaning Value range
+λ Adjust the weight of the margin variance of the objective function [20,220]
+μ Adjust the weight of sample margin deviation from the positive and negative directions of margin mean (0 .1,0.9)
+θ Control the sparsity of the model and reduce the number of sample support vectors (0 .1,0.9)
+Frontiers in Energy Research | www.frontiersin.org October 2021 | Volume 9 | Article 750983 7Tang et al. WT Fault Detection (ssODM-DSTA)
+------------------------------End of the page -----------------------------------
+Performance Evaluation Index of Fault
+Detection Model
+The correct prediction of the purity of normal samples and fault
+samples was deemed to be an index to evaluate the quality of a
+model. To verify the effectiveness of fault detection of ssODM-DSTA, the FPR and the FNR proposed based on the confusion
+matrix were taken as the evaluation indexes of the model:
+FPR /equalsFP
+FP+TN, (14)
+FNR /equalsFN
+FN+TP, (15)
+where the speci ﬁc meanings of TP, FP, TN, and FN are shown in
+Table 6 .
+EXPERIMENTAL RESULTS
+For verifying the effectiveness of using DSTA to optimize the
+hyperparameters of ssODM, the PSO, GA, and GS were
+FIGURE 3 | Boxplot of FPR of fault detection regarding the pitch
+emergency stop (5% labeled samples).
+FIGURE 4 | Boxplot of FNR of fault detection regarding the pitch
+emergency stop (5% labeled samples).
+FIGURE 5 | Boxplot of FPR of fault detection regarding the pitch
+emergency stop (10% labeled samples).
+FIGURE 6 | Boxplot of FNR of fault detection regarding the pitch
+emergency stop (10% labeled samples).TABLE 6 | Names and meanings of evaluation indexes of the model.
+Indicator name Meaning
+TP Positive samples are predicted to be positive samples
+FP Negative samples are predicted to be positive samplesTN Positive samples are predicted to be negative samplesFN Negative samples are predicted to be negative samples
+Frontiers in Energy Research | www.frontiersin.org October 2021 | Volume 9 | Article 750983 8Tang et al. WT Fault Detection (ssODM-DSTA)
+------------------------------End of the page -----------------------------------
+introduced to carry out the optimization comparison for the
+ssODM, respectively. The experimental data were from windturbine pitch system fault data (the fault data of pitch system areset as 5% labeled data and 10% labeled data for experiments,
+respectively; the normal sample label is 1 and the fault sample
+label is —1), as shown in Table 4 .
+When the experimental sample was the emergency stop fault
+of the pitch, Figures 3 ,4represent the FPR of fault detection and
+the FNR of fault detection, respectively (5% labeled samples).Figures 5 ,6represented the FPR of fault detection and the FNR
+of fault detection (10% labeled samples).
+When the experimental sample was the CAN communication
+fault of blade 1 servo driver, Figures 7 ,8represent the FPR of fault
+detection and the FNR of fault detection, respectively (5% labeledsamples). Figures 9 ,10represent the FPR of fault detection and the
+FNR of fault detection (10% labeled samples).
+When the experimental sample was the low-temperature fault of
+the blade 2 axle box of the pitch, Figures 11 ,12represent the FPR of
+fault detection and the FNR of fault detection, respectively (5%
+labeled samples). Figures 13 ,14represent the FPR of fault
+detection and the FNR of fault detection (10% labeled samples).
+The above results have demonstrated that the FPR and the
+FNR of fault detection regarding the faults for the windturbine pitch system by ssODM-DSTA were the lowestamong the four comparison algorithms. It can beconcluded that using DSTA to optimize ssODM can obtain
+super parameters that more meet the performance requirements ofthe pitch system fault detection model, effectively improve the
+FIGURE 7 | Boxplot of FPR of CAN communication fault detection
+regarding blade 1 servo driver (5% labeled samples).
+FIGURE 8 | Boxplot of FNR of CAN communication fault detection
+regarding blade 1 servo driver (5% labeled samples).
+FIGURE 9 | Boxplot of FPR of CAN communication fault detection
+regarding blade 1 servo driver (10% labeled samples).
+FIGURE 10 | Boxplot of FNR of CAN communication fault detection
+regarding blade 1 servo driver (10% labeled samples).
+Frontiers in Energy Research | www.frontiersin.org October 2021 | Volume 9 | Article 750983 9Tang et al. WT Fault Detection (ssODM-DSTA)
+------------------------------End of the page -----------------------------------
+classi ﬁcation performance of ssODM, and reduce the error of wind
+turbine pitch system fault detection.
+CONCLUSION
+In terms of the problem of obtaining the optimal hyperparameters inthe fault detection model of the wind turbine pitch system, the DSTAwas used for optimizing the three hyperparameters of ssODM. Toverify the effectiveness of this method, ssODM-DSTA was comparedwith ssODM-PSO, ssODM-GA, and ssODM-GS. The experimental
+data originated from the three kinds of pitch system fault datapreprocessed by the random forest method and Pearsoncorrelation analysis method, including the emergency stop faultdata of the pitch system, CAN communication fault data of the
+blade 1 servo driver, and the low-temperature fault data of the blade 2axle box of the pitch. The experimental results showed that thessODM-DSTA had a strong fault detection ability for the fault of the
+wind turbine pitch system. It was provided with a lower FPR and
+FNR than those of the model using t he other three kinds of parameter
+optimization algorithms. It was proved that the fault detectionmethod of the wind turbine pitch system based on the ssODM-DSTA had an outstanding performance.
+Concerning the wind turbine fault detection based on machine
+learning, the fault detection model could not be fully learned dueto a shortage of labels, seriously affecting the accuracy of faultdetection. Consequently, the application of unsupervised learningto wind turbine fault detection could further weaken the weight of
+FIGURE 11 | Boxplot of FPR of low-temperature fault detection
+regarding the blade 2 axle box of the pitch (5% labeled samples).
+FIGURE 12 | Boxplot of FNR of low-temperature fault detection
+regarding the blade 2 axle box of the pitch (5% labeled samples).
+FIGURE 13 | Boxplot of FPR of low-temperature fault detection
+regarding the blade 2 axle box of the pitch h (10% labeled samples).
+FIGURE 14 | Boxplot of FNR of low-temperature fault detection
+regarding the blade 2 axle box of the pitch h (10% labeled samples).
+Frontiers in Energy Research | www.frontiersin.org October 2021 | Volume 9 | Article 750983 10Tang et al. WT Fault Detection (ssODM-DSTA)
+------------------------------End of the page -----------------------------------
+labels and reduce the cost of fault detection when compared with
+supervised learning and semi-supervised learning.
+DATA AVAILABILITY STATEMENT
+The data analyzed in this study are subject to the followinglicenses/restrictions: data used to support the ﬁndings of this
+study are currently under embargo while the research ﬁndings are
+commercialized. Requests to access these datasets should bedirected to whw_xy@hbuas.edu.cn.
+AUTHOR CONTRIBUTIONS
+All authors listed have made a substantial, direct, and intellectualcontribution to the work and approved it for publication.
+FUNDING
+This work was supported in part by the National NaturalScience Foundation of China (Grant Nos. 62173050 and61403046), the Natural Science Foundation of Hunan
+Province, China (Grant No. 2019JJ40304), ChangshaUniversity of Science and Technology “The Double First
+Class University Plan ”International C ooperation and
+Development Project in Scienti ﬁc Research in 2018
+(Grant No. 2018IC14), the Research Foundation of theEducation Bureau of Hunan Pr ovince (Grant No.19K007),
+Hunan Provincial Department of Transportation 2018Science and Technology Progress and Innovation PlanProject (Grant No. 201843), En ergy Conservation and
+Emission Reduction Hu nan University Student
+Innovation and Entrepreneurship Education Center,Innovative Team of Key Technologies of EnergyConservation, Emission Reduction and IntelligentControl for Power-Generati ng Equipment and System,
+CSUST, Hubei Superior and Distinctive Discipline
+Group of Mechatronics and Automobiles (XKQ2021003and XKQ2021010), Major Fund Project of TechnicalInnovation in Hubei (Grant No. 2017AAA133), andGuangxi Key Laboratory of Trusted Software(No.201728), Graduate Scienti ﬁc Research Innovation
+Project of Changsha University of Science & Technology(No. 2021-89).
+REFERENCES
+Blaabjerg, F., and Ke Ma, K. (2013). Future on Power Electronics for Wind Turbine
+Systems. IEEE J. Emerg. Sel. Top. Power Electron. 1 (3), 139 –152. doi:10.1109/
+JESTPE.2013.2275978
+Blaabjerg, F., Liserre, M., and Ma, K. (2012). Power Electronics Converters for
+Wind Turbine Systems. IEEE Trans. Ind. Applicat. 48 (2), 708 –719.
+doi:10.1109/TIA.2011.2181290
+Chavent, M., Genuer, R., and Saracco, J. (2021). Combining Clustering of Variables
+and Feature Selection Using Random Forests. Commun. Stat. - Simulation
+Comput. 50 (2), 426 –445. doi:10.1080/03610918.2018.1563145
+Chen, C., Zhang, Q., Yu, B., Yu, Z., Lawrence, P. J., Ma, Q., et al. (2020). Improving
+Protein-Protein Interactions Prediction Accuracy Using XGBoost FeatureSelection and Stacked Ensemble Classi ﬁer.Comput. Biol. Med. 123, 103899.
+doi:10.1016/j.compbiomed.2020.103899
+Chen, X. (2020). Fault Diagnosis of High Power Grid Wind Turbine Based on
+Particle Swarm Optimization BP Neural Network during COVID-19 Epidemic
+Period. Ifs39, 9027 –9035. doi:10.3233/JIFS-189301
+C h o n g ,Y . ,D i n g ,Y . ,Y a n ,Q . ,a n dP a n ,S .( 2 0 2 0 ) .G r a p h - b a s e dS e m i -
+supervised Learning: A Review. Neurocomputing 408, 216 –230.
+doi:10.1016/j.neucom.2019.12.130
+Dai, J., Zheng, J., Pan, H., and Pan, Z. (2017). Rolling Bearing Fault Diagnosis
+Method Based on Composite Multiscale Entropy and Laplacian SVM.Zhongguo Jixie Gongcheng/China Mech. Eng. 28 (11), 1339 –1346.
+Hu, X., Zhang, H., Ma, D., and Wang, R. (2021). A tnGAN-Based Leak Detection
+Method for Pipeline Network Considering Incomplete Sensor Data. IEEE
+Trans. Instrum. Meas. 70, 1 –10. doi:10.1109/tim.2020.3045843
+Jebli, I., Belouadha, F.-Z., Kabbaj, M. I., and Tilioua, A. (2021). Prediction of Solar
+Energy Guided by pearson Correlation Using Machine Learning. Energy 224,
+120109. doi:10.1016/j.energy.2021.120109
+Li, W. (2010). Gear Incipient Fault Diagnosis Using Graph Theory and Transductive
+Support Vector Machine. Jme46, 82 –88. doi:10.3901/JME.2010.23.082
+Liming, S., and Bo, Y. (2020). Nonlinear Robust Fractional-Order Control of Battery/
+SMES Hybrid Energy Storage Systems. Power Syst. Prot. Control. 48 (22), 76 –83.
+Long, W., Jiao, J., Liang, X., Wu, T., Xu, M., and Cai, S. (2021a). Pinhole-Imaging-
+Based Learning Butter ﬂy Optimization Algorithm for Global Optimization and
+Feature Selection. Appl. Soft Comput. 103, 107146.Long, W., Wu, T., Xu, M., Tang, M., and Cai, S. (2021b). Parameters Identi ﬁcation
+of Photovoltaic Models by Using an Enhanced Adaptive Butter ﬂy Optimization
+Algorithm. Energy 229, 120750.
+Malik, H., and Mishra, S. (2017). Arti ﬁcial Neural Network and Empirical Mode
+Decomposition Based Imbalance Fault Diagnosis of Wind Turbine UsingTurbSim, FAST and Simulink. IET Renew. Power Generation , 11(6).
+Institution of Engineering and Technology, 889 –902. doi:10.1049/iet-
+rpg.2015.0382
+Mao, W., Tian, S., Fan, J., Liang, X., and Sa ﬁan, A. (2020). Online Detection of
+Bearing Incipient Fault with Semi-supervised Architecture and Deep Feature
+Representation. J. Manufacturing Syst. 55, 179 –198. doi:10.1016/
+j.jmsy.2020.03.005
+Odoﬁn, S., Bentley, E., and Aikhuele, D. (2018). Robust Fault Estimation for Wind
+Turbine Energy via Hybrid Systems. Renew. Energ. 120, 289 –299. doi:10.1016/
+j.renene.2017.12.031
+Qian, W., and Wang, J. (2020). An Improved Seasonal GM(1,1) Model Based on
+the HP Filter for Forecasting Wind Power Generation in China. Energy 209,
+118499. doi:10.1016/j.energy.2020.118499
+Shen, Z., Chen, X., Zhang, X., and He, Z. (2012). A Novel Intelligent Gear Fault
+Diagnosis Model Based on EMD and Multi-Class TSVM. Measurement 45,
+30–40. doi:10.1016/j.measurement.2011.10.008
+Song, D., Chang, Q., Zheng, S., Yang, S., Yang, J., and Hoon Joo, Y. (2021). Adaptive
+Model Predictive Control for Yaw System of Variable-Speed Wind Turbines.J. Mod. Power Syst. Clean Energ. 9( 1 ) ,2 1 9 –224. doi:10.35833/MPCE.2019.000467
+Sun, Q., Han, R., Zhang, H., Zhou, J., and Guerrero, J. M. (2015). A Multiagent-
+Based Consensus Algorithm for Distributed Coordinated Control ofDistributed Generators in the Energy Internet. IEEE Trans. Smart Grid 6
+(6), 3006 –3019. doi:10.1109/TSG.2015.2412779
+Tan, Z. H., Tan, P., Jiang, Y., and Zhou, Z. H. (2020). Multi-label Optimal Margin
+Distribution Machine. Mach Learn. 109 (3), 623 –642. doi:10.1007/s10994-019-
+05837-8
+Tang, M., Chen, Y., Wu, H., Zhao, Q., Long, W., Sheng, V. S., et al. (2021).
+Cost-Sensitive Extremely Randomized Trees Algorithm for Online FaultDetection of Wind Turbine Generators. Front. Energ. Res. 9 (234).
+doi:10.3389/fenrg.2021.686616
+Tang, M., Ding, S. X., Yang, C., Cheng, F., Shardt, Y. A. W., Long, W., et al. (2019).
+Cost-sensitive Large Margin Distribution Machine for Fault Detection of Wind
+Turbines. Cluster Comput. 22 (3), 7525 –7537. doi:10.1007/s10586-018-1854-3
+Frontiers in Energy Research | www.frontiersin.org October 2021 | Volume 9 | Article 750983 11Tang et al. WT Fault Detection (ssODM-DSTA)
+------------------------------End of the page -----------------------------------
+Tang, M., Zhao, Q., Ding, S. X., Wu, H., Li, L., Long, W., et al. (2020). An Improved
+LightGBM Algorithm for Online Fault Detection of Wind Turbine Gearboxes.Energies 13, 807. doi:10.3390/en13040807
+Tang, S., Yuan, S., and Zhu, Y. (2020). Data Preprocessing Techniques in
+Convolutional Neural Network Based on Fault Diagnosis towards RotatingMachinery. IEEE Access 8, 149487 –149496. doi:10.1109/ACCESS.2020.3012182
+Tuerxun, W., Chang, X., Hongyu, G., Zhijie, J., and Huajian, Z. (2021). Fault
+Diagnosis of Wind Turbines Based on a Support Vector Machine Optimized bythe Sparrow Search Algorithm. IEEE Access 9, 69307 –69315. doi:10.1109/
+ACCESS.2021.3075547
+Wang, R., Sun, Q., Hu, W., Li, Y., Ma, D., and Wang, P. (2021). SoC-Based Droop
+Coefﬁcients Stability Region Analysis of the Battery for Stand-Alone Supply
+Systems with Constant Power Loads. IEEE Trans. Power Electron. 36 (7),
+7866 –7879. doi:10.1109/TPEL.2021.3049241
+Xi, L., Wu, J., Xu, Y., and Sun, H. (2021). Automatic Generation Control Based on
+Multiple Neural Networks With Actor-Critic Strategy. IEEE Trans. Neural
+Netw. Learn. Syst. 32 (6), 2483 –2493. doi:10.1109/TNNLS.2020.3006080
+Yang, J., Fang, L., Song, D., Su, M., Yang, X., Huang, L., et al. (2021). Review of
+Control Strategy of Large Horizontal-axis Wind Turbines Yaw System. Wind
+Energy 24 (2), 97 –115. doi:10.1002/we.2564
+Yao, L., Fang, Z., Xiao, Y., Hou, J., and Fu, Z. (2021). An Intelligent Fault Diagnosis
+Method for Lithium Battery Systems Based on Grid Search Support VectorMachine. Energy 214, 118866. doi:10.1016/j.energy.2020.118866
+Yuan, Z., Zhou, T., Liu, J., Zhang, C., and Liu, Y. (2021). Fault Diagnosis Approach
+for Rotating Machinery Based on Feature Importance Ranking and Selection.Shock and Vibration 2021, 1 –17. doi:10.1155/2021/8899188
+Zhang, L., Ji, S., Gu, S., Huang, X., Palmer, J. E., Giewont, W., et al. (2021). Design
+Considerations for High-Voltage Insulated Gate Drive Power Supply for 10-kVSiC MOSFET Applied in Medium-Voltage Converter. IEEE Trans. Ind.
+Electron. 68 (7), 5712 –5724. doi:10.1109/TIE.2020.3000131
+Zhang, L., and Ruan, X. (2019). Control Schemes for Reducing Second Harmonic
+Current in Two-Stage Single-phase Converter: An Overview from DC-BusPort-Impedance Characteristics. IEEE Trans. Power Electron. 34 (10),
+10341 –10358. doi:10.1109/TPEL.2019.2894647
+Zhang, T., and Zhou, Z.. (2018). “Semi-Supervised Optimal Margin Distribution
+Machines, ”in Proceedings of the Twenty-Seventh International Joint
+Conference on Arti ﬁcial Intelligence; 2018; Stockholm, Sweden; 3104 –3110.
+doi:10.24963/ijcai.2018/431
+Zhang, T., and Zhou, Z.-H. (2014). “Large Margin Distribution Machine, ”in
+Proceedings of the 20th ACM SIGKDD international conference on Knowledgediscovery and data mining, New York, USA (New York, NY, United States:Association for Computing Machinery), 313 –322. doi:10.1145/2623330.2623710Z h a n g ,X . ,H a n ,P . ,X u ,L . ,Z h a n g ,F . ,W a n g ,Y . ,a n dG a o ,L .( 2 0 2 0 ) .R e s e a r c h
+on Bearing Fault Diagnosis of Wind Turbine Gearbox Based on 1DCNN-PSO-SVM. IEEE Access 8, 192248 –192258. doi:10.1109/
+ACCESS.2020.3032719
+Zhang, Y., and Sheng, R. (2021). Fault Diagnosis Method of Mine Motor Based on
+Support Vector Machine. Eng 14 (3), 508 –514. doi:10.2174/
+1872212113666191121122720
+Zhang, Y., Zheng, H., Liu, J., Zhao, J., and Sun, P. (2018). An Anomaly
+Identi ﬁcation Model for Wind Turbine State Parameters.
+J. Clean. Prod.
+195, 1214 –1227. doi:10.1016/j.jclepro.2018.05.126
+Zhang, Z.-Y., and Wang, K.-S. (2014). Wind Turbine Fault Detection Based on
+SCADA Data Analysis Using ANN. Adv. Manuf. 2 (1), 70 –78. doi:10.1007/
+s40436-014-0061-6
+Zhao, H., Gao, Y., Liu, H., and Li, L. (2019). Fault Diagnosis of Wind Turbine
+Bearing Based on Stochastic Subspace Identi ﬁcation and Multi-Kernel Support
+Vector Machine. J. Mod. Power Syst. Clean. Energ. 7 (2), 350 –356. doi:10.1007/
+s40565-018-0402-8
+Z h o u ,X . ,S h i ,P . ,L i m ,C . - C . ,Y a n g ,C . ,a n dG u i ,W .( 2 0 1 8 ) .AD y n a m i c
+State Transition Algorithm with Application to Sensor Network
+Localization. Neurocomputing 273 (17), 237 –250. doi:10.1016/
+j.neucom.2017.08.010
+Z h o u ,X . ,Y a n g ,C . ,Y a n g ,C . ,a n dG u i ,W .( 2 0 1 2 ) .S t a t eT r a n s i t i o nA l g o r i t h m .
+J. Ind. Manage. Optimization 8 (4), 1039 –1056. doi:10.3934/
+jimo.2012.8.1039
+Conﬂict of Interest: The authors declare that the research was conducted in the
+absence of any commercial or ﬁnancial relationships that could be construed as a
+potential con ﬂict of interest.
+Publisher ’s Note: All claims expressed in this article are solely those of the authors
+and do not necessarily represent those of their af ﬁliated organizations, or those of
+the publisher, the editors and the reviewers. Any product that may be evaluated inthis article, or claim that may be made by its manufacturer, is not guaranteed orendorsed by the publisher.
+Copyright © 2021 Tang, Hu, Wu and Wang. This is an open-access article
+distributed under the terms of the Creative Commons Attribution License (CCBY). The use, distribution or reproduction in other forums is permitted, provided theoriginal author(s) and the copyright owner(s) are credited and that the originalpublication in this journal is cited, in accordance with accepted academic practice.No use, distribution or reproduction is permitted which does not comply withthese terms.
+Frontiers in Energy Research | www.frontiersin.org October 2021 | Volume 9 | Article 750983 12Tang et al. WT Fault Detection (ssODM-DSTA)
+------------------------------End of the page -----------------------------------

@@ -1,0 +1,612 @@
+Detection of pitch failures in wind turbines using environmental
+noise recognition techniques
+Georgios Alexandros Skrimpas1, Kun S. Marhadi2, Robert Gomez3, Christian Walsted Sweeney4, Bogi Bech Jensen5,Nenad
+Mijatovic6, and Joachim Holboell7
+1,2,4Br¨uel and Kjær Vibro, Nærum, 2850, Denmark
+alexandros.skrimpas@bkvibro.com
+kun.marhadi@bkvibro.com
+christian.sweeney@bkvibro.com
+3Br¨uel and Kjær Vibro, Sugar Land, 77478 Texas, USA
+robert.gomez@bkvibro.com
+5University of the Faroe Islands, T ´orshavn, 100, Faroe Islands
+bogibj@setur.fo
+6,7Technical University of Denmark, Lyngby, 2800, Denmark
+nm@elektro.dtu.dk
+jh@elektro.dtu.dk
+ABSTRACT
+Modern wind turbines employ pitch regulated control strate-
+gies in order to optimise the yielded power production. Pitch
+systems can be subjected to various failure modes related
+to cylinders, bearings and loose mounting, leading to poor
+pitching and aerodynamic imbalance. Early stage pitch mal-
+functions manifest as impacts in vibration signals recorded
+by accelerometers mounted in the hub vicinity, as for exam-
+ple on the main bearings or nacelle frame, depending on the
+installed condition monitoring system and turbine topology.
+Due to the location of the above mentioned vibration sen-
+sors, impacts of various origin, such as from loose covers,
+can be generated, complicating the assessment of the impact
+nature. In this work, detection of pitch issues is performed by
+analysing vibration impacts from main bearing accelerome-
+ters and applying environmental noise and speech recognition
+techniques. The proposed method is built upon the follow-
+ing three processes. Firstly, the impacts are identiﬁed using
+envelope analysis, followed by the extraction of 12 features,
+such as energy, crest factor and peak to peak amplitude and
+ﬁnally the classiﬁcation of the events based on the above fea-
+tures. Eighty nine impacts are analysed in total, where 60 im-
+pacts are categorized as valid and 29 as in-valid. It is shown
+Georgios Alexandros Skrimpas et al. This is an open-access article dis-
+tributed under the terms of the Creative Commons Attribution 3.0 United
+States License, which permits unrestricted use, distribution, and reproduc-
+tion in any medium, provided the original author and source are credited.that the frequency band of maximum crest factor presents the
+best classiﬁcation performance employing K-means cluster-
+ing, which is an unsupervised clustering technique. The high-
+est correct classiﬁcation rate reaches 90%, providing useful
+information towards coherent and accurate fault detection.
+1. I NTRODUCTION
+Wind industry has been continuously growing over the past
+decades reaching new global total of 369.6GW at the end of
+2014 ( Global Wind Report Annual Market Update , 2014).
+In order to ensure system safety, proﬁtability and uninter-
+rupted operation, condition based maintenance (CBM) has
+been deployed by many owners and operators, especially in
+offshore wind turbines (Yang, Tavner, Crabtree, Feng, & Qiu,
+2012). Condition monitoring (CM) is integrated part of CBM
+and specialized solutions are offered by condition monitoring
+system (CMS) suppliers and wind turbine (WT) manufactur-
+ers, mainly based on vibration analysis. Other non destruc-
+tive techniques (NDT) which are applicable in monitoring
+speciﬁc subcomponents are oil debris analysis, temperature
+measurement, optical ﬁber monitoring and acoustic emission
+(Tchakoua et al., 2014). Regardless the condition monitoring
+technique, condition based maintenance is performed in the
+following steps: 1) data acquisition, 2) feature extraction, 3)
+diagnostics, 4) prognostics and 5) planning of maintenance
+activities (Coble & Hines, 2011).
+1
+------------------------------End of the page -----------------------------------
+ANNUAL CONFERENCE OF THE PROGNOSTICS AND HEALTH MANAGEMENT SOCIETY 2015
+CM systems target mainly drive train components, such as
+main bearings, gearbox and generator bearings, where ac-
+celerometers are mounted in strategic locations in order to
+ensure optimum vibration path and thus enhance fault detec-
+tion. Furthermore, accelerometers are usually installed on the
+nacelle frame in order to record any excessive tower oscilla-
+tion, due to blade, yaw and pitch related issues (Skrimpas et
+al., 2015). Although the pitch system is frequently subjected
+to a large number of failures resulting in increased downtime
+(Bi, Qian, Hepburn, & Rong, 2014), there is not any CMS
+solution able to detect these failures on time and prevent sec-
+ondary damages. The latter could be possibly explained due
+to location of the pitch system in the nacelle hub and the na-
+ture of its function.
+Modern wind turbines are equipped with pitch systems offer-
+ing independent control of the three blades. A pitch cylinder
+is connected to each blade on one side and to the hub on the
+other side. The cylinder suspension system allows movement
+in two axes using slide bearings. Due to heavy operation, the
+suspension system can become loose, causing the pitch cylin-
+der assembly to start moving irregularly leading to random
+impacts in early stage and one or two impacts per rotor rev-
+olution in late stage. The main issue of the above described
+jarring movement is damage to cables and hydraulics, im-
+proper pitching and poor power production. Furthermore, the
+replacement of the pitch system may cause substantial down-
+time especially in cases of extensive damage to the electric
+cables and hydraulic system failures (Skrimpas et al., 2015).
+Considering a typical wind turbine drive train, accelerome-
+ters having adequate vibration path to the pitch system can
+be utilized aiming on the detection of pitch failures. Bearing
+in mind the sensor location described above, accelerometers
+monitoring the main bearings and tower are the ones closest
+to the pitch system. In this work, impacts captured by the
+accelerometer installed on the rotor-end (front) main bearing
+are analysed and correlated to pitch failures. The extracted
+features are adopted by speech, audio and environmental
+noise recognition methods, showing that techniques applied
+in sound applications can be also employed on the analysis
+of vibration signals. It has been observed that impacts gener-
+ated by loose pitch suspension share common characteristics
+with gun-shots and glass breaks, which do not have any ap-
+parent substructures. Finally, the impacts are classiﬁed using
+K-means clustering, which is an unsupervised technique.
+The structure of the paper is as follows. Section 2 describes
+the algorithm of impact identiﬁcation which is divided into
+three processes, namely the identiﬁcation of impacts, feature
+extraction and classiﬁcation. Section 3 presents the results
+from 89 impacts classiﬁed as valid or invalid based on the
+feedback provided by the service crews. Finally, the discus-
+sion and conclusions are presented in sections 4 and 5.2. M ETHOD DESCRIPTION
+Traditionally, vibration based CMS consists of two main
+modules. The ﬁrst step is the extraction of features from
+vibration signals which describe the condition of the com-
+ponent of interest and indicate a potential fault in case of
+progression or high levels. Typical features are the ampli-
+tude of spectral components associated to the operation of the
+monitored equipment, such as tooth mesh frequencies in gear-
+boxes, or frequency bands which usually describes its overall
+status. The second block of a successful CMS is the capabil-
+ity of consistent alarming based on the level or progression of
+the related condition indicators. This stage can also provide
+an automated preliminary diagnosis of the fault and estima-
+tion of its severity.
+Sound recognition systems are also composed of two stages,
+namely the extraction of features and classiﬁcation (Dufaux,
+2001). In the framework of evaluating solely impacts, a sig-
+nal pre-processing stage is required in order to identify these
+events, shown in Figure 1 as impact detection. Although the
+core of any recognition system is the feature extraction, the
+effectiveness of the the impact detection is assessed to be crit-
+ical on the performance of the proposed method.
+A intermediate step not dispalyed in Figure 1 is the dimen-
+sionality reduction or feature selection. It refers to the algo-
+rithm that select the best subset of the input feature set in re-
+gards to class discrimination capabilities (Jain, Duin, & Mao,
+2000).
+Figure 1. Method Description.
+2.1. Impact Detection
+The randomness, complexity and non-stationary nature of vi-
+bration impacts generated by wind turbine pitch system fail-
+ures highlights the necessity of signal pre-processing for ef-
+ﬁcient feature extraction. Signal segmentation is used exten-
+sively as pre-processing stage in applications such as cardiac
+sound recognition (Choi & Jiang, 2008). Algorithms, such as
+normalized average Shannon energy and Hilbert transforma-
+tion, are very effective techniques when detection of impacts
+is the main objective. In this work, the envelope of the signal
+high frequency bandwidth is utilized as signal segmentation
+tool. The envelope calculation process is executed in three
+discrete and simple steps illustrated in Figure 2. The signal
+passes through a bandpass ﬁlter in order to remove any low
+frequency noise and restrict the bandwidth to mitigate any
+aliasing effects. Typically low frequency (below 1kHz) spec-
+tral components in wind turbines are generated by multi-stage
+gearboxes and high speed generators. The vibrations created
+2
+------------------------------End of the page -----------------------------------
+ANNUAL CONFERENCE OF THE PROGNOSTICS AND HEALTH MANAGEMENT SOCIETY 2015
+by these components are commonly recorded by accelerom-
+eters installed on the main bearings or nacelle frame due to
+the presence of weak vibration paths to them. In addition,
+vibrations from loose components of minor importance, such
+as covers, or structural micromovement could also produce
+noise and random impacts. The ﬁltered signal is then rec-
+tiﬁed, shown as a diode in Figure 2, and the outcome is an
+unipolar signal. Finally, a low pass ﬁlter is applied in order
+to compute the envelope signal. Both ﬁlters are Butterworth
+and their settings are listed below. It is noted that the sam-
+pling frequency Fsis 25.6kHz in all presented waveforms.
+Figure 2. Calculation of envelope signal.
+Bandpass ﬁlter: 3rdorder. Bandwidth: 1kHz–10kHz
+Lowpass ﬁlter: 3rdorder. Cut–off frequency: 10Hz
+Figure 3 shows the generated signals following the process
+described above from a vibration signal recorded in a multi-
+megawatt wind turbine.
+Figure 3. Computation of envelope signal. The upper subplot
+shows the outcome of the bandpass ﬁlter. The middle subplot
+displays the rectiﬁed signal. The lower subplot presents the
+envelope signal.The envelope signal shows the presence of three large im-
+pacts, one minor impact in the beginning of the signal and
+a moderate modulation matching three times the main shaft
+speed. In order to extract only the large impacts, a limit is
+deﬁned above which the signal is segmented and character-
+ized as impactive. Following trial and error method, a global
+satisfactory limit value was found to be 1.5 times the energy
+of the envelope signal. Figure 4 shows the envelope signal
+along with the limit for this case. Finally, Figure 5 shows
+the extracted impacts and segments. It can be seen that the
+event in the ﬁrst segment does not have the required energy
+to be identiﬁed as impactive compared to the rest of the signal
+characteristics.
+Figure 4. Envelope signal and limit.
+2.2. Feature Extraction
+The most critical part of any recognition system is the effec-
+tiveness of the extracted features in discrimination between
+different classes. One of the main objectives is to improve
+the signal to noise ratio in order to maximize the information.
+There is an arsenal of features which have been studied exten-
+sively in audio, such as music and speech, and environmental
+sound recognition applications. Time domain features, such
+as zero crossing rate, spectral features, such as spectral cen-
+troid and Mel-frequency cepstral coefﬁcients (MFCCs), and
+joint time-frequency characteristics have been traditionally
+used as features (Ghoraani & Krishnan, 2011).
+The basis of this work is to utilize the features applied to
+sound signals in vibration time waveforms. The following
+subsection present the features which are extracted from each
+impactive segment, as the ones illustrated in Figure 5.
+Peak value of a signal S(n)deﬁned as the maximum pos-
+itive amplitude of a time waveform.
+Apk=max(S(n)) (1)
+Peak to peak (P2P) is the difference between the maxi-
+mum positive and the maximum negative amplitudes of a
+signalS(n). In the current application, the main purpose
+of evaluating both peak and peak-to-peak is the identi-
+ﬁcation of malfunctioning sensors which often present
+unipolar time waveforms
+App=max(S(n)) min(S(n)) (2)
+3
+------------------------------End of the page -----------------------------------
+ANNUAL CONFERENCE OF THE PROGNOSTICS AND HEALTH MANAGEMENT SOCIETY 2015
+Figure 5. Segments extracted from the initial signal using envelope analysis.
+EnergyESof a discrete signal S(n)is a measure of sig-
+nal strength. It is deﬁned as:
+ES=1
+NjS(m)w(n m)j2(3)
+wherew(m)is a window of size equal to the signal
+length
+Impact duration Tis the time duration of each extracted
+impactive events using the process described in section
+2.1
+Power of a signal is given by the following ratio:
+PS=Es
+T(4)
+Zero crossing rate (ZCR) occurs when successive sam-
+pes have different signs (Chu, Narayanan, & Kuo, 2009).
+It is given by:
+Zn=1
+2X
+mj[sgn(S(m)) sgn(S(m 1))]jw(n m)
+(5)
+where
+sgnjx(n)j=(
+1x(n)0
+ 1x(n)<0(6)
+Standard deviation (Std) is a measure of how spread is a
+distribution. It is equal to
+=vuut1
+NNX
+n=1(S(n) )2 (7)
+where the mean value is equal to 1=NPN
+n=1S(n)
+Kurtosis is a typical measure of signal peakdeness. It isequal to:
+K=1=NPN
+n=1(S(n) )4
+(1=NPN
+n=1(S(n) )2)2(8)
+Spectral centroid (SC) measures the brightness of a
+sound. The higher the centroid, the brighter the sound
+(Chu et al., 2009). It is equal to
+SC=PM
+m=1mF(m)
+PM
+m=1F(m)(9)
+where F stands for the Fourier Transformation of signal
+S.
+Spectral ﬂatness (SF) quantiﬁes the tonal quality, i.e.
+how much tone-line the sound is as opposed to being a
+noise (Chu et al., 2009). I is given by:
+SF=exp(PM
+m=1logF(m))
+1=MPM
+m=1F(m)(10)
+Crest factor (CF) is the ratio of peak value to the signal
+RMS (root mean square) value. It is commonly used in
+vibration analysis for bearing wear.
+SF=Spk
+Srms(11)
+Maximum crest factor frequency band . (Max CF band)
+It is a joint time-frequency feature, which corresponds
+to the frequency range of 500Hz bandwidth yielding the
+maximum crest factor.
+2.3. Dimensionality Reduction
+Dimensionality reduction is deﬁned as the selection of a fea-
+ture subset of size m, out of a set of dfeatures, which leads to
+the smallest classiﬁcation error (Jain et al., 2000). The most
+straightforward is to examine all (dm)combinations and se-
+4
+------------------------------End of the page -----------------------------------
+ANNUAL CONFERENCE OF THE PROGNOSTICS AND HEALTH MANAGEMENT SOCIETY 2015
+lect the subset with the lowest classiﬁcation error. Although
+the risk of exhaustive search is apparent, the small number
+of features permits this method to select the feature subset.
+Reference (Jain et al., 2000) presents a complete list of di-
+mensionality reduction methods, where the most popular and
+commonly used are principal component analysis (PCA) and
+Fisher’s Linear Discriminant. Bishop discusses the use of
+these techniques showing that Linear Discriminant Analysis
+shows usually better characteristics in classiﬁcation problems
+compared to PCA.
+2.4. Classiﬁcation
+A simple unsupervised classiﬁcation technique used in many
+application is K-means clustering. K-means clustering
+groups a data set consisting of Nobservations x1;:::;x N
+of dimension DintoKclusters, where the inter-point dis-
+tances between them is minimized (Bishop, 2006). A binary
+indexrnk, wheren= 1;:::;N andk= 1;:::;K is assigned
+to each data point when the sum of the squares of the Eu-
+clidean distances between the cluster centres and the data is
+minimized, as shown in Eq. 12. Hence, each data point is
+assigned to the closest cluster centre.
+rnk=(
+1if argminPK
+k=1PN
+n=1jjxn kjj2
+0otherwise(12)
+K-means clustering is based on the Expectation-
+Maximization (EM) algorithm, where the Expectation step
+corresponds to clustering the data points based on equation
+12 and the cluster centres kare updated at the Maximiza-
+tion step. The initial clustering and cluster centres can be
+arbitrarily selected, given a known number of clusters K. The
+process is terminated after a predeﬁned number of iterations
+or when a desired convergence is achieved.
+3. D ETECTION OF PITCH FAILURES
+Detection of pitch failures is performed in multi megawatt
+wind turbines, whose topology is depicted in Figure 6. In ad-
+dition, the installed CMS sensors are represented by red rings,
+where the blue ring shows the position of the speed sensor. It
+is shown that the front and rear main bearing accelerometers
+(Br¨uel and Kjær Vibro AS-70) are placed at the bottom and
+top of the bearings respectively in order to take into account
+the stress applied on the shaft due to the rotor weight. The
+recorded vibration signals are processed by the Wind Tur-
+bine Analysis System Type 3652 (WTAS Type 3652) which
+calculates scalar values and streams them to central servers
+every one hour for long time trending and alarming. Fur-
+thermore, 10.24 second vibration signals recorded by the ac-
+celerometers mounted on the generator bearings, gearbox andmain bearings sampled at 25.6kHz are delivered to the central
+servers every one or two days for detailed spectral analysis.
+It is assessed that the vibration path from the pitch cylinders
+to the front main bearing accelerometer is the clearest, and
+thus this sensor will be utilized as indicator for pitch related
+issues.
+The test set consists of 89 impacts from 35 wind turbines,
+where 60 impacts from 20 turbines and 29 impacts from 15
+turbines are marked as valid and invalid respectively regard-
+ing the presence of a fault in the pitch cylinders or pitch sus-
+pension. The veriﬁcation of an actual fault depends highly
+on the provided feedback from the service technicians trou-
+bleshooting the corresponding alarms. Therefore, there is a
+error margin on what is classiﬁed as loose suspension based
+on the technicians’ assessment.
+Normalization of the extracted features is essential in order to
+obtain more consistent and effective classiﬁcation. A random
+featurefcan normalized using the following equation:
+fnorm =f f
+f(13)
+wherefandfare the mean and standard deviation of the
+feature population respectively.
+In many cases, it is useful to obtain two- or three- dimensional
+projection of the features offering a visual examination of the
+data. The features described in section 2.2 are clustered in
+pairs as shown in Table 1. It is shown that the best classiﬁca-
+tion performance is seen when one of the utilized features is
+the frequency band of maximum crest factor, reaching 90%
+in almost all cases. It is also important to note that the afore-
+mentioned feature provides the same results when it is the
+only one used. Furthermore, moderate results in the vicin-
+ity of 70% are recorded using other features, where spectral
+ﬂatness and spectral centroid are among them.
+Figure 7 illustrates the initial classes using spectral ﬂatness
+and maximum crest factor band on the left, and the recalcu-
+lated classes based on K-means clustering on the right. The
+red squares represent the data corresponding to pitch failures
+and the blue diamonds to negative feedback from the service
+technicians. The black stars on the right ﬁgures represent the
+new cluster centres. In this case, approximately 90% of the
+data are assigned to their initial classes. The class separa-
+tion is maximized in terms of distance between the cluster
+centres as compared to Figure 8, where spectral ﬂatness and
+spectral centroid are used. At this point, it is important to
+note that the misclassiﬁed points are mainly related to actual
+faults which are assigned to the ”no-fault” cluster. However,
+the above phenomenon could be linked to the the presence
+of both valid and invalid impacts in the same analysed time
+waveform. The effectiveness of maximum crest factor band
+5
+------------------------------End of the page -----------------------------------
+ANNUAL CONFERENCE OF THE PROGNOSTICS AND HEALTH MANAGEMENT SOCIETY 2015
+Figure 6. Wind turbine topology and CMS sensor location.
+Peak P2P Energy Duration Power ZCR SC Std Kurtosis SF CF Max CF band
+Peak 40.67 40.67 35.28 72.26 35.28 40.67 53.95 40.67 41.84 70.22 62.04 90.32
+P2P 40.67 40.67 35.28 72.26 37.97 40.76 53.95 40.67 41.84 70.22 62.04 90.32
+Energy 35.28 35.28 35.28 63.00 35.28 57.25 63.20 37.97 38.63 70.22 62.70 90.32
+Duration 72.26 72.26 63.00 35.28 57.25 59.79 54.25 48.25 68.54 71.09 61.92 90.32
+Power 35.28 37.97 35.28 63.00 35.28 57.25 58.32 37.97 39.14 70.22 62.70 90.32
+ZCR 40.67 40.67 57.25 59.79 57.25 59.28 54.25 48.25 67.52 68.39 62.70 90.32
+SC 53.95 53.95 63.20 54.25 58.32 54.25 71.95 53.95 70.43 70.94 73.63 82.74
+Std 40.67 46.06 37.97 48.25 37.97 48.25 53.95 48.25 41.84 70.22 59.85 90.32
+Kurtosis 41.84 41.84 38.63 68.54 39.14 67.52 70.43 41.84 35.94 70.22 56.13 90.32
+SF 70.22 70.22 70.22 71.09 70.22 68.39 70.94 70.22 70.22 70.22 66.71 90.32
+CF 62.04 62.04 62.70 61.92 62.70 62.79 73.63 59.85 56.13 66.71 72.11 88.14
+Max CF band 90.32 90.32 90.32 90.32 90.32 90.32 82.74 90.32 90.32 90.32 88.14 90.32
+Table 1. Correct classiﬁcation percentage when reclustering the extracted features in pairs.
+as classiﬁer is also displayed in Figure 9 where it is the only
+used feature.
+In order to investigate the optimum feature subset which
+yields the lowest classiﬁcation error, all combinations were
+examined as discussed in section 2.3. No improvement has
+been observed, whereas in many combinations moderate to
+high increase of misclassiﬁed data was registered. As for ex-
+ample, Figure 10 depicts the clusters when spectral ﬂatness,
+spectral centroid and maximum crest factor band are used.
+The proper classiﬁcation percentage in this case was approx-
+imately 87%.
+4. D ISCUSSION
+The method described in the previous sections is the ﬁrst ap-
+proach by the authors to correlate single or repetitive vibra-
+tion impacts recorded from the front main bearing accelerom-
+eter in wind turbines to failures related to the pitch assem-
+bly. The validity of the technique and results depends highly
+on two factors; the provided feedback from the ﬁeld and the
+extracted features. The human factor and thoroughness on
+reporting the presence of a fault is a parameter which can-
+Figure 7. Original and news clusters using spectral ﬂatness
+and maximum crest factor band. Correct classiﬁcation is at
+90.32%.
+not be explicitly quantiﬁed and it will always add uncertainty
+on the method. The feature extracted in the time-frequency
+domain presented the best performance compared to conven-
+tional spectral or temporal features, suggesting that the cor-
+rect classiﬁcation percentage can be further improved if more
+features are tested. Furthermore, the impact population un-
+6
+------------------------------End of the page -----------------------------------
+ANNUAL CONFERENCE OF THE PROGNOSTICS AND HEALTH MANAGEMENT SOCIETY 2015
+Figure 8. Original and news clusters using spectral ﬂatness
+and spectral centroid. Correct classiﬁcation is at 70.94%.
+Figure 9. Original and news clusters using only maximum
+crest factor band feature. Correct classiﬁcation is at 90.32%.
+der investigation, i.e. 89 impacts, is considered relatively
+limited so as to serve as a platform for establishing a data
+base or training set. The limited number of conﬁrmed im-
+pacts has been the main motivation for using an unsupervised
+clustering technique and not employing advanced classiﬁca-
+tion methods, such as space vector machine (SVM), Gaussian
+mixture models (GMM) or neural networks (NN).
+An important aspect of the impact classiﬁcation method is the
+lack of severity estimation. Although the evaluation of the
+remaining useful lifetime of the pitch assembly is assessed to
+be challenging, the proper identiﬁcation of the issue could as-
+sist the maintenance organization to plan its troubleshooting
+more efﬁciently. Based on the nature of the described failure
+mode, a single impact over 10.24s, i.e. approximately three
+rotor revolutions, is usually an early failure indicator, whereas
+the presence of repetitive impacts matching the rotor running
+speed suggests severe looseness of the pitch suspension or
+cylinders. It is the belief of the authors that a more complete
+impact database could potentially offer the ground for holistic
+condition monitoring of pitch systems in wind turbines.
+5. C ONCLUSIONS
+The present work shows an effective technique to diagnos-
+ticate pitch assembly malfunctions, an area which has re-
+Figure 10. Original and news clusters employing three fea-
+tures, namely spectral ﬂatness, spectral centroid and maxi-
+mum crest factor band.
+ceived little attention, by analysing vibration signals recorded
+in wind turbine main bearing accelerometers. The proposed
+impact recognition scheme consists of three blocks, namely
+impact detection, feature extraction and classiﬁcation, in-
+spired by research areas not related to machinery diagnostics,
+such as in environmental noise and speech recognition sys-
+tems. Consistent impact recognition is achieved using enve-
+lope analysis, where the limit for assigning an event as impact
+was found to be equal to 1.5 times the envelope signal energy.
+The maximum correct classiﬁcation percentage reaches 90%
+in a test sample of 89 impacts. Out of the 12 extracted fea-
+tures, the best classiﬁcation characteristics are seen on a joint
+time-frequency feature representing the spectral bandwidth of
+maximum crest factor. Conventional spectral and temporal
+features present poorer class discrimination tendency ranging
+from 30% to 70%.
+REFERENCES
+Bi, R., Qian, K., Hepburn, D. M., & Rong, J. (2014). A sur-
+vey of failures in wind turbine generator systems with
+focus on a wind farm in china. International Journal of
+Smart Grid and Clean Energy , 366–373.
+Bishop, C. M. (2006). Pattern recognition and machine
+learning . Springer New York.
+Choi, S., & Jiang, Z. (2008). Comparison of envelope extrac-
+tion algorithms for cardiac sound signal segmentation.
+Expert Systems with Applications ,34, 1056–1069.
+Chu, S., Narayanan, S., & Kuo, C.-C. (2009). Environmen-
+tal sound recognition with time–frequency audio fea-
+tures. IEEE Transactions on Acoustics Speech and Sig-
+nal Processing ,17, 1142–1158.
+Coble, J., & Hines, J. W. (2011). Applying the general path
+model to estimation of remaining useful life. Interna-
+tional Journal of Prognostics and Health Management ,
+2, 1 – 13.
+Dufaux, A. (2001). Detection and recognition of impulsive
+sounds signals (Unpublished doctoral dissertation). In-
+7
+------------------------------End of the page -----------------------------------
+ANNUAL CONFERENCE OF THE PROGNOSTICS AND HEALTH MANAGEMENT SOCIETY 2015
+stitute of Microtechnology, University of Neuchatel,
+Switzerland.
+Ghoraani, B., & Krishnan, S. (2011). Time–frequency matrix
+feature extraction and classiﬁcation of environmental
+audio signals. IEEE Transactions on Acoustics Speech
+and Signal Processing ,19, 2197–2209.
+Global wind report annual market update (Tech. Rep.).
+(2014). Rue d’Arlon 80, 1040 Brussels, Belgium:
+Global Wind Energy Council.
+Jain, A. K., Duin, R. P. W., & Mao, J. (2000). Statistical
+pattern recognition: A review. IEEE Transactions on
+Pattern Analysis and Machine Intelligence ,22, 4–37.
+Skrimpas, G. A., Marhadi, K., Hilmisson, R., Sweeney, C.,
+Mijatovic, N., & Holboell, J. (2015). Advantages on
+monitoring wind turbine nacelle oscillation. In Ameri-
+can wind energy association (awea).
+Tchakoua, P., Wamkeue, R., Ouhrouche, M., Slaoui-
+Hasnaoui, F., Tameghe, T. A., & Ekemb, G. (2014).
+Wind turbine condition monitoring: State-of-the-art re-
+view, new trends, and future challenges. Energies ,7,
+2595–2630.
+Yang, W., Tavner, P., Crabtree, C., Feng, Y ., & Qiu, Y . (2012).
+Wind turbine condition monitoring: technical and com-
+mercial challenges. Wind Energy ,17, 673–693.
+BIOGRAPHIES
+Georgios Alexandros Skrimpas received the Diploma in
+electrical and computer engineering from the Aristotle Uni-
+versity of Thessaloniki, Greece, in 2009 and the M. Sc.
+in wind energy from the Technical University of Denmark
+(DTU) in 2012. He joined Br ¨uel and Kjær Vibro in 2012 and
+since 2013 he is pursuing the Industrial Ph.D. degree at the
+Centre of Electric Power and Energy at DTU in cooperation
+with Br ¨uel and Kjær Vibro. His research interests are diagno-
+sis and prognosis of electrical and mechanical faults in wind
+turbines.
+Kun S. Marhadi is an engineer in the Remote Monitoring
+Group at Br ¨uel and Kjær Vibro. He joined Br ¨uel and Kjær Vi-
+bro in 2012. Previously, he worked as a postdoctoral fellow in
+the Department of Mathematics at the Technical University of
+Denmark (DTU). He received his PhD in computational sci-
+ence in 2010 from San Diego State University and Claremont
+Graduate University. He has M.S. and B.S. in aerospace en-
+gineering from Texas A&M University. His expertise is in
+structural vibration and analyses, probabilistic methods, and
+design optimization.
+Robert Erick Gomez received a Bachelor of Science in Me-
+chanical Engineering from the University of Florida in 2010.
+He began his career in the power generation ﬁeld in 2008,
+with his key focus being to optimize productivity and efﬁ-
+ciency in rotating equipment. He joined Br ¨uel and Kjær Vi-
+bro in 2013 as diagnostic engineer. His research interests are
+diagnosis of faults on wind turbine drive train components.
+Christian Walsted Sweeney received his B.Sc. degree from
+the University of Southern Denmark in 2006 and M.Sc de-
+gree from the Technical University of Denmark in 2008 both
+in mechanical engineering. From 2008 to 2010 he was em-
+ployed by Br ¨uel and Kjær Vibro as diagnostic engineer andsince 2010 he is the team leader of the diagnostic services
+group. His research focus is on the development of condition
+monitoring systems and handling of large data quantities.
+Bogi Bech Jensen received the Ph.D. degree from Newcastle
+University, Newcastle Upon Tyne, U.K., for his work on in-
+duction machine design. He was in various engineering and
+academic positions in the marine sector from 1994 to 2004.
+He was at Newcastle University from 2004 to 2010 ﬁrst as a
+Postgraduate, then Research Associate and ﬁnally as a Lec-
+turer. From 2010 to 2014 he was Associate Professor and
+later Head of Research Group at the Technical University of
+Denmark (DTU), Lyngby, Denmark. He is currently Pro-
+fessor of Energy Engineering at the University of the Faroe
+Islands (UFI), where he is responsible for education and re-
+search in energy. Prof. Jensen is Associate Editor of IEEE
+Transactions on Industry Applications and a Senior Member
+of IEEE.
+Nenad Mijatovic received his Ph.D. degree from the Tech-
+nical University of Denmark for his work in superconducting
+machine. After obtainnign his Dipl.Ing. education at Univer-
+sity of Belgrade, Serbia, he enrolled as a doctoral candidate
+in 2012. Upon completion of the PhD, he has continued to
+work in the same ﬁeld of machine research - superconduct-
+ing machines, as an Industrial PostDoc. The 3 year industrial
+PostDoc grant has been provided by Hojteknologifonden and
+supported by Envision Energy Aps., Denmark. Dr. N. Mija-
+tovic is a member of IEEE from 2008 and his ﬁeld of interest
+and research includes novel electrical machine design, opera-
+tions and diagnostic.
+Joachim Holboell is associate professor and deputy head of
+center at the Technical University of Denmark, Department
+of Electrical Engineering, Center for Electric Power and En-
+ergy. His main ﬁeld of research is high voltage components,
+their properties, condition and broad band performance, in-
+cluding insulation systems performance under AC, DC and
+transients. Focus is also on wind turbine technology and fu-
+ture power grid applications of components. J. Holboell is
+Senior Member of IEEE.
+8
+------------------------------End of the page -----------------------------------

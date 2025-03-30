@@ -1,0 +1,1061 @@
+Wind Energ. Sci., 3, 791–803, 2018
+https://doi.org/10.5194/wes-3-791-2018
+© Author(s) 2018. This work is distributed under
+the Creative Commons Attribution 4.0 License.
+Automatic detection and correction of pitch
+misalignment in wind turbine rotors
+Marta Bertelè1, Carlo L. Bottasso1,2, and Stefano Cacciola2
+1Wind Energy Institute, Technische Universität München, 85748 Garching bei München, Germany
+2Dipartimento di Scienze e Tecnologie Aerospaziali, Politecnico di Milano, 20156 Milano, Italy
+Correspondence: Carlo L. Bottasso (carlo.bottasso@tum.de)
+Received: 7 March 2018 – Discussion started: 3 April 2018
+Revised: 11 September 2018 – Accepted: 3 October 2018 – Published: 25 October 2018
+Abstract. In this work, a new algorithm is presented to correct for pitch misalignment imbalances of wind
+turbine rotors. The method uses signals measured in the ﬁxed frame of the machine, typically in the form of
+accelerations or loads. The amplitude of the one per revolution signal harmonic is used to quantify the imbalance,
+while its phase is used to locate the unbalanced blade(s). The near linearity of the unknown relationship between
+harmonic amplitude and pitch misalignment is used to derive a simple algorithm that iteratively rebalances the
+rotor. This operation is conducted while the machine is in operation, without the need for shutting it down.
+The method is not only applicable to the case of a single misaligned blade, but also to the generic case of
+multiple concurrent imbalances. Apart from the availability of acceleration or load sensors, the method requires
+the ability of the rotor blades to be commanded independently from one another, which is typically possible
+on many modern machines. The new method is demonstrated in a realistic simulation environment using an
+aeroservoelastic wind turbine model in a variety of wind and operating conditions.
+1 Introduction
+The pitch system has the highest failure rate of all wind tur-
+bine components (Wilkinson et al., 2010). Issues can include,
+among others, faults of the pitch actuators or of the pitch
+angle sensors, but they can also be caused by an imperfect
+installation of the blades. In general, rotor asymmetries rep-
+resent a signiﬁcant problem for wind turbines, as also wit-
+nessed by the fact that certiﬁcation guidelines require the
+veriﬁcation of the effects of even relatively small pitch mis-
+alignments (typically 0:3for two blades; GL Standards,
+2010, Sect. 4.3.4.1, pp. 4–20).
+Irrespective of the speciﬁc type of fault, a pitch imbalance
+will have as a direct consequence not only a possible de-
+crease in harvested energy but, most importantly, also an in-
+creased level of vibrations and rotor speed ﬂuctuations (Hy-
+ers et al., 2006; Kusiak and Verma, 2011). In fact, when a
+pitch misalignment among the blades is present, the periodic
+aerodynamic, dynamic and gravitational loading experienced
+by the blades is not balanced. As a result, additional har-
+monic components are transferred from the rotating to theﬁxed frame, resulting in vibrations that may lead to the fail-
+ure of other components of the machine and that may also af-
+fect its fatigue life if not promptly corrected for (Yang et al.,
+2008). Moreover, whenever vibrations are fed back to the
+turbine control laws, imbalances can also result in increased
+duty cycles for the machine actuators.
+Currently, the downtime related to pitch failures is rela-
+tively high (Wilkinson et al., 2010). In fact, once an anoma-
+lous behavior has been detected – typically by higher than
+expected ﬁxed-frame vibrations; see Hameed et al. (2009) –
+pitch correction operations are often initiated by a visual in-
+spection. An operator (more recently with the possible aid of
+a drone) takes pictures or videos of the blades, which are later
+analyzed to reveal whether all blades have the same pitch an-
+gle. Once a pitch offset has been estimated, the blade pitch
+is reset to align it with the others. This operation will im-
+ply some downtime and may come at a non-negligible cost.
+Furthermore, the procedure might not always be able to pro-
+duce an exactly balanced rotor. Clearly, more effective condi-
+tion monitoring and correction strategies for the pitch system
+Published by Copernicus Publications on behalf of the European Academy of Wind Energy e.V.
+------------------------------End of the page -----------------------------------
+792 M. Bertelè et al.: Automatic pitch misalignment detection and correction
+of wind turbines should be developed. An ideal solution for
+correcting misaligned blades should be able to ﬁrst identify
+when a rotor is unbalanced, and then it should be able to au-
+tomatically rebalance it. This should be obtained without the
+need to shut down the machine, without the presence and su-
+pervision of an operator, and without the need for expensive
+extra hardware.
+Imbalance detection and correction techniques have been
+developed both in the literature and in practical applications.
+For example, Pierce and Slack (2009) and Axelsson et al.
+(2014) report on methods that reduce a rotor imbalance by
+ﬁrst arbitrarily setting a pitch offset and then measuring the
+resulting loads and accelerations on the shaft or on the yaw
+system. However, no mathematical formulation is provided
+by the authors, thus preventing a better understanding of
+the methodology and its limits. Niebsch et al. (2010) and
+Niebsch and Ramlau (2014) proposed a method to simul-
+taneously estimate both mass and aerodynamic imbalance
+effects from nacelle vibrational measurements. The method
+considers a ﬁnite-element model of the turbine, and the im-
+balance terms are obtained by solving an inverse problem
+through nonlinear regularization theory. The results are in-
+teresting although not excellent, with errors in the estimation
+of the pitch misalignment up to 0.5. However, the need for
+a detailed model of the machine may hinder the applicability
+of this method. A different approach was proposed by Kus-
+nick et al. (2015). In this case, the blade misalignment esti-
+mation is performed by an ad hoc workﬂow using multiple
+measurements, including power output, blade loads and ac-
+celerations. Finally, a method based on system identiﬁcation
+is presented by Cacciola et al. (2016). In that work, a neural
+network is trained based on nodding moment and power mea-
+surements from different experiments conducted for varying
+known pitch misalignments and operating conditions. After
+training, the network is able to detect the severity and loca-
+tion of the imbalance, even distinguishing effects caused by
+pitch misalignments from those induced by ice accretion.
+Ad hoc controllers have also been formulated to correct
+for rotor imbalances (Kanev and van Engelen, 2009; Kanev
+et al., 2009; Petrovi ´c et al., 2015; Cacciola and Riboldi, 2017;
+Cacciola et al., 2017). In all these cases, the general idea is to
+develop a control law that compensates for a pitch misalign-
+ment by targeting imbalance-induced vibrations, typically
+by Coleman-transforming blade loads (Bossanyi, 2003). One
+possible drawback of such approaches is the resulting extra
+control activity necessary to rebalance the rotor, which will
+induce extra duty cycles in the pitch system.
+The analysis of signals such as loads and accelerations
+measured on the wind turbine ﬁxed frame provides a way
+to determine if a rotor is unbalanced. In fact, it is well known
+that the amplitude of the 1P (once per revolution) harmonic
+is an indicator of an unbalanced rotor. Recently, it was shown
+that the phase of that same harmonic can be used to identify
+the unbalanced blade(s) (Cacciola et al., 2016). Based on this
+simple signal analysis, a condition monitoring system can bedeveloped to detect the severity and location of the imbal-
+ance in order to schedule appropriate maintenance and repair
+actions.
+In the present work, the same concept is used to automati-
+cally rebalance an unbalanced rotor. In a nutshell, the method
+works as follows. First, an unknown linear relationship is as-
+sumed between pitch setting of the blades and the 1P ampli-
+tude of a signal measured in the ﬁxed frame. Exploiting the
+radial symmetry of a rotor, the coefﬁcients of the linear rela-
+tionship are reduced to only two. In addition, this also has the
+effect of including the phase information in the model, which
+eventually allows one to correctly identify the pitch misalign-
+ment of each blade. Since the linear imbalance–disturbance
+model is determined by two parameters, one single additional
+measurement (in addition to the one performed on the cur-
+rently unbalanced conﬁguration) is necessary to identify the
+unknown imbalance–disturbance relationship. This is easily
+achieved by pitching the blades by some amount and measur-
+ing the resulting 1P amplitude. Once the linear relationship is
+known, it is trivial to compute the blade pitch offset that, by
+zeroing the 1P amplitude, balances the rotor. To account for
+possible small nonlinearities, the procedure can be iterated
+a few times as necessary. A similar approach was presented
+in Bertelè et al. (2017), which considered only the case of
+a pitch fault located in one single blade. The present work
+expands and generalizes this methodology, allowing for the
+detection and correction of multiple simultaneous pitch im-
+balances.
+The paper is organized as follows. Section 2 formulates
+the proposed imbalance detection and correction procedure.
+In particular, Sect. 2.1 shows the mechanism through which
+a pitch imbalance causes a 1P load in the ﬁxed frame by
+developing a spectral analysis of the relevant loads and ex-
+plaining their origin. Next, Sect. 2.2 formulates the linear
+imbalance–disturbance model of an axial-symmetric rotor,
+while Sect. 2.3 shows how the model coefﬁcients can be
+readily identiﬁed by using two ﬁxed-frame measurements at
+two different pitch settings. Lastly, Sect. 2.4 explains the re-
+balancing procedure. Results are discussed in Sect. 3, which
+reports extensive numerical simulations performed with a
+state-of-the-art aeroservoelastic model operating in a vari-
+ety of different turbulent winds. Tests are conducted in re-
+alistic scenarios, in the sense that rebalancing is performed
+while the wind turbine is operating in changing wind con-
+ditions, including modiﬁcations in air density, wind speed,
+shear, yaw misalignment, upﬂow angle and turbulence inten-
+sity. Details on the speciﬁc combinations of conditions used
+in the tests are reported in Appendix A. In addition, Sect. 3.4
+presents a study assessing the effects of measurement noise
+on the method performance, with the goal of deﬁning min-
+imum speciﬁcation requirements for the whole measuring
+chain. Finally, Sect. 4 draws conclusions and gives an out-
+look on future work.
+Wind Energ. Sci., 3, 791–803, 2018 www.wind-energ-sci.net/3/791/2018/
+------------------------------End of the page -----------------------------------
+M. Bertelè et al.: Automatic pitch misalignment detection and correction 793
+Figure 1. Thrust forcetcomputed in terms of the shear forces tiof
+theBblades. One single blade is shown for clarity.
+2 Methods
+2.1 Spectral analysis of an unbalanced rotor
+In a balanced rotor with Bblades, under the assumption of a
+periodic response, loads transmitted from the rotating frame
+of reference to the ﬁxed frame contain only nBP frequen-
+cies. Indeed, the rotor acts as a ﬁlter: while the full spectrum
+of frequencies is observed in the rotating frame (1P, 2P, 3P,
+4P, . . . ), in the ﬁxed frame only frequencies that are multiples
+of the number of blades appear ( BP, 2BP, 3BP, . . . ).
+On the other hand, when an imbalance is present, other
+harmonic components can be detected in ﬁxed-frame mea-
+surements, the most prominent typically being the 1P har-
+monic. Hence, detection and correction of rotor imbalances
+can be based on the analysis of the 1P harmonic measured in
+the ﬁxed frame.
+As an example, consider the measurement of nacelle fore–
+aft accelerations, which are primarily caused by ﬂuctuations
+in the rotor thrust. The thrust force ton the rotor can be com-
+puted by summing up the out-of-plane shear forces tiof the
+Bblades, as illustrated in Fig. 1.
+The shear force of the generic ith blade can be expanded
+in Fourier series as
+tiDt0iC1/summationdisplay
+nD1/parenleftbig
+tncicos(n i)Ctnsisin(n i)/parenrightbig
+; (1)
+where iD 1C2(i 1)=Bis the azimuthal angle, sub-
+scripts ()ncand ()nsrefer to thenP cosine and sine compo-
+nents, respectively, and t0is the 0th harmonic constant am-
+plitude.Assuming a periodic response, the harmonic amplitudes
+are the same for the various blades; i.e.,
+t0Dt0iDt0j; (2a)
+tncDtnciDtncj; (2b)
+tnsDtnsiDtnsj: (2c)
+In the presence of an imbalance, the harmonic amplitudes of
+thekth (unbalanced) blade will differ from the other ones and
+can be expressed as
+t0kDt0Ct0; (3a)
+tnckDtncCtnc; (3b)
+tnskDtnsCtns: (3c)
+Inserting Eqs. (2) and (3) into Eq. (1) and using the proper-
+ties of trigonometric functions, one can readily compute the
+thrust forcetas
+tDB/summationdisplay
+iD1ti; (4a)
+DBt0CB1/summationdisplay
+nD1(tnBccos(nB )CtnBssin(nB )); (4b)
+Ct0C1/summationdisplay
+nD1(tnccos(n k)Ctnssin(n k)); (4c)
+where D 1. Equation (4c) states that, when the rotor is
+balanced (i.e., when t0DtncDtnsD0), then only nB
+harmonics are present in the spectrum of t. On the other hand,
+when the rotor is unbalanced
+1. intermediate harmonics also pollute the spectrum, and
+2. the phase of these harmonics indicates the unbalanced
+blade.
+Limiting the analysis to the case of the lowest harmonics of
+both expansions in Eq. (4c), which are typically the most en-
+ergetic ones, leads to
+tD(Bt0Ct0)0PC(t1ccos kCt1ssin k)1P
+CB(tBccos(B )CtBssin(B ))BP: (5)
+This expression states that the 1P harmonic in the ﬁxed frame
+is generated by the 1P harmonic of the unbalanced blade.
+This is not always the case, as the result depends on the con-
+sidered ﬁxed-frame load. For example, similar derivations
+performed for the nodding (overturning) moment show that
+the 0P of the unbalanced blade also contributes to the 1P in
+the ﬁxed frame in that particular case. This is beneﬁcial be-
+cause, as shown later on, the 0 and 1P imbalance harmonics
+have a different aerodynamic origin. In fact, numerical exper-
+iments show that an improved performance and robustness
+of the detection algorithm can be obtained by using as an im-
+balance detection signal the overturning or yawing moments.
+www.wind-energ-sci.net/3/791/2018/ Wind Energ. Sci., 3, 791–803, 2018
+------------------------------End of the page -----------------------------------
+794 M. Bertelè et al.: Automatic pitch misalignment detection and correction
+However, since load sensors in the ﬁxed frame are typically
+difﬁcult to install, a similar effect can be obtained by using
+the difference of two fore–aft accelerometers located in the
+nacelle at a distance between the two of them (which, de-
+pending on their positions, will measure nodding or yawing
+motions of the rotor or combinations thereof).
+To better understand the effects of a pitch imbalance, the
+expression for the aerodynamic contribution to the shear in a
+blade can be worked out analytically. Following the approach
+of Manwell et al. (2009), which uses a one degree of freedom
+rigid body model of a ﬂapping blade, the shear tiof theith
+rotor blade is found to be
+tiDt0iCt1cicos i; (6)
+where the 0 and 1P harmonic amplitudes are written as
+Dt0i Nt/parenleftbigg3
+2 i
+3/parenrightbigg
+; (7a)
+t1ciDNt/parenleftbigg
+(3 i)NVCK
+3NU/parenrightbigg
+: (7b)
+In these expressions, NtDJ2=(2R),D%cC L;R4=Jis
+the Lock number, %the air density, cthe blade chord, CL;
+the lift slope, Rthe rotor radius, Jthe ﬂapping moment of
+inertia and3D(1 a)U=(R) the nondimensional ﬂow ve-
+locity at the rotor disk, with abeing the axial induction, NV0D
+V0=(R) the nondimensional cross-ﬂow and NUDU=(R)
+the nondimensional wind speed; is the rotor angular ve-
+locity andKthe linear vertical wind shear.
+Assuming a pitch misalignment , the resulting
+imbalance-induced 0 and 1P harmonic amplitudes are
+t0DNt
+3; (8a)
+t1cD NtNV: (8b)
+These expressions state that there is a linear dependency be-
+tween a pitch misalignment and the resulting harmonic dis-
+turbances. In addition, the 1P imbalance harmonic t1cthat
+– according to Eq. (5) – causes the appearance of a 1P har-
+monic in the ﬁxed frame is proportional to the cross-ﬂow.
+Although in operation there will always be some small mis-
+alignment between the rotor axis and the wind vector, this
+expression suggests that the 1P signal could be strengthened
+by operating at a slight yaw misalignment with the incoming
+wind when detecting an imbalance and correcting for it.
+A word of caution is due in the interpretation of these an-
+alytical results. First of all, this analysis is based on the sole
+thrust force, while terms other than the cross-ﬂow contribute
+to the 1P harmonic when considering yawing and nodding
+moments. In addition, the model is the simplest possible us-
+ing one single degree of freedom and including various sim-
+pliﬁcations in the derivations. Nevertheless, the model is at
+least useful in qualitatively understanding the basic mecha-
+nisms by which ﬁxed-frame vibrations are caused in an im-
+balanced rotor. After having served its purpose, the analyticalmodel is dropped from the rest of the paper, the further de-
+velopments of which are not based on it.
+2.2 Linear imbalance–disturbance model
+In this work, an imbalance–disturbance model is assumed in
+the form
+sDC(b bm); (9a)
+DCbCsm: (9b)
+The 1P harmonic amplitude vector of the ﬁxed-frame mea-
+sured signal sis noted sD(sc;ss)T, wherescandssare the
+cosine and sine components, respectively. Considering here
+and in the following the common case of a three-bladed rotor
+(BD3), vector bD(b1;b2;b3)Tcontains the pitch adjust-
+mentsbifor each one of the blades, while bmis the unknown
+pitch misalignment. Equation (9a) states that, if one knew the
+misalignment bm, then by pitching the blades by bDbmone
+would obtain sD0; i.e., the rotor would be balanced. On the
+other hand, before rebalancing, bD0 and hence, according
+to Eq. (9b), one measures a 1P signal equal to smD Cbm.
+In the model, the matrix of coefﬁcients Clinks imbalance
+angles and 1P disturbances, and it is deﬁned as
+CD/bracketleftbiggcc1cc2cc3
+cs1cs2cs3/bracketrightbigg
+: (10)
+The model coefﬁcients Candsmare unknown. However,
+they can be readily identiﬁed from measurements. Once the
+model is known, one can use it to compute the pitch adjust-
+ment bthat rebalances the rotor.
+Note that the assumed imbalance–disturbance model im-
+plies a linear relationship between the pitch misalignment of
+the blades and the 1P harmonic component of a measured re-
+sponse signal (acceleration or load) in the ﬁxed frame. As
+shown later on, this assumption is not a limitation of the
+model because in fact the model can be iteratively identi-
+ﬁed as the rotor is rebalanced, thus effectively removing the
+linearity hypothesis. However, linearity is conﬁrmed by the
+previously derived simple analytical model, and it is indeed
+generally also observed in extensive numerical simulations
+conducted by using state-of-the-art aeroelastic models.
+Since it is nearly impossible to guarantee that the whole
+model identiﬁcation and rebalancing procedure will be con-
+ducted in exactly the same wind conditions, it is important to
+reduce the dependency of the model on the operating point.
+To this end, the harmonic amplitude vector sin Eq. (9) is
+scaled by the dynamic pressure
+qD1
+2%U2
+a; (11)
+whereUais a moving average of the wind speed. The nondi-
+mensionalization by qhas the effect of making the model
+coefﬁcients Candsmlargely independent from the operat-
+ing condition. In the turbulent examples reported later on,
+Wind Energ. Sci., 3, 791–803, 2018 www.wind-energ-sci.net/3/791/2018/
+------------------------------End of the page -----------------------------------
+M. Bertelè et al.: Automatic pitch misalignment detection and correction 795
+the moving average was computed over 10 min. To avoid the
+typical possible inaccuracies of nacelle-mounted anemome-
+ters,Uamight be based on estimates of the rotor-equivalent
+wind speed (Soltani et al., 2013).
+To simplify the identiﬁcation of the model coefﬁcients, the
+radial symmetry of the rotor can be exploited. Assuming a
+periodic response, the effects of a misalignment in the second
+blade will be the same as those caused by a misalignment in
+the ﬁrst blade, but shifted by 2 =3. Hence, the model coefﬁ-
+cients must obey the following relationship:
+/braceleftbigg
+cc2cs2/bracerightbigg
+D/bracketleftbigg
+cos(2=3) sin(2=3)
+ sin(2=3) cos(2=3)/bracketrightbigg/braceleftbigg
+cc1cs1/bracerightbigg
+DRc: (12)
+Clearly, the same argument holds for the relationship be-
+tween the response of blades two and three. Therefore, ma-
+trixConly depends on the two coefﬁcients of vector cand
+can be written as
+CD/bracketleftbig
+cRcR2c/bracketrightbig
+: (13)
+It is trivial to observe that this also implies the same relation-
+ship between the coefﬁcients of blades three and one, thus
+closing the loop.
+The imbalance–disturbance model might be affected by
+proximity to resonant conditions or by the presence of vi-
+bration control algorithms implemented onboard the turbine
+control system. The ﬁrst problem is readily addressed by
+avoiding identifying the model and rebalancing the machine
+in the proximity of resonant conditions, which is easily done
+since these are typically well known. The second problem
+might require switching off these additional control loops
+during identiﬁcation and rebalancing, although no general
+statements are possible here and the situation would have to
+be analyzed in detail for any speciﬁc implementation of such
+algorithms.
+2.3 Model identiﬁcation
+Before computing the pitch adjustments that rebalance the
+rotor, one needs to identify the unknown coefﬁcients in
+Eq. (9b). To this end, it is convenient to rewrite the
+imbalance–disturbance model as follows:
+sDCbCsm; (14a)
+DBcCsm: (14b)
+By simple algebraic derivations, one can readily show that
+matrix Bis a sole function of the pitch adjustment band is
+written as
+BD/bracketleftbiggB11B12
+ B12B11/bracketrightbigg
+; (15)where
+B11Db1Ccos(2=3)b2Ccos(4=3)b3; (16a)
+B12Dsin(2=3)b2Csin(4=3)b3: (16b)
+At the beginning of the procedure, one has not yet adjusted
+the rotor pitch, and hence bDb(1)D0. In this condition, a
+1P harmonic equal to s(1)is measured on the machine. Next,
+the pitch of the blades is changed by a chosen amount b(2). In
+order not to upset the operating condition of the machine, this
+arbitrary pitch modiﬁcation should be characterized by a null
+collective change. In correspondence to this new condition,
+one measures a 1P harmonic equal to s(2). Considering the
+two measurements s(1)ands(2)together, one can write
+/braceleftbiggs(1)
+s(2)/bracerightbigg
+D/bracketleftbiggB(1)I
+B(2)I/bracketrightbigg/braceleftbiggc
+sm/bracerightbigg
+; (17)
+where B(1)andB(2)indicate matrix (15) evaluated in corre-
+spondence to vectors b(1)andb(2), respectively. Inverting this
+relationship, one readily obtains the unknown coefﬁcients c
+andsm, which fully characterize Eq. (9b).
+2.4 Rebalancing
+Now that Eq. (9b) has been identiﬁed, it can be used to
+rebalance the rotor. Before doing so, however, one should
+note that only imbalances among the blades will produce a
+1P harmonic in the ﬁxed frame. In fact, a collective rota-
+tion of all blades by any given angle will not produce any
+imbalance, and therefore it cannot be detected by a method
+based on ﬁxed-frame response signals. This implies that one
+cannot compute the full pitch adjustment vector b, but only
+a zero-collective adjustment that satisﬁes the relationship/summationtext3
+iD1biD0. This is also stated by Eq. (9b), which is in fact
+a rectangular system of two equations in three unknowns.
+By appending the zero-collective constraint to the
+imbalance–disturbance model, one gets
+/braceleftbiggs
+0/bracerightbigg
+D/bracketleftbiggC
+1T/bracketrightbigg
+bC/braceleftbiggsm
+0/bracerightbigg
+; (18)
+where 1D(1;1;1)T. Setting sD0, i.e., requesting a null 1P
+harmonic response in the ﬁxed frame, one readily computes
+the necessary pitch adjustments as
+bD /bracketleftbiggC
+1T/bracketrightbigg 1/braceleftbiggsm
+0/bracerightbigg
+: (19)
+Blades are now pitched by b, as computed by Eq. (19). If,
+after application of the computed pitch adjustment, a 1P har-
+monic is still detected in the ﬁxed frame, then this might be
+an indication of a non-exact linearity between pitch imbal-
+ance and ﬁxed-frame harmonic amplitude. In this case, one
+can iterate the whole procedure. The measured amplitude in
+the current conﬁguration becomes the new data point in the
+www.wind-energ-sci.net/3/791/2018/ Wind Energ. Sci., 3, 791–803, 2018
+------------------------------End of the page -----------------------------------
+796 M. Bertelè et al.: Automatic pitch misalignment detection and correction
+model identiﬁcation phase. This data point, together with the
+one measured just before adjusting the blade pitch, allows for
+the identiﬁcation of a new model. Given the new coefﬁcients,
+the zero-collective constraint is appended to the model, the
+inversion of which yields the new pitch adjustments. The pro-
+cess is repeated until only a negligible 1P harmonic signal is
+left in the ﬁxed frame. Figure 2 gives a graphical representa-
+tion of this algorithmic procedure.
+Inspecting the values of the computed pitch adjustments
+b, one may notice in some cases that two blades are char-
+acterized by the same correction, for example b1Db26Db3.
+This means that only one blade (number 3 in this speciﬁc ex-
+ample) was misaligned with respect to the other two. In this
+case, one might choose to change the blade pitch of blade
+3 byb3 2b1, which has the effect of realigning blade 3
+with the others instead of adjusting all three at null collec-
+tive change. This might be useful, for example, in the case
+that a blade has been mounted with the wrong pitch offset.
+3 Results
+3.1 Simulation environment
+In this work, the proposed rebalancing procedure is demon-
+strated with the help of aeroservoelastic simulations of a
+3 MW horizontal axis wind turbine. The machine, character-
+ized by an 80 m hub height and a rotor diameter of 93 m, has
+cut-in, rated and cut-out speeds equal to 3, 12.5 and 25 m s 1,
+respectively. The cut-in rotor speed is equal to 5.2 RPM,
+whereas the rated rotor speed is equal to 15 RPM. Both side–
+side and fore–aft tower frequencies are equal to 0.3 Hz. The
+ﬁrst blade ﬂap-wise frequency varies between 0.9 Hz at cut-
+in and 1 Hz at rated rotor speed. Finally, the ﬁrst blade edge-
+wise frequency is about 1.5 Hz. The transient response of the
+machine is computed with the ﬁnite-element multibody code
+Cp-Lambda (Bottasso and Croce, 2006). The rotor blades
+and tower are modeled using a geometrical exact beam for-
+mulation (with torsion, axial, bending and shear deformabil-
+ity), resulting in a nonlinear ﬁnite-element model. The rest of
+the wind turbine is modeled by a combination of rigid bod-
+ies, joints and ﬂexible elements to represent nacelle, drive-
+train and foundations. Generator and pitch actuators are mod-
+eled by ﬁrst- and second-order dynamical systems, respec-
+tively. The classical blade element momentum theory (BEM)
+is used to represent the aerodynamics, considering hub and
+tip losses, dynamic stall, unsteady aerodynamics and rotor-
+tower interference. A speed-scheduled linear quadratic regu-
+lator (LQR) (Riboldi, 2012) is used for the implementation
+of the pitch–torque controller. Turbulent wind time histories
+of 10 min duration are generated with the code TurbSim
+(Jonkman and Kilcher, 2012) based on the Kaimal turbulence
+model.
+Different combinations of initial pitch misalignments in
+the range2are considered, in which only one, two or even
+all three blades are simultaneously misaligned. To model ﬁ-nite resolution effects in the pitch system, the minimum res-
+olution of the pitch motion is assumed to be 0.1. There-
+fore, any blade movement smaller than the given resolution is
+rounded to the closest neighboring integer multiple. To quan-
+tify the effectiveness of the rebalancing algorithm, the abso-
+lute residual pitch misalignment angle is deﬁned as
+Dmax( bm b) min(bm b); (20)
+where bm bis the difference between real and computed
+misalignments.
+Accelerometers are placed on the machine main bearing,
+with the goal of measuring the ﬁxed-frame response of the
+system, and they are simulated in the mathematical model in-
+cluding the effects of measurement noise. Various tests were
+conducted in order to identify an optimal accelerometer con-
+ﬁguration. Typically, the best results were obtained when two
+accelerometers are located to the two sides of the main bear-
+ing and spaced as far as possible from each other. The two ac-
+celerometer signals are subtracted one from the other, yield-
+ing a differential measurement proportional to the yawing ac-
+celerations of the rotor.
+3.2 Linearity
+The model described in Sect. 2.2 is based on the assumption
+that 1P harmonics in the ﬁxed frame depend linearly on the
+pitch misalignment angle. To validate this assumption, simu-
+lations were performed to study the wind turbine ﬁxed-frame
+response to blade misalignments. The simulations were per-
+formed in steady sheared wind conditions, misaligning one
+blade at a time.
+Figure 3 shows the sine and cosine differential acceler-
+ation components at the main bearing for each one of the
+three blades. The plots correspond to a wind condition of
+7 m s 1, although similar results were obtained for different
+wind speeds. Accelerations were scaled with respect to the
+dynamic pressure and averaged over the simulation time. The
+relationship between 1P response and pitch misalignment ap-
+pears to be linear to a very good approximation, with the cor-
+relation coefﬁcient of the linear best ﬁts differing from 1 by
+less that 10 3.
+It is interesting to observe that the misalignment of each
+different blade leaves a unique ﬁngerprint on the measured
+signal. This means that the linear model not only contains
+information on the severity of the misalignment, but also on
+where the misalignment is located.
+3.3 Performance assessment of the rebalancing
+algorithm
+Next, the performance of the proposed algorithm is tested in
+a variety of different wind conditions. The model expressed
+by Eq. (17) is identiﬁed from accelerometer measurements
+recorded in 10 min turbulent conditions, characterized by dif-
+ferent values of air density, wind speed, turbulence inten-
+Wind Energ. Sci., 3, 791–803, 2018 www.wind-energ-sci.net/3/791/2018/
+------------------------------End of the page -----------------------------------
+M. Bertelè et al.: Automatic pitch misalignment detection and correction 797
+Yes NoApply 𝒃Fixed -frame
+dataDemodulation 
+or FFT1P
+Pitch blade(s)
+Demodulation 
+or FFT
+1PModel
+identificationCompute
+pitch adjustment
+𝒃for each bladeBalanced
+rotor
+Balanced
+rotorYesNo
+Figure 2. Graphical representation of the rotor rebalancing algorithm.
+-2 -1 0 1 2
+Pitch misalignment angle [deg]-3-2-10123Scaled differential acceleration component [ms2 kg   ]10-4 Blade 1
+7 ms-1 sine
+7 ms-1 cosine
+-2 -1 0 1 2
+Pitch misalignment angle [deg]-2.5-2-1.5-1-0.500.511.522.510-4 Blade 2
+-2 -1 0 1 2
+Pitch misalignment angle [deg]-2.5-2-1.5-1-0.500.511.522.510-4 Blade 3-1
+Figure 3. Cosine (squares) and sine (circles) 1P components of the main-bearing scaled differential acceleration as functions of pitch
+misalignment.
+sity (TI), yaw misalignment, wind shear and upﬂow. These
+quantities are assumed to change according to a number of
+scenarios, termed series A through F, described in detail in
+Appendix A. Once the model is identiﬁed, the rotor is re-balanced by inverting the model itself. The procedure of
+identiﬁcation–rebalancing is then repeated until the residual
+1P harmonic is smaller than a given threshold.
+www.wind-energ-sci.net/3/791/2018/ Wind Energ. Sci., 3, 791–803, 2018
+------------------------------End of the page -----------------------------------
+798 M. Bertelè et al.: Automatic pitch misalignment detection and correction
+0 1 2 3 4Steps00.511.522.533.5  [°]7 ms, TI 5 %;     (series A)-1
+7 ms, TI 12 %;   (series B)-1
+15 ms, TI 5 %;   (series C)-1
+15 ms, TI 12 %; (series D)-1
+Figure 4. Residual pitch misalignment as a function of the number
+of steps for given wind speed and turbulence intensity, but variable
+conditions according to series A through D.
+Figure 4 shows the absolute residual pitch misalignment
+after each iteration of the rebalancing algorithm. The spe-
+ciﬁc cases reported in the ﬁgure correspond to situations in
+which wind speed and TI are kept constant, whereas mean
+values of yaw misalignment, vertical shear and upﬂow an-
+gle vary throughout the identiﬁcation–rebalancing sequence
+according to what is speciﬁed for series A through D.
+In the ﬁgure, the abscissa represents the various steps of
+the procedure. At the beginning (step 0), a 1P acceleration is
+measured in the ﬁxed frame. Next, one or more blades are
+randomly pitched (step 1), while keeping the collective con-
+stant. In the resulting new conﬁguration, a new 1P accelera-
+tion is measured. Since this step is random, the unbalance of
+the blades may worsen in this ﬁrst step. The algorithm is now
+applied by ﬁrst identifying the model and then computing the
+pitch adjustment bthat rebalances the rotor. The blades are
+then accordingly pitched (step 2). If a residual 1P harmonic
+is still present, the algorithm is applied again using data from
+steps 1 and 2, resulting in a new pitch adjustment (step 3).
+The procedure is repeated until convergence.
+The ﬁgure shows that the proposed algorithm is capable of
+rebalancing the rotor in a very small number of steps, typi-
+cally ranging between three and four. It should be noted that
+during each one of these steps, the machine is operating in
+markedly different operating conditions, as described by the
+series reported in the Appendix. Notwithstanding these very
+signiﬁcant operational changes, the procedure seems to be
+quite robust.
+An important remark is due at this point. As wind condi-
+tions may change from one step to the next, in general it is
+not possible to guarantee that the imbalance will always di-
+minish at each step of the algorithm. Indeed, some of the
+following numerical experiments show that the imbalance
+may occasionally increase. However, this happens only in the
+case of radical changes in wind conditions from one step to
+the next. It would be relatively straightforward to avoid such
+0 1 2 3 4 5 6 7
+Steps00.511.522.533.54  [°][7, 15] ms , 5 % TI;   (series E)-1
+[7, 15] ms , 12 % TI; (series F)-1Figure 5. Residual pitch misalignment as a function of the number
+of steps for given turbulence intensity and variable wind speed, but
+variable conditions according to series E and F.
+situations by implementing some simple logic in the proce-
+dure. For example, one might monitor the operating param-
+eters and continue with rebalancing only when changes do
+not exceed a certain threshold. In addition, if one observes
+an increase in the 1P harmonic amplitude after a rebalancing
+step, then that step might be rejected and the blades could
+be pitched back to their previous setting. To consider a worst
+case scenario, in all numerical experiments presented here
+these simple precautions were not taken. Therefore, the al-
+gorithm was forced to continue irrespective of the severity
+of operating changes. Because of this, the results show oc-
+casional increases in the imbalance throughout the iterations.
+Nevertheless, these same results also show that the algorithm
+was always eventually able to successfully rebalance the ro-
+tor in a very small number of steps.
+Figure 5 reports results obtained at different TI levels for
+cases characterized by changes in wind speed from 7 to
+15 m s 1and in density from 1.225 to 1.1 kg m 3for series E
+and F. For the E series results, the situation temporarily wors-
+ens between steps 1 and 2. This may be due to the simulta-
+neous change in air density, yaw misalignment and halving
+the shear from 0.4 to 0.2 in this step. Here again, very vari-
+able inﬂow conditions do not seem to excessively affect the
+performance of the algorithm, which is indeed able to com-
+pletely rebalance the turbine rotor within four steps.
+3.4 Effects of measurement noise
+The effects of noise on the measurement of the accelera-
+tions driving the algorithm were then investigated. In fact,
+small imbalances induce only small 1P harmonics in the
+ﬁxed frame so that the effects of noise on the measurements
+can be signiﬁcant.
+Measurement noise is modeled by adding a white
+Gaussian signal to the accelerations measured on the
+multibody wind turbine model. Five different signal-
+Wind Energ. Sci., 3, 791–803, 2018 www.wind-energ-sci.net/3/791/2018/
+------------------------------End of the page -----------------------------------
+M. Bertelè et al.: Automatic pitch misalignment detection and correction 799
+Figure 6. Residual pitch misalignment as a function of the number
+of steps for different SNRs in constant uniform inﬂow at 11 m s 1,
+D0,D0:4,D0andD1:225 kg m 3.
+to-noise ratios (SNRs) are considered, namely SNR D
+T5 15 22 26 30UdB. To obtain statistically relevant results, for
+each SNR six different random noise realizations are used,
+and the results are then averaged.
+In addition to acceleration noise, the study also consid-
+ered the effects of errors in the measurement of the average
+wind speedUaof Eq. (11), used for scaling the imbalance
+harmonic amplitudes. Such errors might be due to the well-
+known poor accuracy of nacelle-mounted anemometers. Re-
+sults are not reported here for space limitations, but even er-
+rors of20 % did not signiﬁcantly affect the performance of
+the proposed algorithm.
+3.4.1 Nonturbulent wind conditions
+To separate the effects of measurement noise from the
+stochastic disturbances caused by turbulence, series com-
+posed of 3 min long nonturbulent wind conditions are con-
+sidered ﬁrst.
+Figure 6 shows the average residual pitch misalignment
+for different SNRs for a case in which all wind parameters
+are constant and wind speed is equal to 11 m s 1. The results
+clearly illustrate the detrimental effects of decreasing SNR
+values on the quality of the rebalancing. For SNR D5 dB,
+the residualconverges to about 0.35, which is neverthe-
+less a good result considering that in this particular case the
+initial imbalance was of 1.5. Increasing SNR, the resid-
+ual misalignment improves as expected, showing that, from
+SNR22 dB and higher, converges to values smaller than
+0.1(which is the assumed minimum resolution of the pitch
+system, and therefore past this value differences among the
+SNR levels become irrelevant).
+Figure 7 shows results obtained in varying wind condi-
+tions. Speciﬁcally, wind speed and density change respec-
+tively from 11 to 15 m s 1and from 1.1 to 1.225 kg m 3,
+while vertical shear and misalignment angles vary according
+to series G. Here again a temporary worsening of the rotor
+Figure 7. Residual pitch misalignment as a function of the number
+of steps for different SNRs for variable nonturbulent inﬂow (series
+G).
+balancing can be observed between step 2 and 3, probably
+due to the halving of shear between these two steps, accom-
+panied by simultaneous substantial increases in air density
+and wind speed.
+It appears that the method very effectively reduces the ini-
+tial misalignments. Indeed, results show a very modest effect
+of SNR, except for the lowest value of 5 dB that seems to
+take a bit longer to converge. The apparently surprising lack
+of sensitivity to SNR can be explained by the changing yaw
+misalignment within the steps. Indeed, as shown in Eq. (8b),
+the 1P harmonic measured in the ﬁxed frame is related to the
+presence of a cross-ﬂow component. Therefore, a bit of mis-
+alignment of the rotor axis with respect to the wind vector
+eases rebalancing because it makes the effects of an unbal-
+ance more prominent and therefore less affected by noise.
+3.4.2 Turbulent wind conditions
+Figure 8 shows the same simulation series as in Fig. 7 (i.e.,
+wind speed and density changing from 11 to 15 m s 1and
+from 1.1 to 1.225 kg m 3, respectively, with other wind pa-
+rameters according to series G), but for a turbulent inﬂow
+characterized by TID5 %. Here again it appears that SNRs
+larger than 22 dB have very little effect on the speed of con-
+vergence of the algorithm.
+It is also interesting to observe that convergence is actually
+faster in turbulent conditions (Fig. 8) than in nonturbulent
+ones (Fig. 7). This may be due again to the fact that turbu-
+lence implies a higher excitation of the 1P harmonic, making
+it more evident against the sensor noise.
+A large number of tests performed in additional operat-
+ing conditions and SNR values conﬁrm the ﬁndings reported
+herein. Clearly, one should choose a sensor with the highest
+SNR possible in the frequency range of interest. However,
+these results suggest that even fairly limited values of SNR
+should typically be sufﬁcient for the algorithm to completely
+rebalance a rotor in turbulent and varying wind conditions.
+www.wind-energ-sci.net/3/791/2018/ Wind Energ. Sci., 3, 791–803, 2018
+------------------------------End of the page -----------------------------------
+800 M. Bertelè et al.: Automatic pitch misalignment detection and correction
+Figure 8. Residual pitch misalignment as a function of the number
+of steps for different SNRs with turbulent inﬂow at TI D5 % (series
+G).
+4 Conclusions
+This paper has described a new method to detect and correct
+pitch imbalances in wind turbine rotors. The method uses a
+measured signal in the ﬁxed frame, typically in the form of
+accelerations or loads. The signal is demodulated to extract
+the 1P harmonic, which is then related to the misalignment
+of the blades by a linear model. By exploiting the axial sym-
+metry of the rotor, the phase of the signal is used to detect
+which blades are unbalanced. The use of the rotor axial sym-
+metry has the additional effect of reducing the number of free
+parameters in the model to only two.
+The model parameters are readily identiﬁed by measuring
+the signal and computing its harmonics at two different pitch
+settings, something that is easily achieved by simply pitching
+the blades by a small chosen amount. The procedure can be
+performed while the machine is in operation, without shut-
+ting it down. The method also works if measurements are
+taken at different operating conditions, which is indeed in-
+evitable in the ﬁeld. Once the model has been identiﬁed, its
+inversion readily yields the pitch adjustments of the various
+blades that rebalance the rotor. If, after rebalancing, some re-
+maining 1P harmonic is detected, the whole procedure can
+be repeated, thereby eliminating the effects of possible small
+nonlinearities in the imbalance–disturbance relationship. The
+whole approach has fairly minimal requirements, as it only
+assumes the availability of a sensor of sufﬁcient accuracy and
+bandwidth to detect the 1P harmonic to the desired precision
+and the ability to command the pitch setting of each blade
+independently from the others.
+Extensive numerical simulations were conducted with the
+proposed procedure using a detailed aeroservoelastic model
+of a multi-MW wind turbine. The analysis considered real-
+istic scenarios in which measurements and rebalancing were
+performed in operating conditions characterized by varying
+air density, wind speed, yaw misalignment, upﬂow, shearand turbulence intensity. The simulation environment also
+considered the modeling of measurement noise and distur-
+bances.
+Based on the results presented herein, the following con-
+clusions may be drawn.
+–The relationship between pitch imbalance and 1P ﬁxed-
+frame harmonics appears to be linear and unique de-
+pending on the location of the misalignment. This al-
+lows one to not only quantify the severity of the imbal-
+ance, but also the unbalanced blade(s).
+–In realistic wind conditions, i.e., with turbulent wind
+and variable air density, speed, vertical shear and wind
+rotor angles, the proposed algorithm successfully rebal-
+ances the rotor typically within four iterations. To ac-
+count for possible changes in the mean value of wind
+speed and/or density, the simple scaling of the 1P input
+by the dynamic pressure was sufﬁcient to guarantee a
+good performance in all tested conditions.
+–Given the relatively small magnitude of the signals that
+are generated by small misalignments of the blades, one
+might expect that particular attention should to be paid
+to the selection of the installed sensors. However, results
+have shown that measurements are rather insensitive to
+SNR. Indeed, values of SNR 30 dB in the frequency
+range of interest are more than adequate for the present
+application, although even a signiﬁcantly smaller value
+of SNR gives only a slight performance degradation.
+However, one should keep in mind that different results
+might have been obtained on different wind turbines and
+when placing the sensors at different locations than the
+ones considered here.
+–Good results were obtained by using observation win-
+dows of 10 min. Although longer time windows might
+appear to be beneﬁcial to smooth out ﬂuctuations due to
+turbulence and noise, one should also consider that long
+time windows might also imply signiﬁcant changes not
+only in the operating conditions, but also in rotor speed,
+which should also be duly accounted for.
+Notwithstanding the very promising results obtained here
+in a simulation environment, a demonstration in the ﬁeld re-
+mains indispensable to prove the actual effectiveness and ap-
+plicability of the proposed method in practice. Finally, fu-
+ture studies should consider the case of simultaneous aero-
+dynamic and mass imbalances.
+Data availability. Data can be provided upon request.
+Please contact the corresponding author Carlo L. Bottasso
+(carlo.bottasso@tum.de).
+Wind Energ. Sci., 3, 791–803, 2018 www.wind-energ-sci.net/3/791/2018/
+------------------------------End of the page -----------------------------------
+M. Bertelè et al.: Automatic pitch misalignment detection and correction 801
+Appendix A: Wind series
+The following tables report the values of the relevant oper-
+ational and wind parameters used for the veriﬁcation of the
+rebalancing algorithm.
+Table A1. Series A. Initial blade misalignment: bmD
+(2;0:5; 1:5)T.
+Step 0 1 2 3
+U(m s 1) 7 7 7 7
+TI (%) 5 5 5 5
+(kg m 3) 1.225 1.225 1.225 1.225
+() 0 10 0 10
+(–) 0.2 0.4 0.2 0.2
+() 0 0 0 0
+Table A2. Series B. Initial blade misalignment: bmD
+(0:5; 1:5;2)T.
+Step 0 1 2 3
+U(m s 1) 7 7 7 7
+TI (%) 12 12 12 12
+(kg m 3) 1.225 1.225 1.225 1.225
+() 10 10 10 10
+(–) 0.4 0.4 0.4 0.2
+() 0 0 0 0
+Table A3. Series C. Initial blade misalignment: bmD
+(2;0:5; 1:5)T.
+Step 0 1 2 3
+U(m s 1) 15 15 15 15
+TI (%) 5 5 5 5
+(kg m 3) 1.225 1.225 1.225 1.225
+() 0 0 10 10
+(–) 0.2 0.2 0.4 0.2
+() 0 0 0 0
+Table A4. Series D. Initial blade misalignment: bmD
+(0:5;2; 1:5)T.
+Step 0 1 2 3 4
+U(m s 1) 15 15 15 15 15
+TI (%) 12 12 12 12 12
+(kg m 3) 1.225 1.225 1.225 1.225 1.225
+() 0 10 0 0 0
+(–) 0.2 0.4 0.2 0.2 0.2
+() 0 0 0 0 0Table A5. Series E. Initial blade misalignment: bmD
+(2;0:5; 1:5)T.
+Step 0 1 2 3 4
+U(m s 1) 15 7 7 15 15
+TI (%) 5 5 5 5 5
+(kg m 3) 1.225 1.225 1.1 1.225 1.225
+() 0 10 0 10 0
+(–) 0.2 0.4 0.2 0.4 0.2
+() 0 0 0 0 0
+Table A6. Series F. Initial blade misalignment: bmD
+(1;2; 1:5)T.
+Step 0 1 2 3 4
+U(m s 1) 15 7 7 15 15
+TI (%) 12 12 12 12 12
+(kg m 3) 1.225 1.225 1.1 1.225 1.225
+() 10 10 0 10 0
+(–) 0.4 0.4 0.2 0.4 0.2
+() 0 0 0 0 0
+Table A7. Series G. Initial blade misalignment: bmD
+( 1;0;0)T.
+Step 0 1 2 3 4 5 6 7 8
+U(m s 1) 15 11 11 15 11 15 15 11 15
+(kg m 3) 1.1 1.225 1.1 1.225 1.225 1.1 1.225 1.1 1.1
+() 0 0 10 10 0 10 0 10 10
+(–) 0.4 0.2 0.4 0.2 0.2 0.2 0.4 0.4 0.2
+() 4 0 0 0 0 0  4 0 0
+www.wind-energ-sci.net/3/791/2018/ Wind Energ. Sci., 3, 791–803, 2018
+------------------------------End of the page -----------------------------------
+802 M. Bertelè et al.: Automatic pitch misalignment detection and correction
+Appendix B: Nomenclature
+a Axial induction
+bi Pitch adjustment that rebalances blade i
+bmi Pitch misalignment of blade i
+s Fixed-frame signal
+t Rotor thrust
+ti Out-of-plane shear of blade i
+B Number of blades
+CL Slope of the lift coefﬁcient
+J Flapping moment of inertia
+K Linear vertical shear factor
+R Rotor radius
+U Wind speed
+V0 Cross-ﬂow speed
+ Lock number
+ Residual pitch misalignment angle
+ Pitch angle
+ Vertical shear exponent
+% Air density
+ Yaw misalignment angle
+ Upﬂow angle
+ Azimuthal angle
+3 Nondimensional ﬂow velocity at the rotor disk
+ Rotor angular velocity
+b Pitch adjustment vector
+bm Pitch misalignment vector
+s Fixed-frame signal vector
+I Identity matrix
+R Rotation matrix between two consecutive blades
+()0 Zeroth harmonic
+()nnth harmonic
+()i Quantity related to the ith blade
+()(j)Quantity measured with the jth pitch setting
+()c Cosine amplitude
+()s Sine amplitude
+N() Nondimensional quantity
+nPntimes per revolution
+BEM Blade element momentum
+SNR Signal-to-noise ratio
+TI Turbulence intensity
+Wind Energ. Sci., 3, 791–803, 2018 www.wind-energ-sci.net/3/791/2018/
+------------------------------End of the page -----------------------------------
+M. Bertelè et al.: Automatic pitch misalignment detection and correction 803
+Competing interests. The authors declare that they have no
+conﬂict of interest.
+This work was supported by the German Research
+Foundation (DFG) and the Technische Universität
+München within the funding program
+Open Access Publishing.
+Edited by: Joachim Peinke
+Reviewed by: two anonymous referees
+References
+Axelsson, U., Bjork, M., and Haag, C.: Method for Balancing a
+Wind Turbine, US Patent No. 8683688 B2, 2014.
+Bertelè, M., Cacciola, S., Bottasso, C. L., and Domestici M.: Au-
+tomatic track and balance of wind turbine rotors, in: WCCM
+2017 – 1st World Congress on Condition Monitoring, 13–16 June
+2017, London, UK, 2017.
+Bossanyi, E. A.: Wind turbine control for load reduction, Wind En-
+ergy, 6, 229–244, https://doi.org/10.1002/we.95, 2003.
+Bottasso, C. L. and Croce, A.: Cp-Lambda: User’s Manual, 2006.
+Cacciola, S., and Riboldi, C. E. D.: Equalizing aerodynamic
+blade loads through individual pitch control via multi-
+blade multilag transformation, J. Sol. Energ., 139, 061008,
+https://doi.org/10.1115/1.4037744, 2017.
+Cacciola, S., Munduate, I., and Bottasso, C. L.: Detection of ro-
+tor imbalance, including root cause, severity and location, J.
+Phys. Conf. Ser., 753, 072003, https://doi.org/10.1088/1742-
+6596/753/7/072003, 2016.
+Cacciola, S., Riboldi, C. E. D., and Croce, A.: A new decen-
+tralized pitch control scheme for wind turbines, Wind turbine
+and wind farm control: control challenges and solutions, 20th
+IFAC World Congress, IFAC-PapersOnLine, 50, 9908–9913,
+https://doi.org/10.1016/j.ifacol.2017.08.1627, 2017.
+GL Standards: Guideline for the Certiﬁcation of Wind Turbines,
+Rules and Guidelines Industrial Services, Germanischer Lloyd,
+Hamburg, Germany, 2010.
+Hameed, Z., Hong, Y ., Cho, Y ., Ahn, S., and Song, C.: Condi-
+tion monitoring and fault detection of wind turbines and re-
+lated algorithms: a review, Renew. Sust. Energ. Rev., 13, 1–39,
+https://doi.org/10.1016/j.rser.2007.05.008, 2009.
+Hyers, R. W., Mcgowan, J. G., Sullivan, K. L., Manwell, J. F.,
+and Syrett, B. C.: Condition monitoring and prognosis of
+utility scale wind turbines, Energy Materials, 1, 187–203,
+https://doi.org/10.1179/174892406X163397, 2006.Jonkman, B. and Kilcher, L.: TurbSim Users’ Guide: Version
+1.06.00, 2012.
+Kanev, S. and van Engelen, T.: Exploring the limits in individual
+pitch control, in: European Wind Energy Conference (EWEC),
+16–19 March 2009, Marseille, France, 2009.
+Kanev, W. E., Neilson, V ., and Dominguez, S.: Alleviation of un-
+balanced rotor loads by single blade controllers, in: European
+Wind Energy Conference (EWEC), 16–19 March 2009, Mar-
+seille, France, 1296–1301, 2009.
+Kusiak, A. and Verma, A.: A data-driven approach for monitoring
+blade pitch faults in wind turbines, IEEE T. Sustain. Energ., 2,
+87–96, https://doi.org/10.1109/TSTE.2010.2066585, 2011.
+Kusnick, J., Adams, D. E., and Grifﬁth, D. T.: Wind turbine ro-
+tor imbalance detection using nacelle and blade measurements,
+Wind Energy, 18, 267–276, https://doi.org/10.1002/we.1696,
+2015.
+Manwell, J. F., McGowan, J. G., and Rogers, A. L.: Wind Energy
+Explained – Theory, Design and Application, John Wiley and
+Sons Ltd., West Sussex, UK, 2009.
+Niebsch, J. and Ramlau, R.: Simultaneous estimation of mass
+and aerodynamic rotor imbalances for wind turbines, Journal of
+Mathematics in Industry, 4, 1–12, 2014.
+Niebsch, J., Ramlau, R., and Nguyen, T. T.: Mass and aerody-
+namic imbalance estimates of wind turbines, Energies, 3, 696–
+710, https://doi.org/10.3390/en3040696, 2010.
+Petrovi ´c, V ., Jelavi ´c, M., and Baoti ´c, M.: Advanced control algo-
+rithms for reduction of wind turbine structural loads, Renew. En-
+erg., 76, 418–431, https://doi.org/10.1016/j.renene.2014.11.051,
+2015.
+Pierce, K. G. and Slack, R. P.: Methods and Apparatus for Balancing
+a Rotor, US Patent No. 0035136, 2009.
+Riboldi, C.: Advanced Control Laws for Variable-Speed Wind Tur-
+bines and Supporting Enabling Technologies, PhD thesis, Po-
+litecnico di Milano, Milano, Italy, 2012.
+Soltani, M. N., Knudsen, T., Svenstrup, M., Wisniewski, R., Brath,
+P., Ortega, R., and Johnson, K.: Estimation of rotor effective wind
+speed: a comparison, IEEE T. Contr. Syst. T., 21, 1155–1167,
+https://doi.org/10.1109/TCST.2013.2260751, 2013.
+Wilkinson, M., Hendriks, B., Spinato, F., and Harman, K.: Method-
+ology and results of the Reliawind reliability ﬁeld study, in: Eu-
+ropean Wind Energy Conference, 20–23 April, Warsaw, Poland,
+2010.
+Yang, W., Tavner, P. J., and Wilkinson, M.: Wind turbine condition
+monitoring and fault diagnosis using both mechanical and elec-
+trical signatures, in: 2008 IEEE/ASME International Conference
+on Advanced Intelligent Mechatronics, 2–5 July, Xian, China,
+1296–1301, https://doi.org/10.1109/AIM.2008.4601849, 2008.
+www.wind-energ-sci.net/3/791/2018/ Wind Energ. Sci., 3, 791–803, 2018
+------------------------------End of the page -----------------------------------

@@ -1,0 +1,1481 @@
+Citation: Borja-Jaimes, V .;
+Adam-Medina, M.; García-Morales, J.;
+Guerrero-Ramírez, G.V .;
+López-Zapata, B.Y.;
+Sánchez-Coronado, E.M. Actuator
+FDI Scheme for a Wind Turbine
+Benchmark Using Sliding Mode
+Observers. Processes 2023 ,11, 1690.
+https://doi.org/10.3390/pr11061690
+Academic Editors: Francisco
+Ronay L ópez-Estrada and
+Guillermo Valencia-Palomo
+Received: 18 April 2023
+Revised: 21 May 2023
+Accepted: 25 May 2023
+Published: 1 June 2023
+Copyright: © 2023 by the authors.
+Licensee MDPI, Basel, Switzerland.
+This article is an open access article
+distributed under the terms and
+conditions of the Creative Commons
+Attribution (CC BY) license (https://
+creativecommons.org/licenses/by/
+4.0/).
+processes
+Article
+Actuator FDI Scheme for a Wind T urbine Benchmark Using
+Sliding Mode Observers
+Vicente Borja-Jaimes1
+, Manuel Adam-Medina1,*, Jarniel Garc ía-Morales1,
+Gerardo Vicente Guerrero-Ram írez1
+, Betty Yolanda L ópez-Zapata2
+and Eduardo Mael S ánchez-Coronado3
+1Electronic Engineering Department, TecNm/National Center for Research and Technological
+Development (CENIDET), Cuernavaca, Morelos 62490, Mexico; vicentebj@cenidet.edu.mx (V .B.-J.);
+jarniel.gm@cenidet.tecnm.mx (J.G.-M.); gerardo.gr@cenidet.tecnm.mx (G.V .G.-R.)
+2Department of Mechatronic Engineering, Polytechnic University of Chiapas, Tuxtla Gutierrez,
+Chiapas 29082, Mexico; blopez@upchiapas.edu.mx
+3Department of Mechatronic Engineering, Technological University of the Center of Veracruz,
+Cuitlahuac, Veracruz 94910, Mexico; eduardo.sanchez@utcv.edu.mx
+*Correspondence: manuel.am@cenidet.tecnm.mx
+Abstract: This paper proposes a fault detection and isolation (FDI) scheme for a wind turbines subject
+to actuator faults in both the pitch system and the drive train system. The proposed scheme addresses
+fault detection and isolation problems using a fault estimation approach. The proposed approach
+considers the use of a particular class of sliding mode observers (SMOs) designed to maintain the
+sliding motion even in the presence of actuator faults. The fault detection problem is solved by
+reconstructing the actuator faults through an appropriate analysis of the nonlinear output error
+injection signal, which is required to keep the SMO in a sliding motion. To ensure accurate fault
+reconstruction, only two conditions are required, namely that the faults are bounded and they meet
+the matching condition. A scheme based on a bank of SMOs is proposed to solve the fault detection
+and isolation problem in the pitch system. For the drive train system, a scheme using only one SMO
+is proposed. The performance of the proposed FDI scheme is validated by using a wind turbine
+benchmark model subjected to several actuator faults. Normalized root mean square error (NRMSE)
+analysis is performed to evaluate the accuracy of the actuator fault estimations.
+Keywords: fault detection and isolation (FDI); sliding mode observer (SMO); wind turbines
+1. Introduction
+Nowadays, wind turbines contribute a large part of the world’s electrical energy
+production from renewable sources. In 2022, their second-highest growth in history was
+registered, with 93.6 GW of installed capacity added, which is only 1.8% below the historical
+record reached in 2020. The addition in 2022 carries the global cumulative installed capacity
+of wind energy to 837 GW, which, on average, represents a growth of 12% per year [ 1].
+The remarkable growth that wind turbines have experienced has led to a growing demand
+for greater efﬁciency and reliability. However, the size, the complexity of the components,
+and the stochastic behavior of the wind present signiﬁcant challenges when trying to
+maintain an operation with a preset efﬁciency [ 2]. Furthermore, wind turbines, like any
+complex system, are susceptible to faults. Various factors including environmental factors,
+manufacturing defects, and lack of maintenance can cause wind turbine faults, leading to
+signiﬁcant damage and operational disruptions. Additionally, wind turbines are installed
+in remote and isolated locations, which complicates preventive and corrective maintenance
+actions, whereby the incidence of a fault can trigger breakdowns or even the destruction of
+the turbine if it is not detected [ 3]. This situation has generated interest in the application
+of fault detection and isolation (FDI) methods in wind turbines, especially in critical wind
+turbine components such as the pitch and drive train systems [4].
+Processes 2023 ,11, 1690. https://doi.org/10.3390/pr11061690 https://www.mdpi.com/journal/processes
+------------------------------End of the page -----------------------------------
+Processes 2023 ,11, 1690 2 of 26
+FDI is crucial for ensuring the reliable and safe operation of wind turbines. The primary
+objective of an FDI scheme is to generate a warning when an unusual situation occurs in
+the operation of the system and then to ﬁnd its source and location [ 5]. Overviews and
+surveys of FDI methods for wind turbines appear in [ 6–9]. Most of the works reported in
+the literature can be divided into two large groups: data-driven and model-based methods.
+Many data-driven techniques have been developed to detect faults in wind turbines based
+on fuzzy systems and neural networks [ 10], kernel methods [ 11], deep neural networks
+(DNN) and principal component analysis (PCA) [ 12], classiﬁer fusion [ 13], and condition
+monitoring systems [ 14]. Of these data-driven approaches, condition monitoring systems
+are the most effective because they provide substantial information about irregularities in
+the system. However, one drawback of most condition monitoring methods is the slow
+and tedious data collection and interpretation.
+Model-based FDI methods utilize mathematical models of the wind turbine system
+to simulate its behavior under normal and faulty conditions. These methods rely on
+comparing the model predictions with sensor measurements to detect and isolate faults [ 15].
+One of the most common methods of model-based FDI schemes is the observer-based
+method. This method involves designing observers, also known as estimators or ﬁlters, to
+estimate the internal states of the wind turbine based on signals measured by sensors. By
+comparing the estimated states with the measured states, deviations can be detected and
+attributed to speciﬁc faults [ 16]. Many observer-based FDI schemes have been developed
+for wind turbines. In [ 17], an adaptive observer FDI scheme is proposed. The observer is
+used to estimate both sensor and actuator faults in the benchmark model proposed in [ 18].
+An algorithm for detecting pitch actuator faults using interval observers is proposed in [ 19].
+The algorithm is trained with healthy parameters of the system, and it is assumed that in
+the presence of faults, the values of the parameters do not stray too far from their fault-
+free condition, which is unrealistic. A model-based FDI scheme for the pitch system was
+proposed in [ 20]. The scheme uses an extended Kalman ﬁlter to detect faults. The Kalman
+ﬁlter applies multiple model-adaptive estimators to approximate the states of the pitch
+system. A scheme to detect both actuator and sensor faults in a wind turbine benchmark
+model based on an unknown input observer is proposed in [ 21]. For fault detection, it
+employs residual signals; for fault isolation, it utilizes estimating states, output signals, and
+control signals.
+The vast majority of proposed FDI schemes for both sensor and actuator faults in wind
+turbines use a residual generation approach. In a residual-based approach, residuals are
+ideally expected to be zero during fault-free operation and non-zero in a failed operation [ 22].
+However, since a wind turbine is subject to disturbances, parameter uncertainty, and mis-
+matches between the mathematical model and the actual system, these discrepancies can
+produce non-zero residuals even in a fault-free operation, creating a false alarm problem.
+The false alarms can affect FDI performance to such an extent that it may become useless.
+To overcome these difficulties, the model-based FDI scheme must be made insensitive to
+modeling uncertainty but sensitive to faults, which is called a robust FDI scheme [23].
+A robust FDI scheme is proposed in [ 24]. The scheme considers actuator and sensor
+faults in both the pitch and drive train systems. Robustness is achieved by decoupling the
+faulty dynamics from the system using coordinate transformations.
+Sliding mode techniques have historically demonstrated robustness properties for a
+certain class of matched uncertainties [ 25]. In particular, sliding mode observers (SMOs)
+have been used for both fault detection and isolation as well as fault-tolerant control (FTC)
+schemes [ 26]. Alternatives to taking advantage of the inherent robustness of the SMO for
+fault detection and isolation problems have been explored in wind turbines. A model-based
+FDI scheme for simultaneously detecting sensor and actuator faults is presented in [ 27].
+The proposed scheme uses an adaptive SMO to accurately estimate both system states and
+disturbances as part of an active FTC system. An FDI scheme using SMOs is designed
+in [28]. The SMOs are combined with a residual signal generator for detecting sensor
+faults in both the pitch and drive train systems in a wind turbine benchmark model. The
+------------------------------End of the page -----------------------------------
+Processes 2023 ,11, 1690 3 of 26
+proposed schemes require the designer to know the behavior of the fault to establish an
+adequate threshold to be able to perform fault detection. However, this is an impractical
+approach since fault behavior is continually changing [29]. Thus, an FDI scheme using an
+observer-based approach can only detect faults considered in the fault propagation analysis
+of the system for which a detection threshold is established. Recently, fault diagnosis
+methods that not only detect and isolate faults but are also capable of making a complete
+estimate of faults have attracted great interest. Complete fault information is crucial to an
+FTC system that can effectively mitigate fault effects, enabling the wind turbine to operate
+safely and with reduced downtime [ 30]. A fault estimation approach using adaptive and
+parameter estimation schemes for a wind turbine is proposed in [ 31]. The parameter
+estimation scheme is utilized to estimate the values of speciﬁc parameters that may be
+affected by faults or abnormalities in the wind turbine. A robust actuator multiplicative
+fault estimation method with unknown input decoupling is presented in [ 32]. The method
+employs a multiplicative fault model and an unknown input decoupling technique to
+mitigate the inﬂuence of unknown inputs on the fault estimation process. Although some
+effective fault estimation techniques for wind turbines have been presented, most of them
+have focused on parametric faults, leaving the application of fault estimation techniques in
+critical components of the wind turbine, such as the pitch and drive train systems, as an
+unresolved issue.
+This paper addresses the problem of designing an FDI scheme for actuator faults in
+the pitch and drive train systems of a wind turbine using a fault estimation approach.
+The proposed method can detect and isolate the source of actuator faults. In addition, it
+provides a complete reconstruction of the faults. Therefore, the fault estimation method
+provides a direct estimate of the size and severity of the faults, which can be crucial for
+FTC schemes.
+The main contributions of this paper are as follows:
+ An FDI scheme for both the pitch and drive train systems that does not require explicit
+information from the fault. The only fault information required is the fault to be bounded.
+ In contrast to the works reported in [ 20,23], the proposed FDI scheme employs the
+concept of an equivalent output error injection term. This allows a complete recon-
+struction of actuator faults while providing accurate estimates of states, regardless of
+fault occurrence.
+ A simple method for actuator fault reconstruction using a low-pass ﬁlter (LPF) that an-
+alyzes the so-called nonlinear output error injection, in contrast to the works presented
+in [20,23], which use more complex methods.
+This paper is organized as follows. The wind turbine model, the design methodology
+of an SMO for actuator fault reconstruction, and the proposed actuator FDI scheme for
+both the pitch and the drive train systems are presented in the Section 2. Simulation results
+of the proposed FDI scheme are presented in the Section 3. A discussion of the results is
+presented in the Section 4. Finally, conclusions are presented in the Section 5.
+2. Materials and Methods
+2.1. Mathematical Model of the Wind Turbine
+A wind turbine converts wind energy into electrical energy by using the aerodynamic
+force of the turbine rotor blades. The input to the system is the wind speed, which causes
+the rotation of the turbine blades. This motion spreads through the turbine rotor. The drive
+train couples this motion with the generator shaft. In turn, the generator is responsible for
+transforming mechanical energy into electrical energy. The electrical power generated by
+the system is controlled by modifying the aerodynamics of the turbine, adjusting the angle
+of inclination of the blades, or modifying the speed of rotation of the generator shaft. In any
+case, the objective of the control system is to maintain the required electrical power. Figure 1
+shows the interconnection of different subsystems that make up a wind turbine and their
+interaction with the control used to regulate electrical power. This model addresses the
+wind turbine at a system level and provides mathematical models with simplicity and
+------------------------------End of the page -----------------------------------
+Processes 2023 ,11, 1690 4 of 26
+sufﬁcient accuracy for all subsystems. The variables associated with Figure 1 are deﬁned
+as follows: vwis the wind speed, tris the rotor torque, tgis the generator torque, wris
+the rotor speed, wgis the generator speed, Egis the electrical power, tg,re fis the reference
+torque of the generator, bis the pitch angle, and bre fis the reference angle of the pitch.
+Processes 2023 , 11, x FOR PEER REVIEW 4 of 26 
+ 
+ generated by the system is controlled by modi fying the aerodynamics of the turbine, ad-
+justing the angle of inclination of the blades , or modifying the speed  of rotation of the 
+generator shaft. In any case, the objective of th e control system is to maintain the required 
+electrical power. Figure 1 shows the interconnection of di ﬀerent subsystems that make up 
+a wind turbine and their interaction with the control used to regulate electrical power. 
+This model addresses the wind turbine at a system level and provides mathematical mod-
+els with simplicity and su ﬃcient accuracy for all subsystems. The variables associated 
+with Figure 1 are de ﬁned as follows: 𝑣ఠ is the wind speed, 𝜏௥ is the rotor torque, 𝜏௚ is 
+the generator torque, 𝜔௥ is the rotor speed, 𝜔௚ is the generator speed, 𝐸௚ is the electrical 
+power, 𝜏௚,௥௘௙ is the reference torque of the generator, 𝛽 is the pitch angle, and 𝛽௥௘௙ is the 
+reference angle of the pitch. 
+For a more detailed description of the di ﬀerent subsystems of the wind turbine 
+benchmark model and its internal connection,  see [18]. The subsystems models are brie ﬂy 
+described below. 
+ 
+Figure 1. Wind turbine benchmark model. 
+2.1.1. Blade and Pitch Model 
+This system combines both aerodynamic and hydraulic pitch models. The wind tur-
+bine’s nonlinear aerodynamic is modeled as a torque acting on the blades. The torque is 
+given as 
+𝜏௥(𝑡)=1
+2𝜋𝜌𝑟ଷ𝑣ఠଶ(𝑡)𝑆(𝜆, 𝛽) (1)
+where 𝑆(𝜆, 𝛽) represents a mapping of the coe ﬃcients, which depends on the tip speed 
+ratio 𝜆 and the pitch angle 𝛽. 𝑟 is the rotor ratio, 𝜌 is the density of the air, and 𝑣ఠ is 
+the wind speed. Since the pitch system is co mposed of three identical subsystems its aer-
+odynamics are stated as follows: 
+𝜏௥(𝑡)=෍𝜋𝜌𝑟ଷ𝑣ఠ,௜ଶ(𝑡)𝑆(𝜆, 𝛽 ௜)
+6
+ଵழ௜ஸଷ (2)
+It is important to highlight that this model is valid for small di ﬀerences between the 
+pitch angles.  
+The hydraulic pitch system is modeled as a closed-loop second-order transfer func-
+tion described as 
+𝛽(𝑠)
+𝛽௥௘௙(𝑠)=𝜓ଶ
+𝑠ଶ+2 𝜉 𝜓 𝑠+𝜓ଶ (3)
+where 𝛽  is the measurement pitch position angle and 𝛽௥௘௙  is the reference input pro-
+vided by the wind turbine controller. 𝜉 is the damping factor and 𝜓 is the natural fre-
+quency. 
+  
+Figure 1. Wind turbine benchmark model.
+For a more detailed description of the different subsystems of the wind turbine bench-
+mark model and its internal connection, see [ 18]. The subsystems models are brieﬂy
+described below.
+2.1.1. Blade and Pitch Model
+This system combines both aerodynamic and hydraulic pitch models. The wind
+turbine’s nonlinear aerodynamic is modeled as a torque acting on the blades. The torque is
+given as
+tr(t)=1
+2prr3v2
+w(t)S(l,b) (1)
+where S(l,b)represents a mapping of the coefﬁcients, which depends on the tip speed
+ratio land the pitch angle b.ris the rotor ratio, ris the density of the air, and vwis the wind
+speed. Since the pitch system is composed of three identical subsystems its aerodynamics
+are stated as follows:
+tr(t)=å
+1<i3prr3v2
+w,i(t)S(l,bi)
+6(2)
+It is important to highlight that this model is valid for small differences between the
+pitch angles.
+The hydraulic pitch system is modeled as a closed-loop second-order transfer function
+described as
+b(s)
+bre f(s)=y2
+s2+2xys+y2(3)
+where bis the measurement pitch position angle and bre fis the reference input provided
+by the wind turbine controller. xis the damping factor and yis the natural frequency.
+2.1.2. Drive Train Model
+The drive train system uses a simple two-mass model. Therefore, the nominal dynam-
+ics of the drive train system can be represented by
+jr.wr(t)=tr(t) kdtq(t) (hdt+br)wr(t)+hdt
+Ngwg(t) (4)
+jg.wg(t)=hdtkdt
+Ngq(t)+hdthdt
+Ngwr(t)  
+hdthdt
+N2g+bg!
+wg(t) tg(t) (5)
+------------------------------End of the page -----------------------------------
+Processes 2023 ,11, 1690 5 of 26
+.
+q(t)=wr(t) 1
+Ngwg(t) (6)
+where wr(t)and wg(t)are the rotor and generator speed and q(t)denotes the torsion
+angle of the drive train system. The inputs tg(t)and tr(t), represent the torque of the
+rotor and generator, respectively. Jrand Jgare the moment of inertia of the low- and high-
+speed shafts, respectively. brand bgare the viscous frictions of the low- and high-speed
+shafts, respectively. kdtis the torsion stiffness of the drive train system, hdtrepresents the
+torsion damping coefﬁcient of the drive train, Ngis the gear ratio, and hdtis the efﬁciency
+percentage of the drive train system.
+2.1.3. Generator and Converter Model
+The dynamics of the generator and converter can be modeled as a ﬁrst-order transfer
+function because the frequency range used in the benchmark model is much smaller than
+the speed of the electrical subsystem and its controllers. The joint dynamics of the converter
+and generator are given by
+tg(s)
+tg,re f(s)=g
+s+g(7)
+where tg,re fis the reference value and gis the cutoff frequency. The electrical power
+produced by the generator is given by
+Eg(t)=hgwg(t)tg(t) (8)
+where Egis the power produced by the generator and hgis the efﬁciency of the generator.
+2.1.4. Faults in Wind Turbines
+In general, a fault refers to an error or defect in something that causes it to not work
+properly or function as intended [ 33]. In the context of wind turbines, a fault typically
+refers to a malfunction or failure in the wind turbine’s components, systems, or operations
+that can lead to reduced performance, downtime, or even safety risks. The faults can occur
+in various parts of the wind turbine, including the pitch system, the drive train system,
+the generator, the electrical system, and the control system [ 34]. In addition, wind turbine
+faults can occur in both the actuators and sensors of any of the systems that make up the
+wind turbine. However, in this paper, we only focus on actuator faults in the pitch and the
+drive train systems.
+According to a report published by the National Renewable Energy Laboratory (NREL)
+in the US, the most common faults in wind turbines include electrical system faults, blade
+damage, and mechanical faults [ 35]. Faults in wind turbines can have several consequences
+affecting the performance and safety of the wind turbine. Two critical components in the
+wind turbine are the pitch and the drive train systems. If a fault in any of these components
+is not detected on time, this can cause severe consequences for the wind turbine, such
+as reduced energy generation, increased downtime, higher maintenance and repair costs,
+and safety risks. Early detection and isolation in the pitch system as well as the drive
+train system are crucial for ensuring the optimal performance, reliability, and safety of
+the wind turbine [ 36]. Therefore, in this paper, we focus on the problem of fault detection
+and isolation in the pitch and drive train systems. It is worth noting that simultaneous
+faults in wind turbines can occur, although they are relatively rare. Accordingly, the case of
+simultaneous faults is not considered.
+The severity of actuator faults in wind turbines can vary depending on the specific fault
+and its impact on the wind turbine’s operation. Based on their severity, actuator faults are
+classified as abrupt, incipient, and intermittent faults. These actuator faults can be modeled
+using signal models that include the effect of the fault on the output of the actuator.
+In normal wind turbine operation, the output of the actuator increases smoothly in
+response to the input. However, during an abrupt actuator fault, the output of the actuator
+------------------------------End of the page -----------------------------------
+Processes 2023 ,11, 1690 6 of 26
+may experience sudden changes or ﬂuctuations, leading to a non-smooth response. Hence,
+to model an abrupt actuator fault, a square signal model is used. In contrast, an incipient
+actuator fault in a wind turbine is a fault that is just beginning to develop, and its behavior
+is characterized by subtle changes in the actuator’s output. Over time, the behavior of an
+incipient fault may become more pronounced, with the output of the actuator becoming
+increasingly irregular or unstable. Then, an incipient fault can be modeled using a time-
+varying signal model that allows for the characterization of the actuator’s output over
+time [ 37]. Therefore, to simulate an incipient actuator fault, both sinusoidal and sawtooth
+signal models are proposed.
+2.2. Design of Sliding Mode Observers for Actuator Fault Reconstruction
+In recent years, SMOs have been successfully applied to solve the problem of estimat-
+ing the states in dynamical systems. One of their most interesting properties, which has
+been used most in the literature, is robustness. This allows an SMO to successfully solve the
+estimation problem despite the presence of disturbances or uncertainties bounded within
+the system. In essence, an SMO is a mathematical replica of the system ﬁtted by means of
+feedback of the output estimation error through a nonlinear function, which provides an
+interesting solution to this issue. The SMO can force the output estimation error to zero in
+ﬁnite time by determining the bound on the magnitude of the disturbance acting on the
+system. Consequently, the observer states converge asymptotically to the system states.
+Under this condition, it is said that a sliding motion takes place [38].
+During the sliding motion, the nonlinear output estimation error contains information
+about unknown signals affecting the system. By suitably ﬁltering the nonlinear output
+estimation error, unknown signals can be obtained. Therefore, by modeling faults as
+unknown signals, it is possible to use an SMO to reconstruct and, thus, detect and isolate
+these faults. The SMO design methodology is described below.
+Consider the linear dynamical system subject to actuator faults described by
+.x(t)=Fx(t)+Gu(t)+M fa(t,x,u) (9)
+y(t)=Hx(t) (10)
+where F2Rnn,G2Rnm,H2Rpn, and M2Rnqwith pq. Assume that the
+matrices G,H, and Mare the full rank, and the function fa: R+RnRm!Rqis deemed
+to represent an actuator fault that is assumed to be bounded so that kfa(t,x,u)kawith
+a2R+.
+In addition, consider that the dynamical system given in Equations (9) and (10) satisﬁes
+the following two conditions:
+ rank(HM)=q;
+ the invariant zeros of the system represented by the triple ( F,G,H) must lie in C .
+ Under these conditions, there is a linear change of coordinates T, such that the new
+coordinate the system can be written as
+.x1(t)=F11x1(t)+F12x2(t)+G1u(t) (11)
+.x2(t)=F21x1(t)+F22x2(t)+G2u(t)+M2fa(t,x,u) (12)
+y(t)=Cx(t) (13)
+where x12Rn p,x22Rp, and F11has stable eigenvalues. The coordinate system
+described above is used as a platform for the design of an SMO. The SMO structure
+that will be considered can be written in the form
+.
+ˆx1(t)=F11ˆx1(t)+F12ˆx2(t)+G1u(t) F12ey(t) (14)
+------------------------------End of the page -----------------------------------
+Processes 2023 ,11, 1690 7 of 26
+.
+ˆx2(t)=F21ˆx1(t)+F22ˆx2(t)+G2u(t) (F22 Fs
+22)ey(t)+w(t) (15)
+where Fs
+22is a stable design matrix, and the discontinuous function w(t)is deﬁned as
+w(t) =8
+<
+: skM2kP2ey(t)
+kP2ey(t)kifey(t)6=0
+0 otherwise(16)
+where P22Rppis a symmetric positive deﬁnite Lyapunov matrix for Fs
+22. If the state
+estimation error and the output estimation errors are deﬁned as e1(t)=ˆx1(t) x1(t)
+andey(t)=ˆx2(t) x2(t), respectively, it is straightforward to show that the dynamical
+of the error is given by
+.e1(t)=F11e1(t) (17)
+.ey(t)=F21e1(t)+Fs
+22ey(t)+w(t) M2fa(t,x,u) (18)
+It is shown by Edwards and Spurgeon in [ 38] that the dynamical of the error in
+Equations (17) and (18) is quadratically stable, and a sliding motion is achieved in finite time,
+forcing both ey(t)and.ey(t)to zero. Therefore, the dynamical system in Equations (14) and (15)
+can be considered as an SMO for the dynamical system in Equations (11)–(13). However, it
+is more convenient to express it in terms of the original coordinates system as
+.
+ˆx(t)=Fx(t)+Gu(t) Kley(t)+Knlw(t) (19)
+where KlandKnlare the linear and nonlinear gain matrices given by
+Kl=T 1F12
+F22 Fs
+22
+, (20)
+and
+Knl=kM2kT 10
+Ip
+(21)
+The output estimation error injection term, which is a nonlinear discontinuous signal,
+is deﬁned as
+w(t) =(
+ skM2kP2Hex(t)
+kP2Hex(t)kifHex(t)6=0
+0 otherwise(22)
+where the state estimation error is deﬁned as ex(t)=ˆx(t) x(t)and the scalar sis chosen
+so that s>kfa(t,x,u)k. It is important to note that even when the model considered for the
+design of the SMO has actuator fault signals, the dynamics of the observer do not depend
+on the faults. Therefore, the convergence of the observer is achieved even in the presence
+of actuator faults. The SMO design methodology described in this part is applied in the
+next subsection to develop an actuator FDI scheme for a wind turbine benchmark model.
+2.3. Actuator FDI Scheme Based on Sliding Mode Observers
+The traditional approach to FDI schemes using SMOs ensures that the sliding mode
+is interrupted when a fault occurs in the system, and the fault information is obtained
+by analyzing the residual signals. Under nominal fault-free conditions, the residuals are
+expected to be zero or nonzero when a fault occurs. In addition, most approaches that
+use residual generation can detect and isolate faults, but they do not provide information
+about the faults. In contrast to the traditional FDI methods, this paper addresses the fault
+detection and isolation problem by using a fault estimation approach based on the analysis
+of the nonlinear output error injection signal. One of the beneﬁts of this approach compared
+to other SMOs based on FDI schemes is that the sliding motion is not broken, even when a
+------------------------------End of the page -----------------------------------
+Processes 2023 ,11, 1690 8 of 26
+fault appears. This allows the use of the SMO as a state estimator and, most importantly, as
+an estimator of faults in the system.
+Figure 2 shows the proposed architecture for actuator fault reconstruction using an
+SMO. The scheme is based on a mathematical model of the system, which describes the
+dynamics of the plant, actuators, and sensors. The model includes the fault description in
+the actuator, which is modeled as an additive signal. Then, an SMO is designed to achieve
+asymptotic convergence of the estimation error to zero. The SMO uses the plant outputs,
+inputs, and the difference between the system’s outputs and the observer’s outputs, named
+output estimation error. The output estimation error signal is fed back into the observer via
+a nonlinear function, which provides two advantages. Firstly, the SMO can force the output
+estimation error to zero in ﬁnite time, even in the presence of actuator faults acting in the
+system. This is possible because the nonlinear output error injection signal compensates for
+the effect of actuator faults throughout the system to maintain the sliding motion. Therefore,
+the observer states converge asymptotically to the system states.
+Processes 2023 , 11, x FOR PEER REVIEW 8 of 26 
+ 
+ in the next subsection to develop an actuat or FDI scheme for a wind turbine benchmark 
+model. 
+2.3. Actuator FDI Scheme Based on Sliding Mode Observers 
+The traditional approach to FDI schemes using SMOs ensures that the sliding mode 
+is interrupted when a fault occurs in the syst em, and the fault information is obtained by 
+analyzing the residual signals. Under nomina l fault-free conditions, the residuals are ex-
+pected to be zero or nonzero when a fault o ccurs. In addition, most approaches that use 
+residual generation can detect and isolate faults, but they do not provide information 
+about the faults. In contrast to the traditiona l FDI methods, this paper addresses the fault 
+detection and isolation problem by using a fault estimation approach based on the analy-
+sis of the nonlinear output error injection signal. One of the bene ﬁts of this approach com-
+pared to other SMOs based on FDI schemes is that the sliding motion is not broken, even 
+when a fault appears. This allows the use of  the SMO as a state estimator and, most im-
+portantly, as an estimator of faults in the system. 
+Figure 2 shows the proposed architecture for actuator fault reconstruction using an 
+SMO. The scheme is based on a mathematical model of the system, which describes the dynamics of the plant, actuators, and sensors. The model includes the fault description in 
+the actuator, which is modeled as an additive signal. Then, an SMO is designed to achieve 
+asymptotic convergence of the estimation erro r to zero. The SMO uses the plant outputs, 
+inputs, and the di ﬀerence between the system’s outputs and the observer’s outputs, 
+named output estimation error. The output es timation error signal is fed back into the 
+observer via a nonlinear function, which prov ides two advantages. Firstly, the SMO can 
+force the output estimation error to zero in ﬁnite time, even in the presence of actuator 
+faults acting in the system. This is possible because the nonlinear output error injection 
+signal compensates for the e ﬀect of actuator faults throughout the system to maintain the 
+sliding motion. Therefore, the observer stat es converge asymptotically to the system 
+states. 
+Secondly, once the output estimation error is forced to zero, it is said that a sliding 
+motion takes place. During the sliding moveme nt, the nonlinear output estimation signal 
+injected into the SMO contains information about the faults a ﬀecting the system actuator. 
+Then, by applying a suitable ﬁltering process to the nonlinear output estimation error, the 
+actuator fault can be reconstructed. 
+ 
+Figure 2. Actuator FDI scheme based on a sliding mode observer. 
+The idea behind this approach is to take advantage of the properties of the sliding 
+motion and use the nonlinear output estimation  error injection signal to reconstruct the 
+actuator faults. Once a sliding motion is a ttained, 𝑒௬(𝑡) = 0  and 𝑒ሶ௬(𝑡)=0 are forced to 
+Figure 2. Actuator FDI scheme based on a sliding mode observer.
+Secondly, once the output estimation error is forced to zero, it is said that a sliding
+motion takes place. During the sliding movement, the nonlinear output estimation signal
+injected into the SMO contains information about the faults affecting the system actuator.
+Then, by applying a suitable ﬁltering process to the nonlinear output estimation error, the
+actuator fault can be reconstructed.
+The idea behind this approach is to take advantage of the properties of the sliding
+motion and use the nonlinear output estimation error injection signal to reconstruct the
+actuator faults. Once a sliding motion is attained, ey(t)=0and.ey(t)=0are forced to zero
+in ﬁnite time, so the dynamics of the output estimation error in Equations (17) and (18) can
+be written as
+0=F21e1(t)+w(t) M2fa(t,x,u) (23)
+Given that F11is stable, it follows that e1(t)!0and, therefore, w(t)=M2fa(t,x,u).
+That is, the fault information is contained in the nonlinear injection signal w(t). Since the
+signal w(t)switches at a very high frequency, one way to estimate the actuator fault is
+using a low-pass ﬁlter (LPF). The key point here is that to achieve a sliding motion in the
+presence of faults, it is only required that the magnitude of the fault is bounded and that it
+meets the matching condition, namely that the fault lies within the range space of the input
+distribution matrix of the system. However, the sliding motion cannot be maintained if the
+------------------------------End of the page -----------------------------------
+Processes 2023 ,11, 1690 9 of 26
+condition s>kfa(t,x,u)kis not satisﬁed for t0>0, where t0represents the time at which
+the sliding motion is achieved.
+2.3.1. Actuator FDI Scheme for the Pitch System
+The pitch actuator is an important component of a wind turbine and is responsible for
+controlling the position and orientation of the turbine blades to optimize energy capture
+and maintain safe operation. If a fault in the pitch actuator is not detected on time, it can
+have serious consequences for the safe and efﬁcient operation of the wind turbine.
+For example, a pitch actuator fault can cause the turbine blades to become misaligned.
+This can cause stress and damage to other components of the turbine, such as the drive
+train and the generator. Over time, this can lead to more serious damage and the need for
+costly repairs or replacements.
+There are several potential causes for pitch actuator faults, which can be classiﬁed
+into external (environmental factors) and internal causes. Environmental factors, such
+as exposure to wind, rain, and saltwater, can cause corrosion, erosion, or damage to
+actuator components. On the other hand, the internal sources of pitch actuator faults are
+the hydraulic system and the electrical motor in charge of turbine blade movement. For
+example, wiring issues or power surges can cause damage to the electrical components
+of the actuator, while hydraulic ﬂuid leaks or clogs can impair the function of hydraulic
+actuators [39].
+Figure 3 shows the proposed architecture for actuator fault detection and isolation in
+the pitch system. The proposed scheme consists of a bank of three SMOs to estimate the
+outputs of each of the three pitch subsystems. As each pitch subsystem is independent of
+the others, one observer receives only the input upband output ypbsignals from a single
+pitch subsystem, that is, the observer is sensitive only to the faults of the monitored pitch
+subsystem, which ensures a solution to the fault isolation problem once a fault is detected.
+Processes 2023 , 11, x FOR PEER REVIEW 10 of 26 
+ 
+  
+Figure 3. Actuator FDI scheme for the pitch system. 
+As the pitch system is composed of thre e independent and identical subsystems, the 
+SMO design presented in this section is appl ied identically to the other two subsystems. 
+The design of the SMO for one of the pitch subsystems considers the state space model 
+given by 
+𝑥ሶ௣௕(𝑡)=𝐹 ௣௕𝑥௣(𝑡)+𝐺 ௣௕𝑢௣௕(𝑡) + 𝑀 ௣௕𝑓௔(𝑡) (24)
+𝑦௣௕(𝑡)=𝐻 ௣௕𝑥௣௕(𝑡) (25)
+where 𝑥௣௕∈ℝଶ  is the state vector, 𝑦௣௕∈ℝଶ  is the output vector, 𝑢௣௕∈ℝ  is the input 
+vector, 𝑓௔(𝑡) is any actuator fault signal, in this case of one dimension, and the matrices 
+𝐹௣௕, 𝐺௣௕ and 𝐻௣௕ are de ﬁned as follows: 
+𝐹௣௕=൤01
+−𝜓ଶ−2𝜉𝜓൨, (26)
+𝐺௣௕=൤0
+𝜓ଶ൨, (27)
+and 
+𝐻௣௕=ቂ10
+01ቃ. (28)
+From Equation (19), an SMO for each pitch subsystem can be wri tten as 
+𝑥ොሶ௣௕(𝑡)=𝐹 ௣௕𝑥ො௣௕(𝑡)+𝐺 ௣௕𝑢௣௕(𝑡)−𝐾 ௟𝑒௬(𝑡) + 𝐾 ௡௟𝑤௣௕(𝑡) (29)
+𝑦ො௣௕(𝑡)=𝐻 ௣௕𝑥ො௣௕(𝑡) (30)
+where 𝑥ො௣௕(𝑡) and 𝑦ො௣௕(𝑡) denote the estimated states and outputs, respectively. 𝐾௟ and 
+𝐾௡௟ are ﬁxed appropriate gain matrices selected to ensure the stability and convergence 
+of the error dynamics. 𝑤௣௕(𝑡) represents a discontinuous switched output estimation er-
+ror injected into the SMO to induce a sliding motion and is given by 
+𝑤௣௕(𝑡) = ቐ−𝜎‖𝑀ଶ‖𝑃ଶ𝐻௣௕𝑒௫(𝑡)
+ฮ𝑃ଶ𝐻௣௕𝑒௫(𝑡)ฮ  if 𝐻௣௕𝑒௫(t) ≠ 0
+    0                                    otherwise (31)
+To verify the convergence of the SMO, the simulation diagram shown in Figure 2 is 
+used. The parameters used to simulate the pitch system model are listed in Table 1. 
+Figure 3. Actuator FDI scheme for the pitch system.
+Since the nonlinear output estimation error injection signal compensates for the effect
+of faults in the SMO in order to maintain the sliding motion, fault detection is performed
+through the reconstruction of fault signals by ﬁltering the nonlinear output error injection
+signal of each pitch subsystem.
+As the pitch system is composed of three independent and identical subsystems, the
+SMO design presented in this section is applied identically to the other two subsystems.
+------------------------------End of the page -----------------------------------
+Processes 2023 ,11, 1690 10 of 26
+The design of the SMO for one of the pitch subsystems considers the state space model
+given by
+.xpb(t)=Fpbxp(t)+Gpbupb(t)+Mpbfa(t) (24)
+ypb(t)=Hpbxpb(t) (25)
+where xpb2R2is the state vector, ypb2R2is the output vector, upb2Ris the input vector,
+fa(t)is any actuator fault signal, in this case of one dimension, and the matrices Fpb,Gpb
+andHpbare deﬁned as follows:
+Fpb=0 1
+ y2 2xy
+, (26)
+Gpb=0
+y2
+, (27)
+and
+Hpb=1 0
+0 1
+. (28)
+From Equation (19), an SMO for each pitch subsystem can be written as
+.
+ˆxpb(t)=Fpbˆxpb(t)+Gpbupb(t) Kley(t)+Knlwpb(t) (29)
+ˆypb(t)=Hpbˆxpb(t) (30)
+where ˆxpb(t)and ˆypb(t)denote the estimated states and outputs, respectively. KlandKnl
+are ﬁxed appropriate gain matrices selected to ensure the stability and convergence of
+the error dynamics. wpb(t)represents a discontinuous switched output estimation error
+injected into the SMO to induce a sliding motion and is given by
+wpb(t) =8
+<
+: skM2kP2Hpbex(t)
+kP2Hpbex(t)kifHpbex(t)6=0
+0 otherwise(31)
+To verify the convergence of the SMO, the simulation diagram shown in Figure 2 is
+used. The parameters used to simulate the pitch system model are listed in Table 1.
+Table 1. Parameters of the wind turbine model.
+Symbol Description Value
+br viscous friction of the low-speed shaft 7.11 Nms/rad
+bg viscous friction of the high-speed shaft 45.6 Nms/rad
+x damping factor 0.6
+y natural frequency 11.11 rad/s
+hdt torsion damping coefﬁcient 775.49 Nms/rad
+kdt torsion stiffness 2.7109Nm/rad
+Jr moment of inertia of the low-speed shaft 55106Kg.m2
+Jg moment of inertia of the high-speed shaft 390 Kg.m2
+Ng gear ratio 95
+hdt efﬁciency of the drive train 0.97
+For simulation purposes, the input to the pitch system is set as a step signal of
+magnitude 10 and it is considered fault-free, that is, fa(t)=0, and the fault coupling
+matrix is set as Mpb=[0, 0]T. The SMO initial conditions are set as zero, while the initial
+conditions of the states of the pitch system are set as 5 and  10, respectively. The linear
+and nonlinear gain matrices of the SMO are given as:
+------------------------------End of the page -----------------------------------
+Processes 2023 ,11, 1690 11 of 26
+The linear and nonlinear gain matrices of the SMO are given as
+Kl=5 1
+ 123.43 9.332
+(32)
+and
+Knl=1 0
+0 1
+. (33)
+The Lyapunov design matrix P2for the switched signal is deﬁned as
+P2=0.1 0
+0 0.125
+(34)
+the design matrix M2=1, and the scalar s=6.
+The results of the SMO convergence are shown in Figures 4 and 5. Figure 4 shows
+both the pitch angle estimation and the pitch angle estimation error. It can be seen that
+the observer estimate converges asymptotically to the system state even if their initial
+conditions are different; therefore, the convergence of the SMO is assured. It can be
+observed that after 0.5 s, a sliding motion takes place, i.e., the estimation error is forced to
+reach and subsequently remain on the sliding surface and, thus, a sliding mode motion is
+said to take place.
+Processes 2023 , 11, x FOR PEER REVIEW 11 of 26 
+ 
+ For simulation purposes, the input to the pitch system is set as a step signal of mag-
+nitude 10 and it is consid ered fault-free, that is, 𝑓௔(𝑡)=0, and the fault coupling matrix is 
+set as 𝑀௣௕=ሾ0, 0ሿ். The SMO initial conditions are set as zero, while the initial conditions 
+of the states of the pitch system are set as 5 and −10, respectively. The linear and nonlinear 
+gain matrices of the SMO are given as: 
+The linear and nonlinear gain matrices of the SMO are given as 
+𝐾௟=ቂ51
+−123.43 −9.332ቃ (32)
+and 
+𝐾௡௟=ቂ10
+01ቃ. (33)
+The Lyapunov design matrix 𝑃ଶ for the switched signal is de ﬁned as 
+𝑃ଶ=ቂ0.1 0
+0 0.125ቃ, (34)
+the design matrix 𝑀ଶ=1, and the scalar 𝜎=6 . 
+Table 1. Parameters of the wind turbine model. 
+Symbol Description Value 
+𝑏௥ viscous friction of the low-speed shaf t       7.11 Nms/rad  
+𝑏௚ viscous friction of the high-speed shaft    45.6 Nms/rad  
+𝜉 damping factor 0.6 
+𝜓 natural frequency 11.11 rad/s  
+ℎௗ௧ torsion damping coe ﬃcient 775.49 Nms/rad  
+𝑘ௗ௧ torsion stiffness 2.7 × 10ଽ Nm/rad  
+𝐽௥ moment of inertia of the low-speed shaft 55 × 10଺ Kg. mଶ 
+𝐽௚ moment of inertia of the high-speed shaft 390 Kgmଶ 
+N୥ gear ratio 95 
+𝜂ௗ௧ efficiency of the drive train 0.97 
+The results of the SMO convergence are shown in Figures 4 and 5. Figure 4 shows 
+both the pitch angle estimation and the pitch angle estimation error. It can be seen that the observer estimate converges asymptotically to the system state even if their initial condi-
+tions are di ﬀerent; therefore, the convergence of the SMO is assured. It can be observed 
+that after 0.5 s, a sliding motion takes place, i.e., the estimation error is forced to reach and 
+subsequently remain on the sliding surface and, thus, a sliding mode motion is said to 
+take place. 
+ 
+Figure 4. Convergence of the pitch angle estimation.
+Figure 5 shows both the pitch speed estimation and the pitch speed estimation error.
+It can be seen that the estimated state converges asymptotically to the system state after
+approximately 0.6 s. This is indicative that a sliding motion is taking place on the sliding
+surface. It is important to mention that the difference in the speed of convergence in the
+estimation of each state variable is due to the fact that the initial conditions of the state
+variables are different.
+------------------------------End of the page -----------------------------------
+Processes 2023 ,11, 1690 12 of 26
+Processes 2023 , 11, x FOR PEER REVIEW 12 of 26 
+ 
+ Figure 4. Convergence of the pitch angle estimation. 
+Figure 5 shows both the pitch speed estimati on and the pitch speed estimation error. 
+It can be seen that the estimated state conver ges asymptotically to the system state after 
+approximately 0.6 s. This is indicative that a sliding motion is taking place on the sliding 
+surface. It is important to mention that the di ﬀerence in the speed of convergence in the 
+estimation of each state variable is due to th e fact that the initial conditions of the state 
+variables are di ﬀerent. 
+ 
+Figure 5. Convergence of the pi tch speed estimation. 
+2.3.2. Actuator FDI Scheme for the Drive Train System 
+Actuator faults in the drive train syst em of a wind turbine can have signi ﬁcant con-
+sequences for the safety and operation of the wind turbine. Actuator faults in the drive 
+train can be caused by various factors, including mechanical wear and tear, electrical 
+faults, and environmental factors such as temperature and moisture. One common actua-
+tor fault in the drive train is caused by gear tooth damage, which inevitably results in gear ratio changes. The friction coe ﬃcient in the drive train changes slowly with time and can 
+evolve over months or years. This change can also result in changes in the dynamics of 
+the drive train system. The drive train system be arings are also likely to be faulty. Fatigue 
+and wear due to heavy loads are inevitable. Moreover, pi tting and impending cracks are 
+also causes of faults. Generally, faults in the drive train system require time-consuming 
+and costly maintenance. In order to reduce the potential impact of these faults in the drive 
+train system, an e ﬀective fault diagnosi s scheme is needed. 
+The drive train system connects the low-speed shaft to the high-speed shaft of the 
+wind turbine. From the mathematical representation of the drive train shown in Equations 
+(4)–(6), it can be observed that it has two input channels, namely, the rotor and the gener-
+ator torque. Actuator faults are considered to occur in both the rotor and generator tor-
+ques. However, since the case of simultaneous failures rarely occurs, we consider that only 
+one actuator fault occurs at a time; that is, the case of simultaneous faults is not considered. 
+Actuator fault signals are modeled as additive  bounded signals acting in each input chan-
+nel of the drive train system. It is important to note that the rotor torque cannot be meas-
+ured; therefore, di ﬀerent approaches have been proposed  to estimate it. Because the focus 
+of this study is on the design of an actuat or fault reconstruction scheme and not on the 
+actuator itself, it is assumed that the rotor torque is known. 
+Figure 6 shows the proposed scheme for performing actuator fault detection and iso-
+lation in the drive train system. It considers the design of a single SMO to estimate both 
+states and outputs. The di ﬀerence between the measured drive train variables and the 
+observer outputs is injected into the SMO usin g a nonlinear function. This term forces the 
+Figure 5. Convergence of the pitch speed estimation.
+2.3.2. Actuator FDI Scheme for the Drive Train System
+Actuator faults in the drive train system of a wind turbine can have signiﬁcant con-
+sequences for the safety and operation of the wind turbine. Actuator faults in the drive
+train can be caused by various factors, including mechanical wear and tear, electrical faults,
+and environmental factors such as temperature and moisture. One common actuator fault
+in the drive train is caused by gear tooth damage, which inevitably results in gear ratio
+changes. The friction coefﬁcient in the drive train changes slowly with time and can evolve
+over months or years. This change can also result in changes in the dynamics of the drive
+train system. The drive train system bearings are also likely to be faulty. Fatigue and
+wear due to heavy loads are inevitable. Moreover, pitting and impending cracks are also
+causes of faults. Generally, faults in the drive train system require time-consuming and
+costly maintenance. In order to reduce the potential impact of these faults in the drive train
+system, an effective fault diagnosis scheme is needed.
+The drive train system connects the low-speed shaft to the high-speed shaft of the wind
+turbine. From the mathematical representation of the drive train shown in Equations (4)–(6) ,
+it can be observed that it has two input channels, namely, the rotor and the generator torque.
+Actuator faults are considered to occur in both the rotor and generator torques. However,
+since the case of simultaneous failures rarely occurs, we consider that only one actuator
+fault occurs at a time; that is, the case of simultaneous faults is not considered. Actuator
+fault signals are modeled as additive bounded signals acting in each input channel of
+the drive train system. It is important to note that the rotor torque cannot be measured;
+therefore, different approaches have been proposed to estimate it. Because the focus of this
+study is on the design of an actuator fault reconstruction scheme and not on the actuator
+itself, it is assumed that the rotor torque is known.
+Figure 6 shows the proposed scheme for performing actuator fault detection and
+isolation in the drive train system. It considers the design of a single SMO to estimate both
+states and outputs. The difference between the measured drive train variables and the
+observer outputs is injected into the SMO using a nonlinear function. This term forces the
+output estimation error to zero in ﬁnite time and compensates for the effects of actuator
+faults in the SMO to maintain a sliding motion. Because the drive train system has two
+measured outputs, the nonlinear output error injection term is a two-dimensional vector.
+Each component of this vector is injected into only one input channel of the drive train
+------------------------------End of the page -----------------------------------
+Processes 2023 ,11, 1690 13 of 26
+system in such a way that it compensates only the actuator fault acting on its corresponding
+input channel. By independently ﬁltering each component of the nonlinear output error
+injection vector, both fault reconstruction and fault isolation in the drive train system
+are achieved.
+Processes 2023 , 11, x FOR PEER REVIEW 13 of 26 
+ 
+ output estimation error to zero in ﬁnite time and compensates for the e ﬀects of actuator 
+faults in the SMO to maintain a sliding motion. Because the drive train system has two 
+measured outputs, the nonlinear output error injection term is a two-dimensional vector. Each component of this vector is injected into only one input channel of the drive train 
+system in such a way that it compensates only  the actuator fault acting on its correspond-
+ing input channel. By independently ﬁltering each component of the nonlinear output 
+error injection vector, both fault reconstruction  and fault isolation in the drive train system 
+are achieved. 
+ 
+Figure 6. Actuator FDI scheme for the drive train system. 
+The SMO methodology presented in previous sections is applied below to the drive 
+train system model. For the design of the SMO,  it is considered that the drive train model 
+in state space is wri tten as 
+𝑥ሶௗ௧(𝑡)=𝐹 ௗ௧𝑥ௗ௧(𝑡)+𝐺 ௗ௧𝑢ௗ௧(𝑡)+𝑀 ௗ௧𝑓௔(𝑡) (35)
+𝑦ௗ௧(𝑡)=𝐻 ௗ௧𝑥ௗ௧(𝑡) (36)
+where 𝑥ௗ௧(𝑡)∈ℝଷ  is the state vector, 𝑢∈ℝଶ  is the input vector, 𝑦ௗ௧(𝑡)∈ℝଶ, 𝑓௔(𝑡)  is 
+any actuator fault signal, 𝑀ௗ௧ is a fault distribution matrix, and 𝐹ௗ௧,𝐺ௗ௧,a n d  𝐻 ௗ௧ are ma-
+trices de ﬁned as 
+𝐹ௗ௧=
+⎣⎢⎢⎢⎢⎢⎢⎡−ℎௗ௧+𝑏 ௥
+𝐽௥ℎௗ௧
+𝑁௚𝐽௥−𝑘 ௗ௧
+𝐽௥
+𝜂ௗ௧ℎௗ௧
+𝑁௚𝐽௚−𝜂 ௗ௧ℎௗ௧
+𝑁௚ଶ −𝑏 ௚
+𝐽௚𝜂ௗ௧𝑘ௗ௧
+𝑁௚𝐽௚
+1−1
+𝑁௚0⎦⎥⎥⎥⎥⎥⎥⎤
+, (37)
+𝐺ௗ௧=
+⎣⎢⎢⎢⎡1
+𝐽௥0
+0−1
+𝐽௚
+00 ⎦⎥⎥⎥⎤
+, (38)
+and 
+Figure 6. Actuator FDI scheme for the drive train system.
+The SMO methodology presented in previous sections is applied below to the drive
+train system model. For the design of the SMO, it is considered that the drive train model
+in state space is written as
+.xdt(t)=Fdtxdt(t)+Gdtudt(t)+Mdtfa(t) (35)
+ydt(t)=Hdtxdt(t) (36)
+where xdt(t)2R3is the state vector, u2R2is the input vector, ydt(t)2R2,fa(t)is any
+actuator fault signal, Mdtis a fault distribution matrix, and Fdt,Gdt,andHdtare matrices
+deﬁned as
+Fdt=2
+6664 hdt+br
+Jrhdt
+NgJr kdt
+Jr
+hdthdt
+NgJg hdthdt
+N2g bg
+Jghdtkdt
+NgJg
+1 1
+Ng03
+7775, (37)
+Gdt=2
+641
+Jr0
+0 1
+Jg
+0 03
+75, (38)
+and
+Hdt=1 0 0
+0 1 0
+(39)
+From Equation (19), the sliding mode observer for the drive train system model can
+be written as.
+ˆxdt(t)=Fdtˆxdt(t)+Gdtudt(t) Kley(t)+Knlwdt(t) (40)
+------------------------------End of the page -----------------------------------
+Processes 2023 ,11, 1690 14 of 26
+ˆydt(t)=Hdtˆxdt(t) (41)
+where ˆxpb(t)and ˆypb(t)denote the estimate of state and output, respectively. KlandKnlare
+appropriate gain matrices selected to ensure the stability and convergence of the dynamics
+of error, and wdt(t)represents a discontinuous switched component to induce a sliding
+motion in the SMO. To verify the convergence of the SMO, the simulation diagram shown
+in Figure 2 was implemented. The parameters used to simulate the drive train system
+model are shown in Table 1. The linear and nonlinear gain matrices of the observer are
+given as
+Kl=2
+410 0.0035
+0.0203 19.8829
+1 0.00953
+5 (42)
+Knl=2
+41 0
+0 1
+0 0.00013
+5, (43)
+and the nonlinear output error injection signal wdt(t)is given as
+wdt(t) =(
+ skM2kP2Hdtex(t)
+kP2Hdtex(t)kifHdtex(t)6=0
+0 otherwise(44)
+where the scalar s=6, the design matrix P2=[0.1, 0; 0, 0.125 ], the matrix M2=1,
+and the estate estimation error is deﬁned as ex(t)=ˆxdt(t) xdt(t). For simulation pur-
+poses, the two inputs of the drive train system are set as step-type signals of magnitude
+10 and 100, respectively. For the time being, the system is considered fault-free, that is,
+fa(t)=0, and the fault coupling matrix Mdt=[0, 0, 0 ]T. The observer initial conditions
+are considered to be zero, while the initial conditions for the drive train system are chosen
+asxdt=[1, 1, 1]T. The results of both observer outputs and output estimation errors are
+shown in Figures 7 and 8 . Figure 7 shows that after approximately 1.2 s, a perfect tracking
+between system output and observer output is achieved and, therefore, a sliding motion
+takes place, i.e., the output estimation error is forced to reach and subsequently remain
+on the sliding surface. It can be seen that once the sliding motion is achieved, the state
+estimation errors evolve according to a ﬁrst-order decay.
+Processes 2023 , 11, x FOR PEER REVIEW 15 of 26 
+ 
+  
+Figure 7. Convergence of the rotor speed estimation. 
+ 
+Figure 8. Convergence of the generator speed estimation. 
+3. Results 
+In this section, the results of the propos ed SMO-based FDI scheme are presented. To 
+evaluate the e ﬀectiveness of the proposed FDI scheme, a set of di ﬀerent actuator faults on 
+a wind turbine benchmark model are employed. Th e test only considers actuator faults in 
+the pitch and the drive train systems. Bounded actuator faults modeled as additive signals 
+are considered. The actuator faults are applied to the input channels of both the pitch and 
+the drive systems. The faults are set as follows: 
+• Fault 1: A sinusoidal fault signal pr esented in pitch system 1 given by 𝑓௔ଵ=
+5 × in (0.5𝑡)  in the time period from 2.5133 to 47.7522 s. 
+• Fault 2: A sinusoidal fault signal presented in pitch system 2 given by 𝑓௔ଶ(𝑡)=
+5×s i n  ( 0 . 5 𝑡 )  in the time period from 0 to 50 s.  
+• Fault 3: A sinusoidal fault signal presented in pitch system 3 given by 𝑓௔ଷ(𝑡)=
+10 × sin (0.5𝑡)  in the time period from 0 to 50 s.  
+• Fault 4: A square fault signal presented in the rotor torque of the drive train system 
+given by 𝑓௔ସ(𝑡)=5×s q u a r e  ( 0 . 5 𝑡 )  in the time period from 6.2832 to 40.2100 s. 
+• Fault 5: A sinusoidal fault signal presented in the generator torque of the drive train 
+system given by 𝑓௔ହ(𝑡)=5×𝑠 𝑖 𝑛 ( 0 . 5 𝑡 )  in the time period from 1.2566 to 37.6991 s. 
+• Fault 6: A sawtooth fault signal presented in the generator torque of the drive system 
+given by 𝑓௔଺(𝑡)= 5 × 𝑠𝑎𝑤𝑡𝑜𝑜𝑡(0.5𝑡)  in the time period from 10.0531 to 43.9800 s. 
+Figure 7. Convergence of the rotor speed estimation.
+------------------------------End of the page -----------------------------------
+Processes 2023 ,11, 1690 15 of 26
+Processes 2023 , 11, x FOR PEER REVIEW 15 of 26 
+ 
+  
+Figure 7. Convergence of the rotor speed estimation. 
+ 
+Figure 8. Convergence of the generator speed estimation. 
+3. Results 
+In this section, the results of the propos ed SMO-based FDI scheme are presented. To 
+evaluate the e ﬀectiveness of the proposed FDI scheme, a set of di ﬀerent actuator faults on 
+a wind turbine benchmark model are employed. Th e test only considers actuator faults in 
+the pitch and the drive train systems. Bounded actuator faults modeled as additive signals 
+are considered. The actuator faults are applied to the input channels of both the pitch and 
+the drive systems. The faults are set as follows: 
+• Fault 1: A sinusoidal fault signal pr esented in pitch system 1 given by 𝑓௔ଵ=
+5 × in (0.5𝑡)  in the time period from 2.5133 to 47.7522 s. 
+• Fault 2: A sinusoidal fault signal presented in pitch system 2 given by 𝑓௔ଶ(𝑡)=
+5×s i n  ( 0 . 5 𝑡 )  in the time period from 0 to 50 s.  
+• Fault 3: A sinusoidal fault signal presented in pitch system 3 given by 𝑓௔ଷ(𝑡)=
+10 × sin (0.5𝑡)  in the time period from 0 to 50 s.  
+• Fault 4: A square fault signal presented in the rotor torque of the drive train system 
+given by 𝑓௔ସ(𝑡)=5×s q u a r e  ( 0 . 5 𝑡 )  in the time period from 6.2832 to 40.2100 s. 
+• Fault 5: A sinusoidal fault signal presented in the generator torque of the drive train 
+system given by 𝑓௔ହ(𝑡)=5×𝑠 𝑖 𝑛 ( 0 . 5 𝑡 )  in the time period from 1.2566 to 37.6991 s. 
+• Fault 6: A sawtooth fault signal presented in the generator torque of the drive system 
+given by 𝑓௔଺(𝑡)= 5 × 𝑠𝑎𝑤𝑡𝑜𝑜𝑡(0.5𝑡)  in the time period from 10.0531 to 43.9800 s. 
+Figure 8. Convergence of the generator speed estimation.
+3. Results
+In this section, the results of the proposed SMO-based FDI scheme are presented. To
+evaluate the effectiveness of the proposed FDI scheme, a set of different actuator faults on a
+wind turbine benchmark model are employed. The test only considers actuator faults in
+the pitch and the drive train systems. Bounded actuator faults modeled as additive signals
+are considered. The actuator faults are applied to the input channels of both the pitch and
+the drive systems. The faults are set as follows:
+ Fault 1: A sinusoidal fault signal presented in pitch system 1 given by fa1=5in(0.5t)
+in the time period from 2.5133 to 47.7522 s.
+ Fault 2: A sinusoidal fault signal presented in pitch system 2 given by fa2(t)=
+5sin(0.5t)in the time period from 0 to 50 s.
+ Fault 3: A sinusoidal fault signal presented in pitch system 3 given by fa3(t)=
+10sin(0.5t)in the time period from 0 to 50 s.
+ Fault 4: A square fault signal presented in the rotor torque of the drive train system
+given by fa4(t)=5square (0.5t)in the time period from 6.2832 to 40.2100 s.
+ Fault 5: A sinusoidal fault signal presented in the generator torque of the drive train
+system given by fa5(t)=5sin(0.5t)in the time period from 1.2566 to 37.6991 s.
+ Fault 6: A sawtooth fault signal presented in the generator torque of the drive system
+given by fa6(t)=5sawtoot (0.5t)in the time period from 10.0531 to 43.9800 s.
+3.1. Results of the FDI Scheme in the Pitch System
+The problem of fault detection and isolation in the pitch system is solved by using
+the architecture shown in Figure 3. Since the output error injection signal injected into the
+SMO compensates for the dynamics added by the faults in the pitch system, the sliding
+motion is not interrupted, even in the presence of actuator faults. The dynamic of these
+faults is recovered using an LPF implemented through a ﬁrst-order differential equation.
+By choosing the time constant of the ﬁlter to be tiny, but larger than the sampling time used
+on the computer to implement the LPF, the dynamics of the faults in the pitch system can
+be reconstructed accurately.
+To measure how much better the method is at reproducing the actuator fault in
+the system, the normalized root mean square error (NRMSE) criterion is used, which
+proportions a ﬁt percentage value.
+The simulation of the proposed FDI scheme in the pitch system is obtained considering
+the initial conditions of the SMO to be zero, while the initial conditions of the pitch
+------------------------------End of the page -----------------------------------
+Processes 2023 ,11, 1690 16 of 26
+system states are set as xpb(t)=[2 1]T. The system input has been arbitrarily set as a
+step function of magnitude 10. The fault lock matrix for the pitch actuator is chosen as
+Mpb=[0, 1]Tand the scaling parameter of the nonlinear output error injection term is
+chosen as s=6.
+The results of the reconstruction of Fault 1 in pitch system 1 are shown in Figure 9. In
+order to obtain the highest accuracy in the actuator fault reconstruction, a heuristic process
+is performed to ﬁnd the best choice of the LPF time constant. In Table 2, three different ﬁlter
+time constants are presented. From the results obtained, it can be concluded that the best
+ﬁt is achieved by using a time constant of 0.06 s, with which a ﬁt percentage of 82.9103%
+is obtained.
+Processes 2023 , 11, x FOR PEER REVIEW 16 of 26 
+ 
+ 3.1. Results of the FDI Scheme in the Pitch System 
+The problem of fault detection and isolation in the pitch system is solved by using 
+the architecture shown in Figure 3. Since the ou tput error injection signal injected into the 
+SMO compensates for the dynamics added by th e faults in the pitch system, the sliding 
+motion is not interrupted, even in the presen ce of actuator faults. The dynamic of these 
+faults is recovered using an LPF implemented through a ﬁrst-order di ﬀerential equation. 
+By choosing the time constant of the ﬁlter to be tiny, but larger than the sampling time 
+used on the computer to implement the LPF, th e dynamics of the faults in the pitch system 
+can be reconstructed accurately. 
+To measure how much be tter the method is at reproducing the actuator fault in the 
+system, the normalized root mean square er ror (NRMSE) criterion is used, which propor-
+tions a ﬁt percentage value. 
+The simulation of the proposed FDI scheme in the pitch system is obtained consider-
+ing the initial conditions of the SMO to be zero, while the initial conditions of the pitch system states are set as 𝑥
+௣௕(𝑡)=ሾ 2 − 1 ሿ். The system input has been arbitrarily set as a 
+step function of magnitude 10. The fault lock matrix for the pitch actuator is chosen as 
+𝑀௣௕=ሾ0, 1ሿ்  and the scaling parameter of the nonlinear output error injection term is 
+chosen as 𝜎=6 . 
+The results of the reconstruction of Fault 1 in pitch system 1 are shown in Figure 9. 
+In order to obtain the highest accuracy in the actuator fault reconstruction, a heuristic process is performed to ﬁnd the best choice of the LPF time constant. In Table 2, three 
+diﬀerent ﬁlter time constants are presented. From the results obtained, it can be concluded 
+that the best ﬁt is achieved by using a time constant of 0.06 s, with which a ﬁt percentage 
+of 82.9103% is obtained. 
+ 
+Figure 9. Reconstruction of actuator Fault 1 in pitch system 1. 
+Figure 10 shows the results of the actuator fault reconstruction in pitch system 2. It 
+can be seen that the best- ﬁt percentage is obtained with LPF 2, which is implemented with 
+a time constant of 0.09 s (see Table 2). 
+Figure 9. Reconstruction of actuator Fault 1 in pitch system 1.
+Table 2. Results of the actuator fault reconstruction in the pitch system.
+FaultsTime Constant
+LPF 1 [s]Time Constant
+LPF 2 [s]Time Constant
+LPF 3 [s]Best FIT [%]
+Fault1 0.050 0.06 0.065 82.9103
+Fault2 0.085 0.09 0.095 82.8394
+Fault3 0.020 0.03 0.040 67.1775
+Figure 10 shows the results of the actuator fault reconstruction in pitch system 2. It
+can be seen that the best-ﬁt percentage is obtained with LPF 2, which is implemented with
+a time constant of 0.09 s (see Table 2).
+------------------------------End of the page -----------------------------------
+Processes 2023 ,11, 1690 17 of 26
+Processes 2023 , 11, x FOR PEER REVIEW 17 of 26 
+ 
+  
+Figure 10. Reconstruction of actuator Fa ult 2 in the pitch system 2. 
+It is important to underline that for a slid ing motion to take place and, subsequently, 
+for it to be maintained in the presence of actuat or faults, it is necessary to select the scalar 
+𝜎 so that the inequality 𝜎> ‖𝑓௔(𝑡)‖ is satis ﬁed for all 𝑡଴>0. Since Faults 1 and 2 satisfy 
+this condition, the sliding motion is maintained despite the dynamics introduced by the actuator faults. This ensures that an accurate reconstruction of the fa ults can be performed, 
+as shown in Figures 9 and 10. 
+In the time intervals where inequality 𝜎> ‖𝑓
+௔(𝑡)‖ is not ful ﬁlled, two issues occur; 
+the ﬁrst is that the sliding motion cannot be main tained and the second is that the matched 
+disturbance rejection property is lost and, ther efore, it is not possible to perform the actu-
+ator fault reconstruction. 
+Figure 11 shows the results of the actuator FDI scheme for Fault 3. It can be observed 
+that since the boundary of Fault 3 is greater than the scalar 𝜎, the inequality 𝜎> ‖𝑓௔ଷ(𝑡)‖ 
+cannot be veri ﬁed for all 𝑡଴>0. This impedes the achievement of an adequate reconstruc-
+tion of Fault 3 in the intervals where the amplitude fault is greater than the scalar 𝜎, as 
+shown in Figure 11. 
+Figure 10. Reconstruction of actuator Fault 2 in the pitch system 2.
+It is important to underline that for a sliding motion to take place and, subsequently,
+for it to be maintained in the presence of actuator faults, it is necessary to select the scalar
+sso that the inequality s>kfa(t)kis satisﬁed for all t0>0. Since Faults 1 and 2 satisfy
+this condition, the sliding motion is maintained despite the dynamics introduced by the
+actuator faults. This ensures that an accurate reconstruction of the faults can be performed,
+as shown in Figures 9 and 10.
+In the time intervals where inequality s>kfa(t)kis not fulﬁlled, two issues occur;
+the ﬁrst is that the sliding motion cannot be maintained and the second is that the matched
+disturbance rejection property is lost and, therefore, it is not possible to perform the actuator
+fault reconstruction.
+Figure 11 shows the results of the actuator FDI scheme for Fault 3. It can be observed
+that since the boundary of Fault 3 is greater than the scalar s, the inequality s>kfa3(t)k
+cannot be veriﬁed for all t0>0. This impedes the achievement of an adequate reconstruc-
+tion of Fault 3 in the intervals where the amplitude fault is greater than the scalar s, as
+shown in Figure 11.
+------------------------------End of the page -----------------------------------
+Processes 2023 ,11, 1690 18 of 26
+Processes 2023 , 11, x FOR PEER REVIEW 18 of 26 
+ 
+  
+Figure 11. Reconstruction of actuator Fa ult 3 in the pitch system 3. 
+Table 2. Results of the actuator fault reco nstruction in the pitch system. 
+Faults Time Constant 
+LPF 1 [s] Time Constant 
+LPF 2 [s] Time Constant 
+LPF 3 [s] Best FIT [%] 
+Fault 1  0.050  0.06  0.065  82.9103  
+Fault 2  0.085  0.09  0.095  82.8394  
+Fault 3  0.020  0.03  0.040  67.1775  
+3.2. Results of the FDI Scheme in the Drive Train System 
+To solve the fault isolation problem in the drive train system, the proposed scheme 
+shown in Figure 6 is implemented. Two di ﬀerent LPFs are used to isolate the actuator 
+faults, acting on each one of the input channels  of the drive train system. When an actuator 
+fault occurs in channel 1 of the system, the ou tput of LPF 1 is expected to reconstruct the 
+fault while the output of LPF 2 remains at ze ro because the second input channel of the 
+system is free of fault. 
+The fault detection problem is solved using the estimation approach described earlier 
+(see Section 2). The main objective of the proposed approach is to maintain the sliding 
+motion even in the presence of  actuator faults. The second ob jective is to recover the fault 
+dynamic through a ﬁltering process of the output error injection signal, which is used to 
+keep the dynamic in a sliding motion. The ﬁltering process is performed using an LPF, 
+which is implemented by a ﬁrst-order di ﬀerential equation. To evaluate the e ﬀectiveness 
+of the reconstruction, NRMSE analysis, which proportioned a ﬁt percentage number, is 
+used. 
+The simulation of the proposed FDI scheme  for the drive train system has been ob-
+tained considering the initial conditions of the SMO to be 𝑥ො(𝑡)=ሾ0, 0, 0 ሿ், while the initial 
+conditions of the drive trai n system are established as 𝑥ௗ௧(𝑡)=ሾ 1, −1, 1 ሿ். 
+The fault lock matrix for rotor torque fault is set as 𝑀ௗ௧=ሾ1, 0, 0 ሿ், while that for 
+generator torque fault is set as 𝑀ௗ௧=ሾ0, 1, 0 ሿ். The scalar 𝜎 is chosen as 6. System inputs 
+and the SMO gains are selected as stated in Section 2. 
+Figure 12 shows Fault 4 acting on the ﬁrst input channel of the system, which a ﬀects 
+the signal of the rotor torque. Since the slidin g motion is maintained despite the presence 
+of a fault, by passing the nonlinear output error injection term of channel 1 through LPF 
+Figure 11. Reconstruction of actuator Fault 3 in the pitch system 3.
+3.2. Results of the FDI Scheme in the Drive Train System
+To solve the fault isolation problem in the drive train system, the proposed scheme
+shown in Figure 6 is implemented. Two different LPFs are used to isolate the actuator
+faults, acting on each one of the input channels of the drive train system. When an actuator
+fault occurs in channel 1 of the system, the output of LPF 1 is expected to reconstruct the
+fault while the output of LPF 2 remains at zero because the second input channel of the
+system is free of fault.
+The fault detection problem is solved using the estimation approach described earlier
+(see Section 2). The main objective of the proposed approach is to maintain the sliding
+motion even in the presence of actuator faults. The second objective is to recover the fault
+dynamic through a ﬁltering process of the output error injection signal, which is used to
+keep the dynamic in a sliding motion. The ﬁltering process is performed using an LPF,
+which is implemented by a ﬁrst-order differential equation. To evaluate the effectiveness of
+the reconstruction, NRMSE analysis, which proportioned a ﬁt percentage number, is used.
+The simulation of the proposed FDI scheme for the drive train system has been
+obtained considering the initial conditions of the SMO to be ˆx(t)=[0, 0, 0 ]T, while the
+initial conditions of the drive train system are established as xdt(t)=[1, 1, 1]T.
+The fault lock matrix for rotor torque fault is set as Mdt=[1, 0, 0 ]T, while that for
+generator torque fault is set as Mdt=[0, 1, 0 ]T. The scalar sis chosen as 6. System inputs
+and the SMO gains are selected as stated in Section 2.
+Figure 12 shows Fault 4 acting on the ﬁrst input channel of the system, which affects
+the signal of the rotor torque. Since the sliding motion is maintained despite the presence of
+a fault, by passing the nonlinear output error injection term of channel 1 through LPF 1, the
+------------------------------End of the page -----------------------------------
+Processes 2023 ,11, 1690 19 of 26
+fault reconstruction is achieved. From a heuristic process, the optimal ﬁlter time constant is
+0.0150 s, with a ﬁt of 90.6006%.
+Processes 2023 , 11, x FOR PEER REVIEW 19 of 26 
+ 
+ 1, the fault reconstruction is achieved . From a heuristic process, the optimal ﬁlter time 
+constant is 0.0150 s, with a ﬁt of 90.6006%. 
+As LPF 2 ﬁlters the output error injection term injected into channel 2 of the SMO and 
+it is free of fault, it can be seen that its output remains at zero. It is important to note that 
+the zero deviation in the output of LPF 2 at the start of the simulation is due to the delay 
+introduced by the ﬁlter. This delay is also present in the reconstruction of the fault. It can 
+be observed that after the delay introduced by the ﬁltering process, fault isolation and 
+reconstruction are carried out precisely. 
+ 
+Figure 12. Reconstruction of actuator Faul t 4 in the drive train system. 
+Figure 13 shows the fault reconstruction when Fault 5 is acting in the second input 
+channel of the drive train. Since the inequality 𝜎> ‖𝑓௔ହ(𝑡)‖ is satis ﬁed for all 𝑡଴>0, by 
+applying an LPF with a time constant of 0.04 s, a ﬁt of 90.1299% is achieved in the fault 
+reconstruction. It can be observed that during  the time the fault remains active, the output 
+of LPF of channel 1 remains at zero, which indicates that the fault is present in channel 2 
+of the system. Hence, it can be establis hed that the fault is properly isolated. 
+Figure 12. Reconstruction of actuator Fault 4 in the drive train system.
+As LPF 2 ﬁlters the output error injection term injected into channel 2 of the SMO
+and it is free of fault, it can be seen that its output remains at zero. It is important to note
+that the zero deviation in the output of LPF 2 at the start of the simulation is due to the
+delay introduced by the ﬁlter. This delay is also present in the reconstruction of the fault. It
+can be observed that after the delay introduced by the ﬁltering process, fault isolation and
+reconstruction are carried out precisely.
+Figure 13 shows the fault reconstruction when Fault 5 is acting in the second input
+channel of the drive train. Since the inequality s>kfa5(t)kis satisﬁed for all t0>0, by
+applying an LPF with a time constant of 0.04 s, a ﬁt of 90.1299% is achieved in the fault
+reconstruction. It can be observed that during the time the fault remains active, the output
+of LPF of channel 1 remains at zero, which indicates that the fault is present in channel 2 of
+the system. Hence, it can be established that the fault is properly isolated.
+Figure 14 shows the results of the reconstruction of sawtooth Fault 6. Since Fault 6 is
+applied in the second input channel of the drive train system, by ﬁltering the output error
+injection term injected into channel 2 with an LPF whose time constant is 0.024 s, a ﬁt of
+87.2779% is obtained.
+------------------------------End of the page -----------------------------------
+Processes 2023 ,11, 1690 20 of 26
+Processes 2023 , 11, x FOR PEER REVIEW 20 of 26 
+ 
+  
+Figure 13. Reconstruction of actuator Faul t 5 in the drive train system. 
+Figure 14 shows the results of the reconstruction of sawtooth Fault 6. Since Fault 6 is 
+applied in the second input channel of the drive train system, by ﬁltering the output error 
+injection term injected into channel 2 with an LPF whose time constant is 0.024 s, a ﬁt of 
+87.2779% is obtained. 
+From the output of the LPF applied to the output error injection term injected into 
+channel 1, it can be seen that it remains at zero during the time that the fault is active. 
+Therefore, it can be concluded that the fault occurred in channel 2 of the system. Table 3 
+presents the time constants used in the LPF for each of the faults in the drive train system, 
+as well as the best ﬁt in percentage obtained when performing the fault reconstruction. 
+ 
+Figure 14. Reconstruction of actuator Faul t 6 in the drive train system. 
+Figure 13. Reconstruction of actuator Fault 5 in the drive train system.
+Processes 2023 , 11, x FOR PEER REVIEW 20 of 26 
+ 
+  
+Figure 13. Reconstruction of actuator Faul t 5 in the drive train system. 
+Figure 14 shows the results of the reconstruction of sawtooth Fault 6. Since Fault 6 is 
+applied in the second input channel of the drive train system, by ﬁltering the output error 
+injection term injected into channel 2 with an LPF whose time constant is 0.024 s, a ﬁt of 
+87.2779% is obtained. 
+From the output of the LPF applied to the output error injection term injected into 
+channel 1, it can be seen that it remains at zero during the time that the fault is active. 
+Therefore, it can be concluded that the fault occurred in channel 2 of the system. Table 3 
+presents the time constants used in the LPF for each of the faults in the drive train system, 
+as well as the best ﬁt in percentage obtained when performing the fault reconstruction. 
+ 
+Figure 14. Reconstruction of actuator Faul t 6 in the drive train system. 
+Figure 14. Reconstruction of actuator Fault 6 in the drive train system.
+------------------------------End of the page -----------------------------------
+Processes 2023 ,11, 1690 21 of 26
+From the output of the LPF applied to the output error injection term injected into
+channel 1, it can be seen that it remains at zero during the time that the fault is active.
+Therefore, it can be concluded that the fault occurred in channel 2 of the system. Table 3
+presents the time constants used in the LPF for each of the faults in the drive train system,
+as well as the best ﬁt in percentage obtained when performing the fault reconstruction.
+Table 3. Results of the actuator fault reconstruction in the drive train system.
+Faults Time Constant LPF [s] Best FIT [%]
+Fault 4 0.0150 90.6006
+Fault 5 0.0400 90.1299
+Fault 6 0.0200 87.2779
+3.3. Factors Affecting the Fault Reconstruction Performance
+Several factors can affect the performance of fault reconstruction using an SMO in
+wind turbines. Here are some key factors to consider:
+1. The characteristics of the faults themselves can impact the performance of fault
+reconstruction. From the results presented in Section 3, it is noted that factors such as
+fault magnitude, fault duration, and fault dynamics (e.g., abrupt or gradual changes)
+affect the accuracy of the fault reconstruction. Different types of faults require speciﬁc
+adaptations in both the SMO design (the s-parameter) and the LPF time constant to
+ensure effective fault estimation.
+2. The design of the SMO, including its parameter selection and initial conditions, affects
+the fault reconstruction performance. In order to implement the SMO-based FDI
+scheme in a wind turbine, the initial condition of the observer must be assigned
+prior to the beginning of the wind turbine operation. However, the issue of how
+best to choose those initial condition values has apparently been completely ignored
+in control engineering textbooks. As a consequence, observer initial conditions in
+industrial applications are usually set to zero by default. A study of the effect of the
+SMO initial conditions on the performance of the fault reconstruction was realized.
+Table 4 shows Fault 5 reconstruction performance using different SMO initial condi-
+tions, keeping the initial condition of the drive train system ﬁxed. From the results, it
+can be noted that for SMO initial conditions close to system conditions, reconstruction
+performance improves, while for SMO initial conditions far from the initial conditions
+of the system, the performance worsens. This is an expected result since the choice of
+initial conditions impacts the transient behavior and convergence speed of the SMO.
+Table 4. Effects of the SMO initial conditions in Fault 5 reconstruction.
+Initial Conditions Time Constant LPF [s] Best FIT [%]
+ˆx=
+0 0 0T0.0400 90.1299
+ˆx=
+0 0 1T0.0400 92.2562
+ˆx=
+3 2 3T0.0350 88.5118
+ˆx=
+5 5 4T0.0350 87.5168
+ˆx=
+100 90 100T0.0350 79.2138
+The observer’s parameters should be appropriately chosen to achieve fast and accurate
+estimation of both system states and fault signals. Improper observer design can result
+in slow convergence, estimation errors, or undesirable oscillations in the reconstructed
+fault signals. A study of the effect of the SMO s-parameter on the performance of the
+fault reconstruction was realized. Table 5 shows Fault 5 reconstruction performance using
+different values of the s-parameter. From the results, it is noted that for svalues less than
+the magnitude of the fault, a substantial degradation in the reconstruction of Fault 5 is
+------------------------------End of the page -----------------------------------
+Processes 2023 ,11, 1690 22 of 26
+observed. However, increasing the svalue does not substantially improve the performance
+of the fault reconstruction. Consequently, an appropriate selection of the svalue must
+satisfy the condition s>kfa(t)k.
+Table 5. Effects of sin Fault 5 reconstruction.
+Parameter s Time Constant LPF [s] Best FIT [%]
+s=6 0.0400 90.1299
+s=5 0.0350 89.8022
+s=3 0.0350 66.5234
+s=8 0.0400 90.5583
+s=10 0.0450 90.7927
+s=20 0.0800 90.9546
+3. From the point of view of the implementation of the proposed scheme, factors such
+as sampling rate and computational resources can affect the fault reconstruction
+performance. The sampling rate at which sensor data are collected and processed
+affects the temporal resolution of fault reconstruction. A higher sampling rate allows
+for ﬁner detection and tracking of fault dynamics, but it also increases computational
+requirements. The sampling rate should be chosen carefully to balance the need for
+accuracy with practical implementation considerations. Moreover, the computational
+resources available for implementing the SMO inﬂuence its performance. A higher
+computational capability enables faster calculations and can facilitate real-time fault
+reconstruction. Insufﬁcient computational resources may result in slower estimation
+or limitations in the complexity of the observer algorithm.
+4. The selection and quality of sensors used to measure the system outputs and inputs
+also impact the performance of fault reconstruction. High-quality sensors with low
+noise and suitable measurement range contribute to accurate state estimation.
+4. Discussion
+An observer-based FDI scheme that uses a particular class of SMO to identify and
+isolate actuator faults using an estimation approach was presented. Fault detection and
+fault isolation problems are solved by analyzing the nonlinear output error injection signal
+required to keep the SMO in a sliding motion. The proposed actuator FDI scheme is
+evaluated with six different actuator faults, and the accuracy of the proposed approach is
+validated using the NRMSE method. In contrast to the works presented in [ 20,23] a simple
+architecture using an LPF is shown be sufﬁcient to perform an accuracy fault reconstruction,
+with no false alarm or missed detection.
+The proposed FDI scheme does not require explicit information from the fault. The
+only fault information required is the fault to be bounded. Thus, the actuator fault recon-
+struction signal is obtained online and without prior knowledge of the fault, which is of
+vital importance for the FDI scheme to be implemented in real applications.
+It is important to highlight, however, that the dynamics of faults, the ﬁlter time con-
+stant, the observer initial conditions, and the svalue of the SMO affect fault reconstruction
+accuracy. To ﬁnd the optimal ﬁlter time constant, a heuristic process is used. However, a
+method to automatically ﬁnd the optimal ﬁlter time constant could be used. The initial
+conditions of the SMO were shown to affect the fault reconstruction performance. A better
+fault reconstruction performance is achieved with SMO initial conditions close to the initial
+condition of the system.
+Thesvalue was shown to have an impact on the fault reconstruction accuracy. If the
+svalue is smaller than the upper bound of the fault, an accurate fault reconstruction is not
+possible. However, values of smuch larger than the upper bound of the fault were not
+shown to lead to a signiﬁcant increase in the fault reconstruction precision. Furthermore,
+high values of swere shown to have a prejudicial effect on the accuracy of state estimation
+due to the undesirable phenomenon known as chattering.
+------------------------------End of the page -----------------------------------
+Processes 2023 ,11, 1690 23 of 26
+5. Conclusions
+In this paper, an actuator observer-based FDI scheme for the pitch and drive train
+systems of a wind turbine is proposed. The proposed scheme employs a special class of
+SMOs that have the capacity to drive the output estimation error to zero in ﬁnite time,
+even in the presence of actuator faults. The approach adopted here uses the nonlinear
+output estimation error signal to perform actuator fault reconstruction. This error signal
+is used to drive the observer dynamics and converges the estimated output to the actual
+output of the system. Thus, it compensates for fault dynamics in the SMO by switching at
+high frequency as a function of the output estimation error. To reconstruct actuator faults
+in both the pitch and drive systems, an approach using an LPF on the nonlinear output
+estimation error signal is adopted. The actuator fault reconstruction signal is obtained
+online and without prior knowledge of the fault and, thus, it is easy to implement in
+real time. Factors such as the initial conditions and SMO settings were demonstrated to
+inﬂuence the fault reconstruction performance. The simulation results and NRMSE analysis
+have demonstrated the effectiveness of the proposed scheme for performing actuator fault
+reconstruction. In future work, the SMO-based FDI scheme will be integrated with an
+FTC system.
+Author Contributions: Conceptualization, V .B.-J. and M.A.-M.; methodology, V .B.-J. and M.A.-M.;
+software, V .B.-J. and J.G.-M.; validation, V .B.-J. and M.A.-M.; formal analysis, G.V .G.-R. and V .B.-J.;
+investigation, V .B.-J., M.A.-M. and B.Y.L.-Z.; resources, G.V .G.-R., B.Y.L.-Z., E.M.S.-C. and J.G.-M.;
+writing—original draft preparation, V .B.-J., B.Y.L.-Z., J.G.-M. and E.M.S.-C.; writing—review and
+editing, M.A.-M., E.M.S.-C., V .B.-J., B.Y.L.-Z., G.V .G.-R. and J.G.-M.; supervision, V .B.-J. All authors
+have read and agreed to the published version of the manuscript.
+Funding: This research received no external funding.
+Data Availability Statement: Not applicable.
+Acknowledgments: The development of this project is the product of the support provided by the
+National Council of Science and Technology (CONACYT) and the National Center for Technological
+Research and Development(CENIDET).
+Conﬂicts of Interest: The authors declare no conﬂict of interest.
+Abbreviations
+The following abbreviations are used in this manuscript:
+SMO Sliding mode observer
+FDI Fault detection and isolation
+NEMSE Normalized root mean square error
+DNN Deep neural networks
+PCA Principal component analysis
+LPF Low-pass ﬁlter
+NREL National Renewable Energy Laboratory
+FTC Fault-tolerant control
+Nomenclature
+Matrix
+F System matrix
+G Input matrix
+H Output matrix
+K Observer gain matrix
+M Fault distribution matrix
+P Symmetric positive deﬁne matrix
+T Change of coordinates matrix
+Vectors
+u System input vector
+e Estimation error vector
+x System state vector
+------------------------------End of the page -----------------------------------
+Processes 2023 ,11, 1690 24 of 26
+ˆx Estimate of states vector
+y System output vector
+ˆy Estimate of output vector
+w Nonlinear discontinuous function
+Constants
+b Viscous friction constant
+h Torsion damping constant
+j Moment of inertia constant
+k Torsion stiffness constant
+N Gear ratio constant
+r Rotor ratio constant
+n Real number
+p Real number
+m Real number
+q Real number
+Signals
+f Fault signal
+v Wind speed signal
+E Power electrical signal
+Greek letters
+a Scalar
+b Pitch angle
+x Damping coefﬁcient
+h Efﬁciency
+q Torsion angle
+s Scalar
+y Natural frequency
+g Cutoff frequency
+l Tip speed ratio
+r Wind density
+Subscripts
+a Actuator
+dt Drive train
+g Generator
+l Linear
+nl Nonlinear
+pb Pitch blade
+r Rotor
+w Wind
+x State
+y Output
+re f Reference
+References
+1. Global Wind Energy Council. Global Wind Report 2022 ; Global Wind Energy Council: Bonn, Germany, 2022.
+2. Anaya-Lara, O.; Jenkins, N.; Ekanayake, J.B.; Cartwright, P .; Hughes, M. Wind Energy Generation: Modelling and Control ; John
+Wiley & Sons: Chichester, UK, 2009.
+3. Wymore, M.L.; Van Dam, J.E.; Ceylan, H.; Qiao, D. A survey of health monitoring systems for wind turbines. Renew. Sustain.
+Energy Rev. 2015 ,52, 976–990. [CrossRef]
+4. Luo, N.; Vidal, Y .; Acho, L. Wind T urbine Control and Monitoring ; Springer: Cham, Switzerland, 2014; Available online: http://www.
+springer.com/series/1412 (accessed on 4 January 2023).
+5. Chang, C.C.W.; Ding, T.J.; Ariannejad, M.; Chao, K.C.; Samdin, S.B. Fault detection and anti-icing technologies in wind energy
+conversion systems: A review. Energy Rep. 2022 ,8, 28–33. [CrossRef]
+6. Thirumarimurugan, M.; Bagyalakshmi, N.; Paarkavi, P . Comparison of fault detection and isolation methods: A review. In Proceedings
+of the 2016 10th International Conference on Intelligent Systems and Control (ISCO), Coimbatore, India, 7–8 January 2016; pp. 1–6.
+[CrossRef]
+7. Liu, Z.; Zhang, L. A review of failure modes, condition monitoring and fault diagnosis methods for large-scale wind turbine
+bearings. Measurement 2020 ,149, 107002. [CrossRef]
+------------------------------End of the page -----------------------------------
+Processes 2023 ,11, 1690 25 of 26
+8. Fekih, A.; Habibi, H.; Simani, S. Fault Diagnosis and Fault Tolerant Control of Wind Turbines: An Overview. Energies 2022 ,
+15, 7186. [CrossRef]
+9. Gao, Z.; Liu, X. An Overview on Fault Diagnosis, Prognosis and Resilient Control for Wind Turbine Systems. Processes 2021 ,
+9, 300. [CrossRef]
+10. Simani, S.; Castaldi, P . Intelligent Fault Diagnosis Techniques Applied to an Offshore Wind Turbine System. Appl. Sci. 2019 ,9, 783.
+[CrossRef]
+11. Liu, W. Intelligent fault diagnosis of wind turbines using multi-dimensional kernel domain spectrum technique. Measurement
+2018 ,133, 303–309. [CrossRef]
+12. Wen, X.; Xu, Z. Wind turbine fault diagnosis based on ReliefF-PCA and DNN. Expert Syst. Appl. 2021 ,178, 115016. [CrossRef]
+13. Pashazadeh, V .; Salmasi, F.R.; Araabi, B.N. Data driven sensor and actuator fault detection and isolation in wind turbine using
+classiﬁer fusion. Renew. Energy 2018 ,116, 99–106. [CrossRef]
+14. Liu, W.; Tang, B.; Han, J.; Lu, X.; Hu, N.; He, Z. The structure healthy condition monitoring and fault diagnosis methods in wind
+turbines: A review. Renew. Sustain. Energy Rev. 2015 ,44, 466–472. [CrossRef]
+15. Lan, J.; Patton, R.J. Robust Integration of Model-Based Fault Estimation and Fault-Tolerant Control ; Springer: Berlin/Heidelberg,
+Germany, 2021. [CrossRef]
+16. Yang, Y.; Ding, S.X.; Li, L. On observer-based fault detection for nonlinear systems. Syst. Control Lett. 2015 ,82, 18–25. [CrossRef]
+17. Teng, J.; Li, C.; Feng, Y.; Yang, T.; Zhou, R.; Sheng, Q.Z. Adaptive Observer Based Fault Tolerant Control for Sensor and Actuator
+Faults in Wind Turbines. Sensors 2021 ,21, 8170. [CrossRef] [PubMed]
+18. Odgaard, P .F.; Stoustrup, J.; Kinnaert, M. Fault-Tolerant Control of Wind Turbines: A Benchmark Model. IEEE Trans. Control Syst.
+Technol. 2013 ,21, 1168–1182. [CrossRef]
+19. Pujol-Vazquez, G.; Acho, L.; Gibergans-B águena, J. Fault Detection Algorithm for Wind Turbines’ Pitch Actuator Systems. Energies
+2020 ,13, 2861. [CrossRef]
+20. Zhu, J.; Ma, K.; Hajizadeh, A.; Soltani, M.; Chen, Z. Fault detection and isolation for wind turbine electric pitch system.
+In Proceedings of the 2017 IEEE 12th International Conference on Power Electronics and Drive Systems (PEDS), Honolulu, HI,
+USA, 12–15 December 2017; pp. 618–623. [CrossRef]
+21. Odgaard, P .F.; Stoustrup, J. Unknown input observer based detection of sensor faults in a wind turbine. In Proceedings of the
+2010 IEEE International Conference on Control Applications, Yokohama, Japan, 8–10 September 2010; pp. 310–315. [CrossRef]
+22. Hwang, I.; Kim, S.; Kim, Y.; Seah, C.E. A Survey of Fault Detection, Isolation, and Reconﬁguration Methods. IEEE Trans. Control
+Syst. Technol. 2009 ,18, 636–653. [CrossRef]
+23. Chen, J.; Patton, R.J. Robust Model-Based Fault Diagnosis for Dynamic Systems. In The International Series on Asian Studies in
+Computer and Information Science ; Springer: Boston, MA, USA, 1999; Volume 3. [CrossRef]
+24. Ziyabari, S.H.S.; Shoorehdeli, M.A.; Karimirad, M. Robust fault estimation of a blade pitch and drivetrain system in wind turbine
+model. J. Vib. Control 2020 ,27, 277–294. [CrossRef]
+25. Edwards, C.; Spurgeon, S.K.; Patton, R.J. Sliding mode observers for fault detection and isolation. Automatica 2000 ,36, 541–553.
+[CrossRef]
+26. Alwi, H.; Edwards, C.; Tan, C.P . Fault Detection and Fault-Tolerant Control Using Sliding Modes. In Advances in Industrial Control ;
+Springer: London, UK, 2011. [CrossRef]
+27. Habibi, H.; Howard, I.; Simani, S.; Fekih, A. Decoupling Adaptive Sliding Mode Observer Design for Wind Turbines Subject to
+Simultaneous Faults in Sensors and Actuators. IEEE/CAA J. Autom. Sin. 2021 ,8, 837–847. [CrossRef]
+28. Borja-Jaimes, V .; Adam-Medina, M.; L ópez-Zapata, B.Y.; Vald és, L.G.V .; Pachecano, L.C.; Coronado, E.M.S. Sliding Mode
+Observer-Based Fault Detection and Isolation Approach for a Wind Turbine Benchmark. Processes 2021 ,10, 54. [CrossRef]
+29. Chen, W.; Ding, S.; Haghani, A.; Naik, A.; Khan, A.; Yin, S. Observer-based FDI Schemes for Wind Turbine Benchmark. IFAC Proc.
+Vol. 2011 ,44, 7073–7078. [CrossRef]
+30. Habibi, H.; Howard, I.; Simani, S. Reliability improvement of wind turbine power generation using model-based fault detection
+and fault tolerant control: A review. Renew. Energy 2018 ,135, 877–896. [CrossRef]
+31. Witczak, M.; Rotondo, D.; Puig, V .; Nejjari, F.; Pazera, M. Fault estimation of wind turbines using combined adaptive and
+parameter estimation schemes. Int. J. Adapt. Control Signal Process. 2017 ,32, 549–567. [CrossRef]
+32. Sun, X.; Patton, R.J. Robust actuator multiplicative fault estimation with unknown input decoupling for a wind turbine system.
+In Proceedings of the Conference on Control and Fault-Tolerant Systems (SysTol), Nice, France, 9–11 October 2013; pp. 263–268.
+[CrossRef]
+33. Isermann, R. Fault-Diagnosis Systems: An Introduction from Fault Detection to Fault Tolerance ; Springer: Berlin/Heidelberg, Germany,
+2006; pp. 1–475.
+34. Garcia M árquez, F.P .; Tobias, A.M.; P érez, J.M.P .; Papaelias, M. Condition monitoring of wind turbines: Techniques and methods.
+Renew. Energy 2012 ,46, 169–178. [CrossRef]
+35. Sheng, S. NREL’s Wind Turbine Drivetrain Condition Monitoring and Wind Plant Operation and Maintenance Research during
+the 2010s: A US Land-Based Perspective. Acoust. Aust. 2021 ,49, 239–249. [CrossRef]
+36. Lin, Y.; Tu, L.; Liu, H.; Li, W. Fault analysis of wind turbines in China. Renew. Sustain. Energy Rev. 2016 ,55, 482–490. [CrossRef]
+37. Abbaspour, A.; Mokhtari, S.; Sargolzaei, A.; Yen, K.K. A Survey on Active Fault-Tolerant Control Systems. Electronics 2020 ,
+9, 1513. [CrossRef]
+------------------------------End of the page -----------------------------------
+Processes 2023 ,11, 1690 26 of 26
+38. Edwards, C.; Spurgeon, S. Sliding Mode Control: Theory and Applications ; CRC Press: London, UK, 1998. [CrossRef]
+39. Olabi, A.G.; Wilberforce, T.; Elsaid, K.; Sayed, E.T.; Salameh, T.; Abdelkareem, M.A.; Baroutaji, A. A Review on Failure Modes of
+Wind Turbine Components. Energies 2021 ,14, 5241. [CrossRef]
+Disclaimer/Publisher’s Note: The statements, opinions and data contained in all publications are solely those of the individual
+author(s) and contributor(s) and not of MDPI and/or the editor(s). MDPI and/or the editor(s) disclaim responsibility for any injury to
+people or property resulting from any ideas, methods, instructions or products referred to in the content.
+------------------------------End of the page -----------------------------------

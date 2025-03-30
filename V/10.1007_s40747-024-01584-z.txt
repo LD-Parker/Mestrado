@@ -1,0 +1,967 @@
+Complex & Intelligent Systems (2024) 10:8109–8125
+https://doi.org/10.1007/s40747-024-01584-z
+ORIGINAL ARTICLE
+A novel local feature fusion architecture for wind turbine pitch fault
+diagnosis with redundant feature screening
+Chuanbo Wen1·Xianbin Wu1·Zidong Wang2·Weibo Liu2·Junjie Yang3
+Received: 12 January 2024 / Accepted: 6 July 2024 / Published online: 14 August 2024
+© The Author(s) 2024
+Abstract
+The safe and reliable operation of the pitch system is essential for the stable and efﬁcient operation of a wind turbine (WT).
+The pitch fault data collected by supervisory control and data acquisition systems (SCADA) often contain a wide variety
+of variables, leading to redundant features that interfere with the accuracy of ﬁnal diagnosis results, making it difﬁcult tomeet requirements. Also, the problem of extracting only local features while ignoring global information is present in the
+feature extraction process using the deep Convolutional Neural Network (CNN) model. To address these issues, the global
+average correlation coefﬁcient is proposed in this article to measure the correlation between multiple variables in SCADAdata. By considering the correlation among multiple variables comprehensively, redundant features are effectively eliminated,
+enhancing the accuracy of fault diagnosis. Furthermore, a new local ampliﬁcation fusion architecture network (LAFA-Net)
+based on multi-head attention (MHA) is introduced. An efﬁcient local feature extraction module, designed to enhance themodel’s perception of detailed features while maintaining global context information, is ﬁrst introduced. LAFA-Net integratesthe advantages of CNN and MHA, efﬁciently extracting and fusing valuable features from ﬁltered data for both local and
+global aspects. Experiments on real pitch fault data demonstrate that the global average correlation coefﬁcient effectively
+screens out redundant features in the dataset that negatively impact fault diagnosis results, thereby improving diagnosisefﬁciency and accuracy. The LAFA-Net model, capable of accurately diagnosing multiple types of pitch faults, shows a
+superior classiﬁcation effect and accuracy compared to several advanced models, along with a faster convergence speed.
+Keywords Fault diagnosis ·Multi-head attention ·Pearson correlation coefﬁcient ·Wind turbine ·Deep learning ·Redundant
+feature
+Introduction
+The installed capacity of wind turbines (WTs) has signiﬁ-
+cantly increased as a crucial method for addressing energybalance and electricity demand. Within this context, the pitch
+B Chuanbo Wen
+chuanbowen@163.com
+Zidong Wang
+Zidong.Wang@brunel.ac.uk
+Junjie Yang
+yangjj@sdju.edu.cn
+1School of Electrical Engineering, Shanghai Dianji University,Shanghai 201306, China
+2Department of Computer Science, Brunel University London,
+Uxbridge, Middlesex UB8 3PH, UK
+3School of Electric Information Engineering, Shanghai Dianji
+University, Shanghai 201306, Chinasystem, a key component of the WT generator, plays a vital
+role in its operational process. Serving as the core subsys-
+tem for regulating WT output power and controlling bladesafety braking, the pitch system frequently adjusts to vari-ations in wind speed and direction. This frequent operation
+leads to a notable fault rate of 35%. Therefore, the develop-
+ment of effective fault diagnosis methods for the pitch systemis essential for ensuring safe, low-cost operation and main-
+tenance of the WT.
+In recent years, deep learning-based intelligent fault diag-
+nosis has garnered signiﬁcant attention, which primarily
+involves two steps: fault feature extraction and fault pat-
+tern classiﬁcation [ 1,16,23,24,38–40,42]. It is noteworthy
+that an extensive amount of operation and maintenance datais recorded in the Supervisory Control and Data Acquisi-
+tion (SCADA) systems of WTs [ 46]. The application of data
+mining technology to extract fault features from these datahas increasingly become a predominant research approach
+123
+------------------------------End of the page -----------------------------------
+8110 Complex & Intelligent Systems (2024) 10:8109–8125
+in WT fault diagnosis. Models frequently employed in this
+domain include recurrent neural networks (GRUs), Convolu-tional Neural Networks (CNNs), Long Short-Term Memory
+(LSTM) networks, and Support V ector Machines [ 2,21,32].
+For instance, a method has been proposed in [ 12] for com-
+paring turbine behavior predicted by a training model witha reference space, which involves collecting SCADA data
+to simulate normal WT behavior and establishing the Maha-
+lanobis space as the reference, thereby effectively detectingfaults through residual construction. Furthermore, an adap-
+tive multivariate time-series convolutional network has been
+introduced in [ 44], which resamples SCADA data over
+multiple time steps, and the resulting resampling matrix
+encapsulates multivariate time series information of different
+states, demonstrating excellent diagnostic performance.
+It is worth mentioning that a framework based on degree-
+mean ﬁeld theory has been proposed in [ 43], which constructs
+a directed graph and implements a fault localization method
+based on node heterogeneity abstracted from WT compo-nents. Moreover, a correlation graph-convolutional neural
+network approach for WT faults has been suggested [ 26],
+which considers the multidimensionality of SCADA dataand their weak correlation with faults. This method employs
+a state tracking strategy to quantify the coupling between
+state parameters, which realizes a new WT fault diagnosisapproach by using the correlation graph-convolutional neuralnetwork. While CNNs’ advantages in feature extraction are
+widely acknowledged in the ﬁeld of data-driven fault diagno-
+sis, they are initially designed for image processing, whichintroduces certain limitations in this context. Speciﬁcally,
+the ﬁxed kernel size of CNNs’ convolutional layers leads
+to a relatively small perceptual domain and restrictions onglobal information acquisition, affecting their original per-
+formance. This limitation underscores the need to focus on
+researching SCADA data-based methods to provide effectiveand reliable SCADA fault diagnosis solutions.
+Most wind farm manufacturers currently equip their wind
+farms with SCADA systems to continuously monitor oper-
+ational status and performance. These systems record a vastamount of sensory data at intervals ranging from a few sec-
+onds to 10 min, covering a wide variety of state variables.
+However, the availability of fault data is often limited, soeffectively screening out heterogeneous feature data can sig-
+niﬁcantly enhance the accuracy of diagnosing pitch faults.
+Furthermore, with the ongoing advancement of deep learningmodels, effective feature selection has emerged as an activeand expanding area of research, which involves downsizing
+and interpreting data to identify relevant features.
+Feature selection methods can generally be divided into
+three categories based on their relationship with the model
+classiﬁer: ﬁlter methods, wrapper methods, and embedded
+methods [ 11,18,50,52]. Wrapper feature selection evaluates
+the performance of different feature subsets using machinelearning algorithms. This method beneﬁts from considering
+the interrelationships between features but incurs a high com-putational cost. Embedded feature selection, on the other
+hand, integrates feature selection into the model training
+process, allowing for automatic selection of the most rep-resentative feature subset. However, this approach tends tooverlook the interrelationship between feature variables. Fil-
+ter feature selection, evaluated based on statistics between
+features and target variables, is computationally efﬁcient andwell-suited for large-scale feature sets.
+The ﬁlter feature selection method, which is based on
+different statistical features of data, computes feature cor-relations and performs feature selection independently of
+learning techniques, and this contrasts with the high compu-
+tational cost of wrapper methods and the reliance on learningalgorithms in embedded methods. Filter feature selectionoffers the advantages of a smaller computational load,
+wide applicability, and minimal dependence on classiﬁers.
+For instance, a multi-objective particle swarm optimizationalgorithm-based heuristic search feature selection method
+has been proposed in [ 22], which addresses the limitations of
+sequential methods but still faces the challenge of excessivecomputational demand. To mitigate this issue, an embed-
+ded chaotic whale survival algorithm has been introduced
+[7] by selecting a subset of features with a lower computa-
+tional cost. While this method reduces computational effort,it does not overcome the inherent limitations of embedded
+feature selection, such as dependency on classiﬁers.
+The shortcomings of both wrapper and embedded methods
+are effectively circumvented by ﬁlter feature selection, which
+operates independently of classiﬁers and learning algorithms.
+An iterative local Fisher score feature selection method, pro-posed in [ 6], aims to minimize local intra-class scatter while
+maximizing local inter-class scatter, thereby achieving effec-
+tive feature selection. Furthermore, in [ 20], a method has
+been introduced to select a subset of signiﬁcant features basedon Euclidean distance for accurate fault diagnosis, and this
+approach exempliﬁes the efﬁcacy of ﬁlter feature selection in
+isolating relevant features without the computational burdenor classiﬁer dependency seen in other methods. On the other
+hand, the Pearson Correlation Coefﬁcient (PCC) is increas-
+ingly used in ﬁlter feature selection methods to identifyfeature redundancy by assessing the correlation between two
+variables [ 51], which is employed to balance relevance and
+redundancy in feature selection [ 34], optimize feature sets
+for fault diagnosis [ 49], solve overﬁtting in prediction mod-
+els [ 25], and rank features based on correlation and mutual
+information [ 33]. However, these methods often focus only
+on the correlation between pairs of features, neglecting thecollective impact of multiple correlated feature variables in
+feature screening.
+Inspired by the identiﬁed limitations of existing methods,
+in this paper, we propose a novel global average correla-
+123
+------------------------------End of the page -----------------------------------
+Complex & Intelligent Systems (2024) 10:8109–8125 8111
+tion coefﬁcient (GACC) to select effective features from real
+WT SCADA raw data for the fault diagnosis of the pitchsystem. This method addresses the deﬁciency of the PCC
+(which is limited to measuring the correlation between pairs
+of features) while maintaining low computational effort andsimultaneously considering the correlation among multiplefeature classes. Furthermore, to tackle the limitation of CNNs
+in acquiring global information, we design a local feature
+ampliﬁcation extraction module, which enhances the abilityof the system to capture local nuances without losing sight
+of the overall global context. Moreover, a new deep learning
+architecture is developed to improve the efﬁcient extractionand fusion of local features from multi-fault variables, par-
+ticularly in scenarios with small sample sizes, and such an
+architecture ensures that the original global contextual infor-mation is preserved while dealing with the intricacies ofmultiple fault variables.
+The key contributions of this article are outlined as fol-
+lows.
+(1) xIntroduction of a new GACC: This coefﬁcient measures
+the correlation among multiple variables, overcomingthe limitation of the PCC which only assesses correla-
+tions between pairs of variables. The GACC enhances
+the accuracy and reliability of screening redundant fea-tures.
+(2) Design of a local feature ampliﬁcation module: This
+module addresses the issue of CNNs losing global con-
+text information when extracting local features, withpurpose to improve the classiﬁcation accuracy for multi-
+class pitch faults in wind turbines.
+(3) Development of the LAFA-Net architecture: This new
+architecture combines the strengths of convolutional net-
+works and Multi-Head Attention (MHA) in learning
+local and global features, which utilizes MHA ’s capa-bility in understanding global information dependenciesand interactions between features, and efﬁciently fuses
+local features of various fault types for effective pitch
+fault diagnosis.
+(4) Effective application of the LAFA-Net model: The
+proposed LAFA-Net model demonstrates strong perfor-
+mance on real pitch fault datasets, providing valuableinsights for the operation and maintenance of wind
+farms.
+The above contributions signify notable advancements in
+the ﬁeld of wind turbine fault diagnosis, particularly in
+enhancing the accuracy and efﬁciency of fault detection and
+classiﬁcation through innovative methods and architectures.Theoretical background
+Convolutional neural network
+CNNs are a type of deep learning model renowned for theirability to actively extract features from data, particularlyadept at extracting and learning local features from raw data
+for classiﬁcation purposes. A standard CNN model typically
+comprises a series of convolutional layers, pooling layers,and fully connected layers Fig. 1. The primary function of
+the convolutional layer is to extract localized features. In
+this layer, different convolutional kernels function as variousfeature extractors, analogous to ﬁlters in signal processing.
+Without loss of generality, the convolution process can be
+represented as:
+a
+l
+j=f/parenleftBiggM/summationdisplay
+i=1al−1
+i∗wl
+ij+bl
+j/parenrightBigg
+(1)
+where al
+jis the jth feature map of the llayer, Mis number
+of features of the l−1 layer, wl
+ijis the convolution kernel
+weights of the ith feature of layer l−1 and the jth feature
+of layer l,bl
+jis the deviation of the jth feature map at the
+lth layer, f(·)is a nonlinear activation function, which can
+usually be the ReLU function, the Sigmoid function, or the
+Tanh function.
+In a CNN, the pooling layer reduces feature space dimen-
+sionality and improves computational efﬁciency through
+down-sampling. There are two primary types of pooling oper-ations: the maximum pooling selects the maximum valuefrom a subset of the input features, preserving major fea-
+tures, and the average pooling calculates the average value
+of a group of features, smoothing the input and reducingnoise. These operations enhance the robustness of the CNN
+by making it less sensitive to the exact location of features.
+The pooling operations can be described as follows:
+Fig. 1 1DCNN framework
+123
+------------------------------End of the page -----------------------------------
+8112 Complex & Intelligent Systems (2024) 10:8109–8125
+Pm=max
+al
+j∈Sal
+j (2)
+Pa=average
+al
+j∈Sal
+j (3)
+where Pmand Paare the output of the pooling layers and S
+is the pooling size of the sliding window. The functions max
+andaverage are employed to take the maximum value and
+the average value, respectively. The fully-connected layer is
+usually placed after multiple convolutional or pooling layers,
+and it maps the multidimensional features extracted from theprevious layer into the vector label space in preparation forthe subsequent classiﬁcation task, and ﬁnally the Softmax
+function is used to compute the relative probabilities between
+different classes.
+Pearson correlation coefficient
+The PCC is mainly applied to measure the correlation
+between two variables, which is commonly used in the nat-
+ural and social sciences to assess the degree of correlationbetween two independent variables, as well as the statistical
+signiﬁcance and direction of this correlation. For two vari-
+ables xand ywith sample size N, the generalized PCC is
+deﬁned as follows:
+ρ=/summationtext
+N
+i=1(xi−¯x)(yi−¯y)/radicalBig/summationtextN
+i=1(xi−¯x)2/radicalBig/summationtextN
+i=1(yi−¯y)2(4)
+where xiand yiare the ith value in the variables xand y,
+respectively, and ¯xand¯yare the means of xand yrespec-
+tively. It can be seen from ( 4) that PCC ranges from −1t o+ 1 .
+When ρ> 0, it indicates that there is a positive correlation
+between xand y; when ρ< 0, it indicates that there is a
+negative correlation between xand y; and when ρ=0, it
+indicates that there is no correlation between xand y. When
+it is extended to a set of nvariables/braceleftBig
+˜X1,˜X2,..., ˜Xn/bracerightBig
+.A
+PCC matrix Cis obtained and contains the values of the cor-
+relation coefﬁcients for all pairs of variables, which can be
+described as:
+C=⎡
+⎢⎢⎢⎣ρ
+11ρ12···ρ1n
+ρ21ρ22···ρ2n
+............
+ρ
+n1ρn2···ρnn⎤
+⎥⎥⎥⎦
+n×n(5)
+where ρij(i,j=1,2,..., n) is the correlation coefﬁcients
+between ˜Xiand˜Xj, which can be obtained from ( 4). It is
+easy to see that the Cis a symmetric matrix and the diagonal
+elements are all 1.Multi-head attention
+In traditional attention mechanisms, attention weights are
+computed by calculating the similarity between the query
+and the key, and then the weights are applied to the valueto obtain a weighted representation of the value. The multi-head attention mechanism enhances the expressive power of
+the model by introducing multiple attention heads and per-
+forming independent feature extraction and representationlearning in each head. Therefore, the multi-head attention
+mechanism can be regarded as an extended form of the self-
+attention mechanism, which adds the ability to parallelizethe computation of multiple attention heads on the basis of
+the original self-attention mechanism, thus further enhancing
+the model’s expressive ability and performance. With differ-ent attention heads, the model can simultaneously attend todifferent feature subspaces, thus better capturing the depen-
+dencies between inputs and the interactions between features
+[27,30]. Multi-Head Attention (MHA) has been widely
+applied in the ﬁelds of model prediction, speech recognition,
+sentiment analysis, and target detection [ 48].
+The architectures of MHA and Scaled Dot-Product Atten-
+tion (SDPA) are shown in Fig. 2. For an input sequence
+X=[ X
+1,X2,..., XN]∈ RDx×N, it ﬁrst needs to be lin-
+early mapped to three different spaces to obtain the queryvector q
+i∈RDk, key vector ki∈RDkand value vector
+vi∈RDvrespectively. The linear mapping process for X
+can be abbreviated as:
+Q=WqX∈RDk×N(6)
+K=WkX∈RDk×N(7)
+V=WvX∈RDv×N(8)
+where Wq∈ RDk×Dx,Wk∈ RDk×Dxand Wv∈
+RDv×Dxare the parameter matrices of the linear mapping.
+Q=[ q1,q2,..., qN],K=[ k1,k2,..., kN]and V=
+[v1,v2,...,v N]are matrices consisting of query vectors, key
+vectors and value vectors, respectively. Dkis the dimension
+of the query and key, Dvis the dimension of value, and Nis
+the length of the input tensor. For each qr, the output can be
+obtained by using the key-value pair attention mechanism:
+hr=att((K,V),qr) (9)
+=N/summationdisplay
+j=1αrjvj=N/summationdisplay
+j=1softmax (s(kj,qr))v j (10)
+where αrj(r,j=1,2,..., n) denotes the weight of the rth
+output attention to the jth input, vjis the value at a particular
+position in the value matrix V, andatt(·)is attention opera-
+tion. The ﬁnal sequence of output vectors can be representedas:
+123
+------------------------------End of the page -----------------------------------
+Complex & Intelligent Systems (2024) 10:8109–8125 8113
+Fig. 2 Structure of multi-head
+attention
+H=V•softmax/parenleftbiggKTQ√Dk/parenrightbigg
+(11)
+where softmax (·)is the operation of normalization by
+columns, •is the scaled dot product operation.
+After the extension of the self-attention model, we have
+MultiHead (H)=Wo[head 1,head 2,... head M] (12)
+head i=att(Qi,Ki,Vi)=att(Wi
+qH,Wi
+kH,Wi
+vH)
+(13)
+where Wois the output projection matrix, MultiHead (·)is
+multi-head attention operation, Mis number of multi-head
+attention, and i=[1,2,..., M].
+Proposed method
+Feature screening
+In WT pitch systems, raw fault data includes diverse variables
+from multiple sensors. However, not all variables are useful
+for fault diagnosis, as redundant and irrelevant features can
+lead to errors. Traditional PCC methods, focused only onpairwise correlations, are insufﬁcient for this multivariatecontext. Therefore, in this paper, we introduce an extension to
+the generalized PCC, creating a global correlation coefﬁcient.
+This new approach evaluates the correlation of one variablewith many, overcoming the limitations of traditional PCC
+and reducing the impact of redundant features on diagnosis
+accuracy.
+For the multi-classiﬁcation problem of pitch fault diagno-
+sis in wind turbines, there are hdistinct outcome states, each
+corresponding to a different classiﬁcation result, denoted as
+Y
+l(l=1,2,..., h).L e t˜Xlrepresent the dataset recordedwhen fault Yloccurs, and assume that each dataset has a sam-
+p l es i z eo f N. We ﬁrstly deﬁne the correlation coefﬁcient with
+respect to Xibased on dataset ˜Xlas follows:
+gl
+i=n·/vextenddouble/vextenddoubleCl
+i/vextenddouble/vextenddouble
+2−/summationtextn
+j=1/vextendsingle/vextendsingle/vextendsingleρl
+ij/vextendsingle/vextendsingle/vextendsingle
+√
+n3,l=1,2,···,h (14)
+where Cl
+i(l=1,2,..., h)is the row vector correspond-
+ing to Xibased on dataset ˜Xl,/bardblCl
+i/bardbl2is the 2-norm of the
+vector Cl
+iand|ρl
+ij|is the absolute value of ρl
+ij.I n( 14),
+the PCC of Xiwith other variables is formulated as a 2-
+norm. This approach maintains the correlation characteristics
+inherent to the original PCC, while also linking Xiwith
+other variables to ascertain the degree of one-to-many cor-relations. The extension of the PCC in this manner makesthe statistic more interpretable and relevant for multivariate
+analysis. Furthermore, it’s important to address the pres-
+ence of negative values in the PCC. These values representthe direction of correlation between pairs of variables but
+can lead to the loss of statistical properties when calculat-
+ing a mean directly. To circumvent this issue, the absolutevalues of the vector elements are considered. This adjust-
+ment ensures that the resulting statistics accurately reﬂect
+the strength of the correlations, regardless of their direction,thereby providing a more robust and meaningful analysis forthe one-to-many relationships in the context of pitch fault
+diagnosis.
+In a multi-classiﬁcation context, each state category has
+its dataset with the same number and type of features, but
+the contribution of each feature varies across categories.
+To standardize this in the analysis, the Global AverageCorrelation Coefﬁcient (GACC) is used, which is calcu-
+lated by averaging the global correlation coefﬁcients of
+each variable across all state categories, as shown in theformula:
+123
+------------------------------End of the page -----------------------------------
+8114 Complex & Intelligent Systems (2024) 10:8109–8125
+gi=/summationtexth
+l=1gil
+h(15)
+where girepresents the GACC for a variable, and gilis its
+global correlation coefﬁcient in the dataset of category l.T h e
+GACC values range from 0 to 1, with higher values indicating
+stronger global correlation. A suitable threshold θis set for
+feature selection to identify the most relevant features for
+pitch fault diagnosis.
+Remark 1 In (14), the 2-norm is utilized to link the self-
+correlation coefﬁcient of a single variable with the correlation
+coefﬁcients of other variables. This approach is effective
+for measuring the spatial distance of vectors, thereby bettercharacterizing the variables’ signiﬁcance and their statisticalrelevance. By averaging the absolute values of these coefﬁ-
+cients, the method reﬁnes the distance measure obtained via
+the 2-norm. This allows for a comprehensive synthesis of thecorrelation between a single variable and multiple variables,
+facilitating more accurate and meaningful variable screening
+for analysis or modeling.
+Algorithm 1 Algorithm for screening of redundant feature
+Require: Original datasets ˜Xl(l=1,2,···,h), classiﬁcation result
+Yl,lis the indicator of classiﬁcation result;
+Ensure: Updated variable X
+1:for i=1t o ndo
+2: for l=1t o hdo
+3: Calculate Cl
+i=[ρl
+i1,ρl
+i2,···,ρl
+in]according to dataset ˜Xland
+(4);
+4: Calculate gl
+iaccording to ( 14);
+5: end for
+6: Calculate giaccording to ( 15);
+7: ifgi≥θthen
+8: Keep Xi;
+9: else
+10: Remove Xifrom X;
+11: Update X=[ X1,X2,···,Xi−1,Xi+1,··· Xn]T.
+12: end if
+13: end for
+Local feature extraction amplification module
+The superiority of CNNs in extracting local features is well-
+established and has been effectively applied in various ﬁelds,
+including the analysis of sensor data collected by SCADAsystems in wind turbines. These systems capture essential
+fault features, crucial for effective fault diagnosis. Unlike the
+more complex MHA, the convolutional operation in CNNscan be ﬁne-tuned by altering the convolutional kernel size
+and stride, thereby adjusting the model’s capability to learn
+local features during data propagation. Given the diverse sen-sor data in a pitch system, local features at the time of faultoccurrence are critical for diagnosing speciﬁc fault types.
+However, while a single CNN model relies on multiple con-volutional layers for efﬁcient local feature learning, deep
+CNN architectures may lead to overﬁtting, especially with
+small sample datasets. To address this, we design a LocalFeature Extraction Ampliﬁcation (LFEA) module, which iscapable of accurately extracting and enlarging local features
+without adding complexity to the model. It employs Global
+Average Pooling (GAP) and shape modiﬁcations to avoidoverﬁtting, maintaining the inherent advantages of CNNs in
+local feature extraction. Moreover, the LFEA module ensures
+that global context information is preserved even after thelocal features are ampliﬁed.
+The LFEA module in the model is designed to efﬁ-
+ciently capture and amplify local features while preservingthe integrity of the input data. The key components of theLFEA module include (1) the ﬁrst convolutional layer that
+uses a convolution kernel size of 3 to precisely capture local
+features without losing critical information; (2) the secondglobal average pooling layer that averages the extracted fea-
+tures to preserve and amplify key information; and (3) the
+feature rearrangement and further ﬁltering, where the fea-tures are rearranged and further reﬁned through an additional
+convolutional layer, combined with a multiplication opera-
+tion with the input. This structure enables the LFEA moduleto extract essential local information effectively and maintainthe completeness of input features, all without signiﬁcantly
+increasing the model’s computational demands.
+LAFA-Net architecture
+The advantages of the multi-head attention mechanism on
+global features include parallelized processing, multi-viewfocusing, improved model robustness, and integrated feature
+representations, which allows the model to capture multi-
+ple different global feature information simultaneously. Theoutput of the multi-head attention mechanism is a linear
+combination of the feature representations of multiple heads,
+which allows the model to synthesize global features throughfeature fusion at different scales. This type of feature fusion
+helps to extract richer information and allows for better adap-
+tation to different tasks. These advantages have made themulti-head attention mechanism one of the commonly usedtechniques in deep learning and have yielded good results in
+a variety of tasks.
+In order to guarantee the effective diagnosis of multiple
+faults in the pitch system, it is not enough to accurately cap-
+ture the local information of a single fault feature. On this
+basis, it is also necessary to have good overall learning abilityfor global context information. Thus, the local information
+of individual fault features is effectively integrated with the
+global information to ensure the accuracy of multi-fault clas-siﬁcation and the robustness of the diagnostic model. We
+123
+------------------------------End of the page -----------------------------------
+Complex & Intelligent Systems (2024) 10:8109–8125 8115
+Fig. 3 Structure of the LAFA-Net model
+propose a new feature learning architecture for LAFA-Net
+to effectively integrate local features and global information,reﬁne the learning ability of the network on features, and
+improve the learning efﬁciency of the model on valuable
+features. The core of the model consists of two parts: theLFEA module and the MHA. The LFEA module realizes the
+accurate capture and ampliﬁcation of local information, and
+the MHA realizes the extraction and learning of global infor-mation with different focuses. The two components work in
+conjunction with each other to enhance the model’s ability
+to model input features.
+For a given data set, the input is X
+i={ xi
+1,xi
+2,..., xi
+m}
+(i=1,2,..., n), where xi
+mis the nth data for the mth vari-
+able, the corresponding output is Y={ Y1,Y2,..., Yh}.I n
+the LAFA architectural model of Fig. 3, the inputs are ﬁltered
+with the feature variables ﬁrst extracted by the LFEA module
+to amplify the local features:
+L(x)=δ(P(δ(xn
+m))T;W)⊗xn
+m (16)
+where δ(·)is the convolution with ReLU being the activa-
+tion function, P(·)is the global average pooling operation,
+⊗is multiplication operation, and Wis the weights generated
+during the convolution operation. It is worth noting that thetranspose operation is an essential part of the ﬁnal ampliﬁca-
+tion of local features and preservation of global information.
+After the LFEA module, the feature information is fed to theMHA core module to realize the fusion of globally important
+features, which combines the outputs of multiple attention
+headers, and then utilizes a linear layer with learnable weights
+Wto aggregate these features to obtain the output of MHA:Z
+n=Concat (ζ(xn
+1) ,...ζ( xn
+m)) (17)
+ζ(xn
+m)=att(L(xn
+m)Wm
+q,L(xn
+m)Wm
+k,L(xn
+m)Wm
+v) (18)
+Subsequently, residual concatenation and layer normaliza-
+tion are performed on the output features of the MHA, an
+operation that effectively speeds up training while the offsetof the internal covariates is reduced:
+S
+n=LN(Xn+Zn) (19)
+LN(μ)=μ−¯μ√
+σ2+ε(20)
+where ¯μandσ2are the mean and variance of μ, respec-
+tively. Then, the output of layer normalization is fed into
+the combination module of convolutional and pooling lay-ers for the secondary learning of local features. The feature
+information is reﬁned by layer normalization and residual
+connection to complete the fusion of local features and theforward propagation learning process of global information.
+Finally, the ﬂattening operation and softmax classiﬁer are
+used to realize the classiﬁcation of different fault types andnormal operation states.
+Application of LAFA-Net and GACC for pitch fault
+diagnosis
+The application procedure of pitch fault diagnosis for WT on
+LAFA-Net model is shown in Fig. 4, and the speciﬁc details
+are as follows:
+123
+------------------------------End of the page -----------------------------------
+8116 Complex & Intelligent Systems (2024) 10:8109–8125
+Fig. 4 Application procedure of pitch fault diagnosis
+Step 1: Obtain raw sensor data from the turbine SCADA
+and intercept fault data from the fault log from the time of
+the fault to reset, as well as normal operation data prior to
+the fault.
+Step 2: The preliminary selected data are screened using
+the GACC method to eliminate redundant variables in the
+data.
+Step 3: The data retained in the various types of sensors are
+normalized to limit the data to a certain range and eliminate
+the adverse effects of outliers on the data itself.
+Step 4: The data is randomly disrupted and divided into
+a training set and a validation set, where 80% is the training
+set and 20% is the validation set.
+Step 5: The LAFA-Net model is ﬁrst trained with the train-
+ing set data, and then the validation set is used to test the
+performance of the model and the accuracy of the diagnosis
+of the paddle faults.
+Experiments
+In this section, we verify the effectiveness of our methodby validating pitch fault data collected by real SCADA. Thedeep learning framework used in this article is Keras, the
+backend engine is TensorFlow, the computer processor used
+is Intel(R) Core i5-5200u-CPU@2.20 Ghz, and Python isused to build CNN models in the Keras environment.
+Wind turbine pitch SCADA fault data
+The pitch system is the core sub-system for power regulationin a WT and adjusts the pitch angle of the turbine blades inreal time according to the wind speed to achieve the max-imum output of the turbine. As shown in the Fig. 5,t h e
+pitch actuator will match the blade position according to the
+pressure and wind speed from the blade. The nacelle mas-ter controller end action signals to the pitch drive, based on
+which, the impeller index angle and pitch angle are adjusted,
+and the change of the blade position is realized.
+The real SCADA data used in this article is from a 4MW
+DC-driven hydraulic WT at a wind farm in Shanghai, China.
+This data records a variety of types of fault data for the WTpitch system from July 2022 to January 2023, with a total of
+Fig. 5 Pitch control system
+Table 1 SCADA data variables
+No V ariable name No V ariable name
+1 Generator active power 12 Grid A phase voltage
+2 Generator reactive power 13 Grid B phase voltage3 Grid active power 14 Grid C phase voltage
+4 Grid reactive power 15 Grid A Line voltage
+5 Paddles set angle 16 Grid B Line voltage6 Paddle A pitch angle 17 Grid C Line voltage7 Paddle B pitch angle 18 Grid voltage8 Paddle C pitch angle 19 Grid frequency9 Paddle A pitch torque 20 Paddle A pitch press10 Paddle B pitch torque 21 Paddle B pitch press11 Paddle C pitch torque 22 Paddle C pitch press
+Table 2 Types of operational faults
+No Running status Label
+1 Proportional valves error 0
+2 Paris blades misaligned error 13 Blade speciﬁed position error 24 Pitch angle deviation error 35 Pitch system low pressure error 46N o r m a l 5
+18,000 sets of data, mainly including normal data and fault
+data within 10 s before and after the fault, with data sampled
+once at 10 ms on average. The operational data includes gen-
+erator active power, generator reactive power, pitch angle,pitch torque, etc.; the status data includes normal operationand fault status codes and reset time stamp records, etc. The
+speciﬁc data names and variables are shown in Tables 1and2.
+However, the data collected by the SCADA system can-
+not be trained immediately. SCADA collects fault data in
+the following manner. SACDA takes the fault timestamp as a
+reference when a turbine fault occurs, and then saves the nor-mal data for the 10 s before the fault timestamp and the fault
+data for the 10 s after. The data recorded after each fault is not
+always fault data, because the operation status will be reset tonormal operation after the fault is removed. At this time, the
+123
+------------------------------End of the page -----------------------------------
+Complex & Intelligent Systems (2024) 10:8109–8125 8117
+data recorded during the sampling time is the data during nor-
+mal operation, which leads to the fact that the data 10 s afterthe fault is not always considered as fault data. Therefore,
+using data recorded before and after the 10 s period would
+result in abnormal correlation of variables, leading to inaccu-rate diagnostic results. First, the valid fault data is interceptedbased on the time stamp of the fault and the reset time. Then,
+GACC is utilized to screen the features for each type of fault
+state. It is veriﬁed that a θvalue set to 0.5 in the pitch fault
+data satisﬁes the screened dataset enabling the model accu-
+racy optimal. Among the 22 feature variables in Table 1,ﬁ v e
+feature variables were excluded after GACC screening wereGrid A Line voltage, Grid B Line voltage, Grid B Line volt-
+age, Grid voltage, and Grid frequency. Finally, in order to
+achieve multi-fault diagnosis and classiﬁcation, the datasetscorresponding to the six different types of states are mixedand randomly disrupted. After all the above is done, 80% of
+all the ﬁnal data is divided into training set and 20% into
+validation set.
+Performance metric
+The corresponding evaluation metrics need to be adjusted
+for the multi-fault classiﬁcation problem. In addition to ac
+curacy, the F-score is used as an overall classiﬁcation perfor-mance metric as well as a classiﬁcation metric for individual
+categories. The F-score takes into account both the precision
+and recall of a model. By combining these two metrics, theF-score provides a more comprehensive and accurate assess-ment of a model’s classiﬁcation performance. In particular,
+in scenarios where a small number of categories are more
+important, the F score can better reﬂect the model’s clas-siﬁcation performance for most categories while focusing
+on a small number of categories. Therefore, F-score is a
+commonly used and reliable metric to help assess the clas-siﬁcation performance of a model. The calculation formula
+is given in Table 3, where TP , TN, FP , and FN refer to true
+positives, true negatives, false positives, and false negativesin class i, respectively. krepresents the number of classes
+being classiﬁed.
+GACC feature screening experiment
+In this subsection, we mainly discuss the effectiveness of theproposed GACC method after feature screening for improv-ing the ﬁnal accuracy of the model. Four datasets were
+used for validation respectively. Datasets 1 is the original
+data without any redundant feature screening, datasets 2 isthe data after screening using GACC, and datasets 3 and
+4 are the datasets with randomly screened feature variables,
+respectively. For consistency, the number of feature variablesscreened is the same as in datasets 2. However, the differenceTable 3 Performance metric and calculated expression
+Performance metric Calculated expression
+PrecisionTP
+TP+FP
+RecallTP
+TP+FN
+f1-score2(p recision ×recall )
+p recision +recall
+Micro-precision (MIP)/summationtextk
+i=1TP i/summationtextk
+i=1(TP i+FP i)
+Micro-recall (MIR)/summationtextk
+i=1TP i/summationtextk
+i=1(TP i+FN i)
+F-score2(MIP×MIR)
+NIP+MIR
+Accuracy/summationtextk
+i=1(TP i+TN i)/summationtextk
+i=1(TP i+TN i+FP i+FN i)
+Fig. 6 Experimental accuracy for Dataset 1, Dataset 2, Dataset 3 and
+Dataset 4
+is that the screened variables in datasets 3 contain a portion
+of the GACC screened variables, while datasets 4 does not.
+On the LAFA-Net model, the model accuracies obtained
+from the four datasets are 0.9533, 0.9956, 0.9767, and
+0.9522, respectively. It is not difﬁcult to get the accuracy
+curves from Fig. 6, which show that the accuracy on datasets
+2 is signiﬁcantly better than that on the other three datasets.
+The results on datasets 3 can also effectively reﬂect that
+the features screened by GACC can effectively improve themodel accuracy, because the randomly eliminated variables
+in datasets 3 contain some of the features screened by GACC.
+The validation loss and accuracy curves of the proposed
+method are given in Fig. 7, from which it can be seen that in
+the early stage of training presents a higher loss due to the
+initialization of the model parameters. With the continuation
+of the training process, the model is rapidly accelerated andgradually converges to a converged state after only 6 epochs,
+while also reaching a high accuracy. The ﬂuctuation of accu-
+racy and loss in the subsequent process becomes very stable.The results show that our method has good generalization
+and can achieve a stable high accuracy with fewer training
+epochs. From the above comparative experimental results,the GAAC feature screening method can effectively elimi-
+123
+------------------------------End of the page -----------------------------------
+8118 Complex & Intelligent Systems (2024) 10:8109–8125
+Fig. 7 LAFA-Net model validation loss, accuracy curves
+nate redundant features to achieve the effect of improving
+the accuracy of the model.
+Comparison with different deep learning methods
+for GACC
+In this subsection, the discussion focuses on the feasibil-
+ity of GACC’s screening results on several different models.We compare the performance of LAFA-Net with GRU [ 2],
+LSTM [ 32], CNN [ 44] and MHA models. All of these mod-
+els are more advanced and applicable in deep learning. CNNand MHA are models that are more sensitive to local featuresand globally valid information, respectively. GRU and LSTM
+are recurrent neural network-based models, which were ini-
+tially used in natural language processing, and are able tohave good learning classiﬁcation processing ability for small
+Fig. 8 LAFA-Net, CNN, GRU, LSTM and MHA accuracy curve com-
+parison in DataSets1
+sample sequence data, can effectively integrate dependencies
+between information, and do not need to consider the distanceproblem. These models can be compared with the LAFA
+model from three perspectives: local features, global infor-
+mation, and processing sequence data. We recorded accuracy,precision, and recall under LAFA-Net and four other baseline
+models. The results are shown in TABLE IV .
+From Table 4, it can be seen that the accuracy and MIP
+of all the models in datasets 2 (GACC-screened data) have
+been greatly improved, and the accuracy and precision of
+the CNN model have been improved by 11.66% and 7.54%compared to dataset 1, reaching 96.22% and 97.19%, respec-tively. In GRU, LSTM and MHA, the accuracy is improved
+to 94.33%, 94.38% and 98.33%, and the MIP is improved
+to 95.96%, 96.16% and 98.64% compared to datasets 1.However, the highest values of accuracy and MIP are still
+Table 4 Performance metrics of
+experimental results fordifferent models on Data1,Data2, Data3 and Data4Method CNN (%) GRU (%) LSTM (%) MHA (%) LAFA-Net (%)
+Datasets 1
+Accuracy 84.56 81.22 90.75 94.44 95.33MIP 89.65 94.21 89.74 95.68 96.03MIR 84.67 91.56 88.56 94.67 95.00
+Datasets 2
+Accuracy 96.33 94.33 94.78 98.33 99.56MIP 97.19 95.96 96.16 98.64 99.89MIR 96.67 94.67 95.22 98.56 99.89
+Datasets 3
+Accuracy 93.11 92.22 93.56 97.33 97.67
+MIP 95.02 94.27 94.80 97.29 97.82MIR 92.89 91.67 93.22 96.98 97.67
+Datasets 4
+Accuracy 90.67 82.44 82.56 91.33 95.22MIP 93.14 84.63 89.24 94.64 96.35MIR 91.33 81.22 82.11 93.44 95.33
+123
+------------------------------End of the page -----------------------------------
+Complex & Intelligent Systems (2024) 10:8109–8125 8119
+Fig. 9 LAFA-Net, CNN, GRU, LSTM and MHA accuracy curve com-
+parison in DataSets2in LAFA-Net, 99.56% and 99.89% respectively. It can be
+seen that our redundant feature screening method is able toeffectively improve the accuracy of the ﬁnal classiﬁcation
+results and the overall accuracy of the model, and the advan-
+tages of the LAFA-Net model over other models in termsof ﬁnal classiﬁcation accuracy and model MIP can also beeffectively veriﬁed.
+In terms of MIR, the average recall of the LAFA-Net
+model exceeds 95% on all four datasets. This is an indica-tion that LAFA-Net can accurately identify the majority of
+fault types, especially on dataset 2, where the MIR reaches
+99.89%, which is 1.33% higher compared to the highest of98.56% (MHA) among several other types of models. This
+indicates that only very few fault data are missed or misiden-
+Fig. 10 Categorical scatterplot of experimental results of different pitch fault diagnosis experiments in 2D space
+123
+------------------------------End of the page -----------------------------------
+8120 Complex & Intelligent Systems (2024) 10:8109–8125
+tiﬁed in the given dataset, which proves that our model
+achieves better performance in the practical application ofpitch fault diagnosis. Figures 8and 9show the accuracy
+curves of ﬁve different models on datasets 1 and 2. It can be
+seen that the proposed method converges signiﬁcantly fasterthan several other types of models during the training processand can quickly reach a higher level of accuracy with fewer
+training rounds. From this result, our method of local fea-
+ture fusion can effectively improve the training speed of themodel, and the full fusion of various types of local features
+of faults and the combination of the model’s own ability to
+learn global information is an effective means to improve thediagnostic accuracy of the model.
+Comparison of pitch fault diagnosis results
+In this subsection, we analyze and compare the actual clas-
+siﬁcation effects on several different types of models for the
+pitch fault datasets 2 (data screened by GACC). We use twometrics, F-score and f1-score, to measure the effect of indi-
+vidual models on overall fault classiﬁcation and single fault
+classiﬁcation, and also use t-distributed stochastic neighborembedding visualization technique to downscale the ﬁnaldata and present the ﬁnal classiﬁcation scatter plots. The
+visualization results of the ﬁve models for pitch fault diag-
+nosis results are shown in Fig. 10, where the different colors
+indicate the different pitch fault types. Obviously, among the
+output distributions in the visualized scatterplot, LAFA-Net
+ﬁnally has the best classiﬁcation results, which can accu-rately classify the distributions of almost all types of faults,
+and only one data point is neglected.
+In MHA and CNN, although a more satisfactory classiﬁ-
+cation result can be achieved, a part of fault states is obviouslyneglected in the ﬁnal distribution, which reduces the classi-
+ﬁcation accuracy of the model. However, the classiﬁcation
+effect of the output distribution in GRU and LSTM is theworst, and the problem of faults being ignored is improved
+compared to MHA and CNN, but the phenomenon of being
+misclassiﬁed obviously occurs again. Obviously, the LAFA-Net model can not only effectively identify the fault state
+and fault characteristics, but also show certain superiority in
+the ﬁnal classiﬁcation in the application of the actual paddlefault diagnosis.
+The f1-socre and recall results for single fault classiﬁca-
+tion are shown in Figs. 12and 13, where we can see that,
+in terms of both the effectiveness of the classiﬁcation andthe identiﬁcation of the faults, the LAFA-Net model has a
+higher F1-socre and recall for each class of faults than sev-
+eral other classes of models. From the overall classiﬁcationscore in Fig. 11, the overall score of our method has reached
+0.9989, which is at the highest level among all the models,
+5.36% higher than the GRU model with the lowest score, and1.34% higher than the MHA model with a relatively high
+Fig. 11 Overall F1-score of CNN, GRU, MHA, LSTM, LAFA-Net
+models for pitch fault diagnosis
+Fig. 12 F1-score of CNN, GRU, MHA, LSTM, and LAFA-Net models
+for six single type of pitch fault diagnosis
+Fig. 13 Recognition recall of CNN, GRU, MHA, LSTM, and LAFA-
+Net models for six single types of pitch fault diagnosis
+score. As for the performance of single fault classiﬁcation,
+our method scores on Fault 2 and Fault 3 are both 0.9967, andit scores 1 on several other fault types. The secondary better
+performer is the MHA model with scores of 0.9619, 0.9933,
+0.9934, and 0.9646 on Fault1 through Fault4, respectively.And the other three types of models are signiﬁcantly lower
+123
+------------------------------End of the page -----------------------------------
+Complex & Intelligent Systems (2024) 10:8109–8125 8121
+Fig. 14 Pitch fault diagnosis confusion matrices of different methods
+123
+------------------------------End of the page -----------------------------------
+8122 Complex & Intelligent Systems (2024) 10:8109–8125
+than these two types of models in terms of scores. In terms
+of fault recognition rate, the LAFA-Net model only has a99.33% recognition rate on Fault2, and the recognition rate
+of other types of fault states is 100%.
+The model classiﬁcation performance can be seen more
+intuitively in the confusion matrix, and Fig. 14shows the con-
+fusion matrix of the classiﬁcation results of the ﬁve models
+on datasets 2. After fusing the local features of a single fault,
+the classiﬁcation performance of LAFA-Net on all types offaults reaches a high level. From the confusion matrix results
+of the LAFA-Net model, it is easy to see that the classi-
+ﬁcation results are basically concentrated on the diagonalelements of the matrix, and only one data point is misclas-
+siﬁed. Compared with the classiﬁcation confusion matrix
+results of other types of models, the proposed method out-performs other types in overall classiﬁcation performanceand achieves a high classiﬁcation accuracy. In summary,
+the above results strongly demonstrate that our method has
+efﬁcient fault recognition and excellent classiﬁcation per-formance for practical fault diagnosis applications, which
+outperforms other models of the same type.
+Comparison with state-of-the-art deep learning
+methods for pitch fault diagnosis
+In this paper, some popular fault diagnosis models are
+selected for comparative experimental validation in supportof demonstrating the advantages of LAFA-Net. The Adam
+optimization algorithm with learning rate of 0.001 is used in
+all the training processes. The selected fault diagnosis modelsinclude:
+(1) MS-Resnet: a multiscale residual network based on 1D-
+CNN, which improves the feature learning ability of
+the model by extracting spatial multiscale features fromSCADA data, and is applied to fault diagnosis of WTs
+[9];
+(2) SC-1DCNN: a self-calibrated 1D-CNN based on self-
+calibration, which can effectively learn shared features
+from data, and consider both marginal and conditional
+distributions for fault diagnosis models [ 13];
+(3) MF-DCRN: a CNN with a multi-acceptance domain
+denoising block which is used to enhance the deep fea-
+tures and ﬁlter out the interfering feature information.
+The adaptive feature integration module is embedded inthe CNN model to better utilize the extracted informa-
+tion, effectively realizing the fault diagnosis of gearboxes
+and industrial pumps [ 35].
+Figure 15shows the experimental accuracy curves of MS-
+Resnet, SC-1DCNN, MF-DCRN and LAFA-Net on the WT
+pitch fault dataset. It can be seen that on the basis of thesame epochs, LAFA-Net converges signiﬁcantly faster than
+Fig. 15 Accuracy curves of MS-Resnet, SC-1DCNN, MF-DRCN, and
+LAFA-Net models for six single types of pitch fault diagnosis
+Fig. 16 F-score, MIR and MIP of MS-Resnet, SC-1DCNN, MF-
+DRCN, and LAFA-Net models for six single types of pitch faultdiagnosis
+the other models and can converge stably at a higher accu-
+racy rate. From the comparison results of F-score, MIR and
+MIP for fault classiﬁcation in Fig. 16, our method performs
+the best among the four types of models while MS-Resnet
+performs the worst. Both F-score, MIR, and MIP values,
+LAFA-Net reaches the highest value of 0.9989. In addition,the advantages of LAFA-Net compared to the other severalclasses of models can be more intuitively seen from the con-
+fusion matrix of the classiﬁcation results in Fig. 17. Among
+the ﬁnal results of the four classes of models, only LAFA-Nethas more elements clustered on the diagonal in its confusion
+matrix. Overall, these results are a good validation that in
+general, our method has a great advantage in fault diagnosisoriented to actual WT pitch fault data.
+Conclusion
+In this paper, we have introduced a novel metric, namely,the Global Average Correlation Coefﬁcient (GACC), forredundant feature screening. The proposed GACC effectively
+123
+------------------------------End of the page -----------------------------------
+Complex & Intelligent Systems (2024) 10:8109–8125 8123
+Fig. 17 Pitch fault diagnosis confusion matrices of MS-Resnet, SC-1DCNN, MF-DRCN, and LAFA-Net
+synthesizes the degree of correlation between a single vari-
+able and other variables in a multivariate system, addressingthe limitations of traditional PCC. The usage of GACC-
+screened datasets enhances the accuracy of various models
+in pitch fault diagnosis, ensuring that the most effective fea-tures in the dataset are utilized to their fullest potential. To
+address the issue of traditional deep CNNs often neglecting
+global context information when extracting local features,we have proposed a multi-attention based LAFA-Net and
+further introduced an LFEA module to comprehensively
+extract effective features of a single type of pitch fault.The LAFA-Net architecture has effectively integrated thestrengths of convolutional networks in local feature learn-ing and MHA in global feature learning, thereby realizing
+efﬁcient pitch fault diagnosis. It has been demonstrated viacomparative experiments with various models and datasets
+that the GACC-screened dataset has signiﬁcantly improved
+the convergence speed and accuracy of fault diagnosis classi-ﬁcation. The LAFA-Net model has shown superior accuracy
+and recognition rates in pitch fault diagnosis compared to sev-
+eral other models. These results have convincingly illustratedthe considerable advantage of this new method in practical
+pitch fault diagnosis applications, which marks a signiﬁcant
+advancement in the ﬁeld. In the future, we aim to (1) applythe proposed LAFA-Net for fault diagnosis of other indus-trial processes e.g., manufacturing and medical engineering
+123
+------------------------------End of the page -----------------------------------
+8124 Complex & Intelligent Systems (2024) 10:8109–8125
+[4,10,28,36,41,47], (2) integrate model-driven methods
+to improve the detection system based on signal processing,state estimation, and ﬁltering approaches [ 5,17,29,53–56],
+(3) develop a new control strategy to adaptively extract pat-
+terns and features in a multi-modal manner [ 8,14,37,45],
+and (4) employ evolutionary computation algorithms to opti-mize the hyperparameters of the LAFA-Net [ 3,15,19,22,
+31].
+Funding This work was supported in part by the European Union’s
+Horizon 2020 Research and Innovation Programme under Grant 820776(INTEGRADDE), the Royal Society of the UK, the Alexander vonHumboldt Foundation of Germany, the BRIEF Award of Brunel Uni-versity London in theUK, and the Capacity Building Project of ShanghaiLocal Colleges and Universities of China under Grant 22010501100.
+Data availability The data that support the ﬁndings of this study are
+available from the corresponding author, C. Wen, upon reasonablerequest.
+Declarations
+Conﬂict of interest The authors declare that they have no known com-
+peting ﬁnancial interests or personal relationships that could haveappeared to inﬂuence the work reported in this paper.
+Open Access This article is licensed under a Creative Commons
+Attribution-NonCommercial-NoDerivatives 4.0 International License,which permits any non-commercial use, sharing, distribution and repro-duction in any medium or format, as long as you give appropriate creditto the original author(s) and the source, provide a link to the CreativeCommons licence, and indicate if you modiﬁed the licensed mate-rial. Y ou do not have permission under this licence to share adaptedmaterial derived from this article or parts of it. The images or otherthird party material in this article are included in the article’s CreativeCommons licence, unless indicated otherwise in a credit line to thematerial. If material is not included in the article’s Creative Commonslicence and your intended use is not permitted by statutory regula-tion or exceeds the permitted use, you will need to obtain permissiondirectly from the copyright holder. To view a copy of this licence, visithttp://creativecommons.org/licenses/by-nc-nd/4.0/ .
+References
+1. Dou J, Song Y (2023) An improved generative adversarial network
+with feature ﬁltering for imbalanced data. Int J Netw Dyn Intell
+2(4):100017
+2. Encalada-Dávila Á, Moyón L, Tutivén C, Puruncajas B, Vidal Y
+(2022) Early fault detection in the main bearing of wind turbinesbased on gated recurrent unit (GRU) neural networks and SCADAdata. IEEE/ASME Trans Mech 27(6):5583–5593
+3. Fang J, Liu W, Chen L, Lauria S, Miron A, Liu X (2023) A survey
+of algorithms, applications and trends for particle swarm optimiza-tion. Int J Netw Dyn Intell 2(1):24–50
+4. Fang J, Wang Z, Liu W, Lauria S, Zeng N, Prieto C, Sikström F, Liu
+X (2024) A new particle swarm optimization algorithm for outlierdetection: industrial data clustering in wire arc additive manufac-turing. IEEE Trans Autom Sci Eng 21(2):1244–1257
+5. Feng S, Li X, Zhang S, Jian Z, Duan H, Wang Z (2023) A review:
+state estimation based on hybrid models of Kalman ﬁlter and neuralnetwork. Syst Sci Control Eng 11(1):21736826. Gan M, Zhang L (2021) Iteratively local ﬁsher score for feature
+selection. Appl Intell 51(8):6167–6181
+7. Guha R, Ghosh M, Mutsuddi S, Sarkar R, Mirjalili S (2020) Embed-
+ded chaotic whale survival algorithm for ﬁlter-wrapper featureselection. Soft Comput 24(17):12821–12843
+8. Han F, Liu J, Li J, Song J, Wang M, Zhang Y (2023) Consensus
+control for multi-rate multi-agent systems with fading measure-ments: the dynamic event-triggered case. Syst Sci Control Eng11(1):2158959
+9. He Q, Pang Y , Jiang G, Xie P (2021) A spatio-temporal multi-
+scale neural network approach for wind turbine fault diagnosis withimbalanced SCADA data. IEEE Trans Ind Inform 17(10):6875–6884
+10. He G, Hu M, Shen Z (2023) Consensus of switched multi-agents
+system with cooperative and competitive relationship. Syst SciControl Eng 11(1):2192008
+11. Jiang L, Kong G, Li C (2021) Wrapper framework for test-cost-
+sensitive feature selection. IEEE Trans Syst Man Cybern Syst51(3):1747–1756
+12. Jin X, Xu Z, Qiao W (2021) Condition monitoring of wind turbine
+generators using SCADA data analysis. IEEE Trans Sustain Energy12(1):202–210
+13. Li S, Y u J (2022) Deep transfer network with adaptive joint distri-
+bution adaptation: a new process fault diagnosis mode. IEEE TransInstrum Meas 71:3507813
+14. Li X, Song Q, Zhao Z, Liu Y , Alsaadi FE (2022) Optimal control
+and zero-sum differential game for Hurwicz model consideringsingular systems with multifactor and uncertainty. Int J Syst Sci53(7):1416–1435
+15. Li H, Liu H, Lan C, Yin Y , Wu P , Yan C, Zeng N (2023) SMWO/D:
+a decomposition-based switching multi-objective whale optimiserfor structural optimisation of turbine disk in aero-engines. Int J SystSci 54(8):1713–1728
+16. Li X, Li M, Yan P , Li G, Jiang Y , Luo H, Yin S (2023) Deep
+learning attention mechanism in medical image analysis: basicsand beyonds. Int J Netw Dyn Intell 2(1):93–116
+17. Li X, Song Q, Liu Y , Alsaadi FE (2023) Saddle-point equilib-
+rium for Hurwicz model considering zero-sum differential game ofuncertain dynamical systems with jump. Int J Syst Sci 54(2):357–370
+18. Liu H, Ren G, Dai T, Zhang D, Xu P , Zhang W, Hu B (2023)
+Diversity-oriented contrastive learning for RGB-T scene pars-ing, In: Proceedings of 2nd international conference on sensing,measurement, communication and internet of things technologies,Changsha, China
+19. Ma G, Wang Z, Liu W, Fang J, Zhang Y , Ding H, Y uan Y (2023)
+Estimating the state of health for lithium-ion batteries: a parti-
+cle swarm optimization-assisted deep domain adaptation approach.
+IEEE/CAA J Autom Sin 10(7):1530–1543
+20. Patel SP , Upadhyay SH (2020) Euclidean distance based feature
+ranking and subset selection for bearing fault diagnosis. ExpertSyst Appl 154
+21. Qin W, Luo X, Zhou M (2024) Adaptively-accelerated parallel
+stochastic gradient descent for high-dimensional and incompletedata representation learning. IEEE Trans Big Data 10(1):92–107
+22. Rostami M, Forouzandeh S, Berahmand K, Soltani M (2020) Inte-
+gration of multi-objective PSO based feature selection and nodecentrality for medical datasets. Genomics 112(6):4370–4384
+23. Shakiba FM, Shojaee M, Azizi SM, Zhou M (2022) Real-time
+sensing and fault diagnosis for transmission lines. Int J Netw DynIntell 1(1):36–47
+24. Tong G, Li Q, Song Y (2023) Two-stage reverse knowledge dis-
+tillation incorporated and self-supervised masking strategy forindustrial anomaly detection. Knowl-Based Syst 273:110611
+25. Tu T, Su Y , Tang Y , Guo G, Tan W, Ren S (2024) SHFW: second-
+order hybrid fusion weight—median algorithm based on machining
+123
+------------------------------End of the page -----------------------------------
+Complex & Intelligent Systems (2024) 10:8109–8125 8125
+learning for advanced IoT data analytics. Wirel Netw https://doi.
+org/10.1007/s11276-023-03395-5 (in press)
+26. Wang D, Cao C, Chen N, Pan W, Li H, Wang X (2022) A
+correlation-graph-CNN method for fault diagnosis of wind turbinebased on state tracking and data driving model. Sustain EnergyTechnol Assess 56:102995
+27. Wang C, Wang Z, Liu W, Shen Y , Dong H (2023) A novel
+deep ofﬂine-to-online transfer learning framework for pipelineleakage detection with small samples. IEEE Trans Instrum Meas72:3503913
+28. Wang D, Shi S, Lu J, Hu Z, Chen J (2023) Research on gas pipeline
+leakage model identiﬁcation driven by digital twin. Syst Sci ControlEng 11(1):2180687
+29. Wang Y -A, Shen B, Zou L, Han Q-L (2023) A survey on recent
+advances in distributed ﬁltering over sensor networks subject tocommunication constraints. Int J Netw Dyn Intell 2(2):100007
+30. Wang C, Wang Z, Ma L, Dong H, Sheng W (2023) A novel
+contrastive adversarial network for minor-class data augmenta-tion: applications to pipeline fault diagnosis. Knowl-Based Syst271:110516
+31. Wang Y , Liu W, Wang C, Fadzil F, Lauria S, Liu X (2023) A
+novel multi-objective optimization approach with ﬂexible opera-
+tion planning strategy for truck scheduling. Int J Netw Dyn Intell
+2(2):100002
+32. Xiang L, Wang P , Yang X, Hu A, Su H (2021) Fault detection
+of wind turbine based on SCADA data analysis using CNN andLSTM with attention mechanism. Measurement 175:109094
+33. Xie S, Zhang Y , Lv D, Chen X, Lu J, Liu J (2023) A new improved
+maximal relevance and minimal redundancy method based on fea-ture subset. J Supercomput 79:3157–3180
+34. Xu J, Tang B, He H, Man H (2017) Semisupervised feature selec-
+tion based on relevance and redundancy criteria. IEEE Trans NeuralNetw Learn Syst 28(9):1974–1984
+35. Xu Y , Yan X, Sun B, Zhai J, Liu Z (2022) Multireceptive ﬁeld
+denoising residual convolutional networks for fault diagnosis.IEEE Trans Ind Electron 69(11):11686–11696
+36. Xu X, Lin M, Luo X, Xu Z (2023) HRST-LR: a Hessian regulariza-
+tion spatio-temporal low rank algorithm for trafﬁc data imputation.IEEE Trans Intell Transport Syst 24(10):11001–11017
+37. Y u L, Cui Y , Liu Y , Alotaibi ND, Alsaadi FE (2022) Sampled-
+based consensus of multi-agent systems with bounded distributedtime-delays and dynamic quantisation effects. Int J Syst Sci53(11):2390–2406
+38. Y uan Y , Zhang H, Wu Y , Zhu T, Ding H (2016) Bayesian learning-
+based model-predictive vibration control for thin-walled workpiecemachining processes. IEEE/ASME Trans Mech 22(1):509–520
+39. Y uan Y , Tang X, Zhou W, Pan W, Li X, Zhang H-T, Ding H,
+Goncalves J (2019) Data driven discovery of cyber physical sys-
+tems. Nat Commun 10(1):1–9
+40. Y uan Y , Ma G, Cheng C, Zhou B, Zhao H, Zhang H-T, Ding H
+(2020) A general end-to-end diagnosis framework for manufactur-ing systems. Natl Sci Rev 7(2):418–429
+41. Zeng N, Li X, Wu P , Li H, Luo X (2024) A novel ten-
+sor decomposition-based efﬁcient detector for low-altitude aerialobjects with knowledge distillation scheme. IEEE/CAA J AutomSin 11(2):487–501
+42. Zeng R, Qin Y , Song Y (2024) A non-iterative capsule network with
+interdependent agreement routing. Expert Syst Appl 238:12228443. Zhang K, Tang B, Deng L, Y u X, Wei J (2021) Fault source location
+of wind turbine based on heterogeneous nodes complex network.Eng Appl Artif Intell 103:104300
+44. Zhang G, Li Y , Zhao Y (2023) A novel fault diagnosis method for
+wind turbine based on adaptive multivariate time-series convolu-tional network using SCADA data. Adv Eng Inform 57:102031
+45. Zhang Y , Zou L, Liu Y , Ding D, Hu J (2023) A brief survey
+on nonlinear control using adaptive dynamic programming underengineering-oriented complexities. Int J Syst Sci 54(8):1855–1872
+46. Zhang Z, Zhou F, Zhang C, Wen C, Hu X, Wang T (2023) A per-
+sonalized federated learning-based fault diagnosis method for datasuffering from network attacks. Appl Intell 53:22834–22849
+47. Zhang Y , Lan R, Li X, Fang J, Ping Z, Liu W, Wang Z Class imbal-
+ance wafer defect pattern recognition based on shared-databasedecentralized federated learning framework. IEEE Trans Instrum
+Meas https://doi.org/10.1109/TIM.2024.3395316 (in press)
+48. Zheng J, Zhang S, Wang Z, Wang X, Zeng Z (2023) Multi-channel
+weight-sharing autoencoder based on cascade multi-head atten-tion for multimodal emotion recognition. IEEE Trans Multimed25:2213–2225
+49. Zhong T, Qu J, Fang X, Li H, Wang Z (2021) The intermittent fault
+diagnosis of analog circuits based on EEMD-DBN. Neurocomput-
+ing 436:74–91
+50. Zhou H, Guo J, Wang Y (2016) A feature selection approach based
+on term distributions. SpringerPlus 5(1):1–14
+51. Zhou H, Wang X, Zhu R (2022) Feature selection based on mutual
+information with correlation coefﬁcient. Appl Intell 52:5457–5474
+52. Zhu Q, Yang Y (2018) Discriminative embedded unsupervised fea-
+ture selection. Pattern Recognit Lett 112:219–225
+53. Zou L, Wang Z, Geng H, Liu X (2021) Set-membership ﬁltering
+subject to impulsive measurement outliers: a recursive algorithm.IEEE/CAA J Autom Sin 8(2):377–388
+54. Zou L, Wang Z, Shen B, Dong H (2023) Encryption-decryption-
+based state estimation with multi-rate measurements against eaves-droppers: a recursive minimum-variance approach. IEEE TransAutom Control 68(12):8111–8118
+55. Zou L, Wang Z, Shen B, Dong H (2023) Moving horizon estima-
+tion over relay channels: dealing with packet losses. Automatica155:111079
+56. Zou L, Wang Z, Shen B, Dong H, Lu G (2023) Encrypted ﬁnite-
+horizon energy-to-peak state estimation for time-varying systemsunder eavesdropping attacks: tackling secrecy capacity. IEEE/CAAJ Autom Sin 10(4):985–996
+Publisher’s Note Springer Nature remains neutral with regard to juris-
+dictional claims in published maps and institutional afﬁliations.
+123
+------------------------------End of the page -----------------------------------
