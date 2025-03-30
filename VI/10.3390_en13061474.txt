@@ -1,0 +1,817 @@
+energies
+Article
+Diagnosis of Faulty Wind T urbine Bearings Using
+Tower Vibration Measurements†
+Francesco Castellani1
+, Luigi Garibaldi2
+, Alessandro Paolo Daga2
+, Davide Astolﬁ1,*
+and Francesco Natili1
+1Department of Engineering, University of Perugia, Via G. Duranti 93, 06125 Perugia, Italy;
+francesco.castellani@unipg.it (F.C.); francesco.natili@studenti.unipg.it (F.N.)
+2Department of Mechanical and Aerospace Engineering, Politecnico di Torino, Corso Duca degli Abruzzi 24,
+10129 Torino, Italy; luigi.garibaldi@polito.it (L.G.); alessandro.daga@polito.it (A.P .D.)
+*Correspondence: davide.astolﬁ@unipg.it; Tel.: +39-075-585-3709
+† This paper is an extended version of our paper published in Surveillance, Vibrations, Shocks and Noise
+(SURVISHNO 2019), Lyon, France, 8–10 July 2019.
+Received: 30 January 2020; Accepted: 17 March 2020; Published: 20 March 2020
+/gid00030/gid00035/gid00032/gid00030/gid00038/gid00001/gid00033/gid00042/gid00045 /gid00001
+/gid00048/gid00043/gid00031/gid00028/gid00047/gid00032/gid00046
+Abstract: Condition monitoring of gear-based mechanical systems in non-stationary operation
+conditions is in general very challenging. This issue is particularly important for wind energy
+technology because most of the modern wind turbines are geared and gearbox damages account for at
+least the 20% of their unavailability time. In this work, a new method for the diagnosis of drive-train
+bearings damages is proposed: the general idea is that vibrations are measured at the tower instead
+of at the gearbox. This implies that measurements can be performed without impacting the wind
+turbine operation. The test case considered in this work is a wind farm owned by the Renvico
+company, featuring six wind turbines with 2 MW of rated power each. A measurement campaign
+has been conducted in winter 2019 and vibration measurements have been acquired at ﬁve wind
+turbines in the farm. The rationale for this choice is that, when the measurements have been acquired,
+three wind turbines were healthy, one wind turbine had recently recovered from a planetary bearing
+fault, and one wind turbine was undergoing a high speed shaft bearing fault. The healthy wind
+turbines are selected as references and the damaged and recovered are selected as targets: vibration
+measurements are processed through a multivariate Novelty Detection algorithm in the feature
+space, with the objective of distinguishing the target wind turbines with respect to the reference ones.
+The application of this algorithm is justiﬁed by univariate statistical tests on the selected time-domain
+features and by a visual inspection of the data set via Principal Component Analysis. Finally, a novelty
+index based on the Mahalanobis distance is used to detect the anomalous conditions at the damaged
+wind turbine. The main result of the study is that the statistical novelty of the damaged wind turbine
+data set arises clearly, and this supports that the proposed measurement and processing methods
+are promising for wind turbine condition monitoring.
+Keywords: wind energy; wind turbines; condition monitoring; vibration analysis; signal processing
+1. Introduction
+The diagnosis of gears and bearings faults of gearbox systems [ 1] is particularly challenging,
+especially if the machine of interest is subjected to non-stationary operation conditions.
+Most of the wind turbines currently operating for industrial uses have a three-stage gearbox
+for transforming the rotation of the blades (order of 10 revolutions per minute) into the generator
+rotational speed. There are several studies about wind turbine reliability [ 2,3] and down-time rates [ 4],
+and it is estimated [ 5] that at least 20% of the non-availability time of a wind turbine is caused by a
+Energies 2020 ,13, 1474; doi:10.3390/en13061474 www.mdpi.com/journal/energies
+------------------------------End of the page -----------------------------------
+Energies 2020 ,13, 1474 2 of 18
+gearbox failure. Therefore, the development of effective gearbox condition monitoring techniques is a
+keystone for the optimization of wind turbine availability and for the energy cost minimization.
+Nevertheless, the elaboration and interpretation of drive-train vibration measurements
+are complex and this matter of fact produces an under-exploitation of this kind of data in the wind
+energy practitioners community. Oil particle counting [ 6] and operation data analysis (especially
+temperatures, as, for example, in [ 7–11]) are widely used techniques for condition monitoring:
+they are more easily interpretable, but the drawback is that they furnish a later stage and more
+uncertain fault diagnosis, with respect to sub-component vibration spectra analysis. This remark
+is supported quantitatively in the work [ 12], where large amounts of labeled wind turbine supervisory
+control and data acquisition (SCADA) and vibration data have been processed, and the conclusion
+is that operation data can be used for reliably diagnosing a failure approximately one month before
+it occurs, while high frequency vibration data can be used to extend the accurate prediction capability
+to ﬁve to six months before failure. Furthermore, using operation data analysis, the fault diagnosis can
+successfully be performed through Artiﬁcial Intelligence techniques approximately 75% of the time,
+while, using vibration data, this percentage rises to 100%.
+On these grounds, it is particularly valuable to develop vibration measurement and analysis
+techniques that can reliably spread in the wind energy industry practice, and the present study aims at
+providing a contribution to this objective.
+The literature about vibration analysis for wind turbine condition monitoring has been particularly
+developing in the latest years: for example, in [ 13], data mining algorithms and statistical methods
+are used for interpreting vibration measurements collected at wind turbine gearbox in the time
+and frequency domains. In [ 14], three techniques are proposed for wind turbine gearbox condition
+monitoring in the time-domain: signal correlation, extreme vibration, and Root Mean Square
+(RMS) intensity. RMS and extreme values result in being particularly meaningful damage indicators.
+The work in [ 15] deals with condition monitoring of wind turbine drive-train bearings, and an
+important challenge is successfully tackled: the separation of the faulty bearing signatures from
+the masking signals, due to the other rolling elements like the gears or the shafts. This can be obtained
+on the basis of the fact that the signatures due to gears and shafts are deterministic and bearing
+signatures are stochastic and can be treated as cyclo-stationary [ 16] around their fundamental period.
+In [17], a simpliﬁed nonlinear gear model is at ﬁrst developed, on which a time–frequency method
+is applied for a ﬁrst overview; subsequently, the case of varying loads is examined through Empirical
+Mode Decomposition (EMD), for decomposing the vibration signals into meaningful components
+associated with speciﬁc frequency bands. The EMD is employed also in [ 18], where an enhanced
+Empirical Wavelet Transform method is proposed and tested on open access data of wind turbine
+gears and bearings: the results support that the proposed method is effective for segmenting
+the frequency spectrum of the signal and for detecting the fault-related features. In [ 19], a critical
+analysis of the synchrosqueezing transform for the representation of non-stationary signals is proposed:
+for this aim, the synchrosqueezing transform is improved using iterative generalized demodulation
+and the proposed method is validated using both numerically simulated and experimental vibration
+signals of wind turbines planetary gearboxes. Finally, for comprehensive and recent reviews about
+wind turbine drive-train condition monitoring techniques, refer to [12,20,21].
+Basing on the above literature discussion, it can be fairly stated that many powerful techniques
+for the analysis of wind turbine vibration signatures are based on cyclo-stationarity. The downside
+is that this kind of analysis is particularly demanding as regards the data because, for example,
+the angular speed must be measured at high sampling rates, and this is not guaranteed even by using
+time-resolved operation data (as, for example, the ones analyzed in [ 22,23]): for this reason, most
+of the studies deal with numerical simulations [ 19] and laboratory test rig measurements [ 24]. On the
+other side, it should be noticed that industrial wind turbines are commonly equipped with commercial
+condition monitoring systems: these do not stock measurements continuously (they record when some
+trigger events occur) and stock them in treated form instead of raw.
+------------------------------End of the page -----------------------------------
+Energies 2020 ,13, 1474 3 of 18
+As regards the circumvention of the above limitations, one remarkable study is [ 25]: it resulted in
+being inspiring for the purposes of the present work because it dealt with wind turbine generators’
+condition monitoring through the analysis of sound and vibration measured at the tower. Empirical
+Mode Decomposition (EMD) is employed for processing the measurements and the results of this
+analysis are put in relation with the vibrations collected directly at the sub-component of interest.
+The conclusion of [25] is that tower vibrations contain intelligible signatures of the generator bearing
+damage. Other inspiring studies for the purposes of the present work are [ 26–28] because dealing with
+the analysis of very extremely modulated real-world wind turbine gearboxes data. The study in [ 28]
+deals with vibration data sets provided by Suzlon, and it shows that the Signal Intensity Estimator
+(SIE) offers a good overall picture of time-frequency space by which a broken gear tooth could
+simply be identiﬁed. Data-inspection techniques similar to the ones of this work are adopted, as, for
+example, the Principal Component Analysis on a set of statistical features computed from the vibration
+data. The use of Signal Intensity Estimator as a time-frequency fault indicator has been explored
+and supported also in [ 26]: the selected test case is a bearing outer race fault at a Repower wind
+turbine. The case has been selected because it has been considered very representative of scenarios
+where factors such as structural noise and variation in speed and load lead to different modulation
+rates of the vibration signals. The use of Signal Intensity Estimator for bearing damage detection
+is discussed as well in [ 27], where comparisons are carried against commonly employed statistical
+indicators like kurtosis and crest factor.
+On these grounds, the present study is devoted to the analysis and post-processing of tower
+vibrations for condition monitoring of drive-train bearings of horizontal-axis wind turbines.
+A qualifying point of this work is that it is based on a particularly valuable real test-case discussion.
+Measurements have been collected at a wind farm sited in Italy, owned by Renvico (a company
+managing around 340 MW of wind turbines in Italy and France, www.renvicoenergy.com), featuring
+six 2 MW wind turbines. Five wind turbines have been selected for this study: three reference healthy
+ones and two target ones. The former target wind turbine is damaged at the high-speed shaft bearing,
+the latter target wind turbine had a planetary shaft bearing damage, and the bearing of interest was
+substituted some weeks before the measurement campaign was conducted. Therefore, the two target
+wind turbines are a damaged and a recovered one. The non-stationary conditions to which wind
+turbines are subjected are taken into account in the proposed methods by aggregating measurements
+acquired simultaneously at the highest possible number of wind turbines under the assumption
+they are subjected to the same wind ﬁeld (which is not true, but commonly acceptable). Given
+the limited number of available instrumentation (i.e., two acquisition systems), it has been assumed
+acceptable also to compare nearly-simultaneous time series (i.e., collected consecutively, order of some
+minutes) because the variation of the wind ﬁeld on such a time scale does not affect the robustness
+of the measurement processing algorithm.
+If the methods proposed in this work are reliable, it should be possible to distinguish the damaged
+target wind turbine with respect to the reference healthy ones, while the recovered wind turbine should
+be indistinguishable with respect to the reference ones. In this work, it is shown that this is indeed
+the case. In summary, the post-processing algorithm proceeds as follows: vibration measurements
+are analyzed through a multivariate Novelty Detection algorithm in the feature space, whose reliability
+is supported by univariate analysis of variance on the selected time-domain features and by Principal
+Component Analysis. Finally, a novelty index based on the Mahalanobis distance is used to distinguish
+the target from the reference wind turbines.
+The results collected in this work support that the proposed measurement and post-processing
+methods are reliable for effective condition monitoring of wind turbine drive-train bearings. it should
+be noticed that an important point of strength of this work is the fact that measurements are collected
+at the tower, without intervening in the normal operation of the wind turbines of interest. This is a
+remarkable aspect about the generalization and repeatability of the proposed methods and it deals as
+well with open access ideology because it allows circumventing, with a relatively low cost, the fact
+------------------------------End of the page -----------------------------------
+Energies 2020 ,13, 1474 4 of 18
+that raw vibration data from commercial condition monitoring systems are typically at the disposal of
+only of wind farm manufacturers, thus excluding wind farm owners and managers and scholars.
+The structure of the manuscript is the following: in Section 2, the test case, the measurements,
+and the collected data sets are introduced. Section 3 is devoted to the methodology description, while
+the results are collected and discussed in Section 4. Finally, conclusions are drawn in Section 5.
+2. The Test-Case and the On-Site Measurements
+The wind farm is comprised of six multi-MW wind turbines, and it is located in southern Italy.
+The layout of the wind farm is reported in Figure 1: the lowest inter-turbine distance on site is on
+the order of seven rotor diameters. The damaged wind turbine (WTG03) is indicated in red, the healthy
+reference wind turbines (WTG02, WTG04, WTG05) are indicated in green, and the recovered wind
+turbine (WTG06) is indicated in blue. The damage at WTG03 regards the high speed shaft bearing,
+and the recovered damage at WTG06 is regarded as a planetary bearing. The damage at WTG03 has
+been independently diagnosed on the basis of oil particle counting; the severity of the damage was
+not high enough to request wind turbine stop (otherwise, the present analysis would not have been
+possible). In order to provide a qualitative indication of the damage severity, consider that the bearing
+of interest has been replaced three and a half months after the measurement campaign of this work
+was conducted.
+Figure 1. The layout of the wind farm. The healthy wind turbines are indicated in green, the damaged
+in red, and the recovered in blue.
+The measurement procedure is the following: accelerometers have been employed inside the tower
+of the wind turbine, measuring the longitudinal ( x-axis) and transversal ( y-axis) vibrations at a
+height of the order of two meters with respect to the tower base. A sketch is reported in Figure 2.
+Each acquisition therefore consists of two channels, and these are sampled at 12.8 kHz for at least
+2 min.
+The wind turbine owner and the wind turbine manufacturer have provided in real time operation
+data having a sampling time of the order of the second. These have been used to verify that the wind
+turbines were undergoing reasonably similar conditions and were operating in a reasonably similar
+way. It has been observed that this was the case. Despite the fact that the reliability of the method
+is not considered to depend on the particular conditions on site, as long as these conditions are similar
+for all the measurement acquisitions; for completeness sake, it is reported that, during the acquisitions
+of Table 1, the prevailing wind intensity and direction were respectively 7 m/s and 330for all the wind
+------------------------------End of the page -----------------------------------
+Energies 2020 ,13, 1474 5 of 18
+turbines. The average produced power was on the order of 30% of the rated. An interesting observation
+regards the fact that the measurements employed in this study have been collected at a low-moderate
+wind intensity; commercial condition monitoring techniques—instead, trigger and stock data at the
+disposal only at rated power.
+Figure 2. Deﬁnition of the reference frame for the longitudinal and the transversal directions.
+Table 1. The time series selection.
+TS Number Wind T urbine Wind T urbine Status Acquisition Time Use Generator rpm
+1 WTG02 healthy 14:15 reference - calibration 1362
+2 WTG04 healthy 14:55 reference - calibration 1199
+3 WTG05 healthy 15:25 reference - calibration 1185
+4 WTG02 healthy 14:25 reference - validation 1242
+5 WTG04 healthy 15:05 reference - validation 1376
+6 WTG05 healthy 15:35 reference - validation 1083
+7 WTG06 repaired 13:00 target - validation 1694
+8 WTG06 repaired 13:10 target - validation 1584
+9 WTG06 repaired 13:20 target - validation 1537
+10 WTG03 damaged 13:00 target - validation 1585
+11 WTG03 damaged 13:10 target - validation 1468
+12 WTG03 damaged 13:20 target - validation 1579
+13 WTG03 damaged 14:15 target - validation 1338
+14 WTG03 damaged 14:25 target - validation 1399
+15 WTG03 damaged 14:55 target - validation 1333
+16 WTG03 damaged 15:05 target - validation 1365
+17 WTG03 damaged 15:25 target - validation 1274
+18 WTG03 damaged 15:35 target - validation 1207
+The vibration time series have been organized as indicated in Table 1, with a progressive
+numbering of the time series. The time series have been labeled for future reference in the following
+methods and analysis. The results reported in the following refer to this particular time series
+arrangement, but it should be noticed that crosschecks have been performed by interchanging
+------------------------------End of the page -----------------------------------
+Energies 2020 ,13, 1474 6 of 18
+TS1–6 and by selecting an arbitrary subset of TS1–6 for the training and the substance, as expected,
+is unchanged. The rationale for these crosschecks is supporting the fact that the proposed method
+does not highlight as novelty wind turbines undergoing slightly different operation conditions
+(because the wind ﬁeld has varied in time and-or space), but it highlights, as shall be shown in
+Sections 3 and 4, the statistical novelty of faulty wind turbines.
+It is important to notice that acquisitions have been performed within 3 h, but there are always
+two contemporary acquisitions (one at reference wind turbines and one at the targets), so that the risk
+that operational or environmental effects could be confounded for damage is reduced.
+3. Methods
+Due to the complexity of the windmills structures and of the possible acquisition disturbances
+in the measurement chain, the on-site accelerometric measurements are usually very noisy. In this
+particular case, many acquisitions show unphysical trends that must be removed. Nevertheless,
+additional anomalies could be found, which are induced by the natural variability of the wind.
+Changes in wind direction or intensity affect the work condition of the machine, which is usually
+adapted to the condition by rotating the whole nacelle upwind (i.e., with the rotor facing the wind)
+and by controlling the pitch angle of the blades so as to obtain the maximum generated power without
+exceeding the maximum rotational speed.
+According to these considerations, before the feature extraction step, a data pre-processing
+needs to be implemented to clean the acquisitions so as to remove confounding inﬂuences that could
+be detrimental for the diagnostics via anomaly detection. The data pre-processing proposed in this
+work is described in Sections 3.1–3.3, and consists of three steps:
+1. a pre-treatment of the single accelerometric tracks to remove the unphysical trends;
+2. the extraction of the selected features;
+3. a multivariate cleaning to recognize and remove from the analysis the chunks of the signal where
+the machine is in adaptation to a change of the work condition.
+Finally, in Section 3.4, the statistical data processing, implemented to analyze the dataset
+and performing the damage detection, is described. The investigation is divided in three sub-analyses:
+1. At ﬁrst, the goodness of the selected features and of the pre-processing is assessed univariately.
+This is performed as a univariate test of hypothesis exploiting the ANOVA to investigate
+the damage detection ability of the single features extracted from the two different channels.
+2. Then, in order to visualize the multivariate dataset, a PCA is performed.
+3. Finally, an unsupervised damage detection implemented in terms of multivariate Novelty
+Detection is used to detect the damaged windmill that stands out from the other machines.
+A scheme of the work ﬂow is reported in Figure 3.
+Figure 3. Block diagram of the data analysis procedure.
+------------------------------End of the page -----------------------------------
+Energies 2020 ,13, 1474 7 of 18
+3.1. Univariate Data Pre-Processing
+The available acceleration signals feature acquisition anomalies, probably due to the strong
+electromagnetic ﬁelds that can interest the area around the windmills. In particular, non-physical
+trends appear in the measured accelerations. To overcome this issue, a data cleaning is proposed
+in this paper to pre-process the data before any further analysis: in Figures 4 and 5, the raw and
+post-processed data are shown.
+0 50 100 150 200 250 300 350 400 450 500−1.5−1−0.500.5acc−x [g]TS 10 − WTG3 @ 13.00
+  
+raw signal
+moving−average trend
+0 50 100 150 200 250 300 350 400 450 500−1−0.500.5
+t[s]acc−x [g]
+  
+trend−removed signal
+outliers free, trend−removed signal
+Figure 4. A sample time series of the raw and processed signal.
+294.3 294.35 294.4 294.45−1−0.50acc−x [g]TS 10 − WTG3 @ 13.00
+  
+raw signal
+moving−average trend
+294.3 294.35 294.4 294.45−1−0.500.5
+t[s]acc−x [g]
+  
+trend−removed signal
+outliers free, trend−removed signal
+Figure 5. Zoom on a sample time series of the raw and processed signal.
+In signal processing, it is very common to deal with trends by considering them as
+the low-frequency content of the signal, which can be then divided into a long-term contribution
+(i.e., the trend), and a short-term (high frequency) contribution. Hence, a trend can be highlighted
+by low-pass ﬁltering the original signal to remove the high-frequency ﬂuctuations. Many kinds
+of digital low-pass ﬁlters are present in the literature, as well as plenty of ﬁlter design criteria.
+Nevertheless, the simplest yet causal (i.e., which uses only past values to compute the present
+output, and is then suitable for online implementation) digital ﬁlter is without any doubt the moving
+average ﬁlter, which is also the optimal ﬁlter for reducing random noise while retaining a sharp
+step response [ 29]. The moving average ﬁlter (sometimes deﬁned as “boxcar ﬁlter” because
+of the rectangular shape of its corresponding weighting window) can be deﬁned through its impulse
+response (Equation (1)):
+h[n] =(1
+M, 0n<M
+0, n<0_nM(1)
+------------------------------End of the page -----------------------------------
+Energies 2020 ,13, 1474 8 of 18
+and applied via convolution (Equation (2)) on the raw signal s[n]:
+sf[n] =s[n]h[n] =¥
+å
+m= ¥s[m]h[n m]. (2)
+An approximate half power cut-off frequency of such a ﬁlter can be found starting from
+the frequency response of an Mpoint moving average ﬁlter (Equations (3) and Figure 6):
+jH(w)j=1
+Msin
+wM
+2
+sin w
+2=1
+MsinpM f
+fs
+sinpf
+fs, (3)
+where fsis the sampling frequency of the signal.
+0 0.5 1 1.5 200.10.20.30.40.50.60.70.80.91
+|H(ω)|=1
+M/vextendsingle/vextendsingle/vextendsingle/vextendsingle/vextendsinglesin(ωM
+2)
+sin(ω
+2)/vextendsingle/vextendsingle/vextendsingle/vextendsingle/vextendsingleւ0.254M= 11
+ω|H(ω)|Moving Average FRF
+Figure 6. Example of frequency response of a moving average ﬁlter.
+With M=11, a cut-off of roughly fco=0.254fs
+2p'500Hzis obtained, which proved to be
+appropriate for the case under analysis.
+The so estimated trend has been removed from the raw data by subtraction, and this can
+be appreciated by comparing the upper subplots in Figures 4 and 5, respectively, for the whole
+signal and for a sample chunk of it. Furthermore, some abnormal spikes can still be found in
+the residual signal. In order to compensate also for this effect, a Hampel ﬁlter is used. The Hampel ﬁlter
+is an online two-step procedure meant to identify univariate outliers in a short window of the signal
+(i.e., local outliers) and substitute such samples with more plausible values. To ensure robustness,
+the local outliers are not identiﬁed through the usual 3 srule (i.e., a value which is farther than three
+times the standard deviation sfrom the mean value mis considered an outlier at a conﬁdence of 99.7%),
+but using the median and the median absolute deviation MAD [ 30,31]. If a sample from the windowed
+signal sw(i.e., a chunk of the signal in the MM samples range) falls out of the conﬁdence interval of
+jsw median (sw)j31.4826 MAD (4)
+it is considered an outlier and is removed and substituted with the median value median (sw). In this
+work, a window of MM=22samples was used, as this window size proved to lead to good results
+in all the acquisitions. The result of this outlier removal on a sample signal (previously de-trended)
+is depicted in the lower subplots of Figures 4 and 5.
+------------------------------End of the page -----------------------------------
+Energies 2020 ,13, 1474 9 of 18
+3.2. Features Extraction
+The information regarding the state of health of the wind turbine must be extracted from
+the vibration data. The ﬁrst step is selecting meaningful damage-distinguishing characteristics
+(commonly called features) for extracting information on the damage. The feature selection is a critical
+point: in fact, the ideal feature is sensitive to incipient damage but is not inﬂuenced by environmental
+or operational variability. For a geared machine operating in non-stationary conditions, as a wind
+turbine is, spectral lines are particularly sensitive to damages: as argued in Section 1, the main
+points as regards spectrum analysis are enhancing the signal-to-noise ratio and taking into account
+non-stationary conditions. Furthermore, for geared systems, it is necessary to know the geometry
+of the gearbox in order to identify the gear-mesh frequencies. For these reasons, it is not a priori
+guaranteed that all the necessary information is available for an effective spectral analysis for a case
+study as the one in the present work; furthermore, in any case, it is likely that considerable human
+supervision is needed in the feature extraction process. Some techniques for damage detection based
+on lower-level features, on the contrary, can avoid human supervision and can outperform the spectral
+features in terms of repeatability and reliability. This approach will be employed in the following:
+it is based on the idea that the modiﬁcation in the probability distribution of the measured acceleration
+yis due to a malfunctioning. The acceleration yis a discrete variable because it is measured with a given
+sampling frequency. For this reason, in the following, it is labeled as y(k)and its standard deviation
+is labeled as sy.
+On the grounds of the above reasoning, for this work, the following features have been selected:
+ Root Mean Square: it represents not only the width of the probability density function of y, but also
+the average power of a stationary process, and it is a robust measure of the acceleration level.
+It is deﬁned as
+RMS =q
+E[y(k)2] (5)
+ Skewness: it is a measure of the symmetry of a probability distribution. it is deﬁned as
+SKEW =E"y(k)
+sy3#
+(6)
+ Kurtosis: it is a measure of tailedness of the probability distribution and therefore it quantiﬁes
+the importance of the tail extremity and is sensitive to outliers. It is deﬁned as
+KURT =E"y(k)
+sy4#
+(7)
+ Peak: it is deﬁned as
+PEAK =max(abs(y(k)) (8)
+ Crest factor: it is deﬁned as the ratio between peak value and root mean square. it is employed
+for anomaly detection because of its responsiveness to impulse.
+CREST =PEAK
+RMS(9)
+The above deﬁnitions are under the assumption that the acceleration signal yhas vanishing mean.
+To guarantee the reliability of the method, many measurement points are necessary [ 32,33].
+The above features have therefore been extracted on independent (no overlap) chunks of the original
+signals: each acquisition is divided in 100 sub-parts which the ﬁve features are computed. Doing this,
+one obtains a features matrix Xwhere the number of columns is n=10and it is given by the product
+of the number of channels (2) times the number of computed features (5); the number of rows
+------------------------------End of the page -----------------------------------
+Energies 2020 ,13, 1474 10 of 18
+isd=1800 and it corresponds to number of chunks extracted from the 18 acquisitions of Table 1
+placed consecutively.
+3.3. Multivariate Data Cleaning
+The stochastic variability of the wind strongly affects the work condition of the machine, which
+adapts to wind direction and intensity, inducing anomalies in the acquired signal. Such anomalies
+are often so important that can be easily noticed by eye; nevertheless, in order to automate the analysis,
+a routine is here proposed for removing the data-points in the 10-dimensional ( d=10) feature
+space (ﬁve features, two channels), which are multivariate outliers with respect to the sample
+of 100 observations corresponding to the particular acquisition (each channel was divided in
+100 independent chunks on which the ﬁve features were computed).
+In multivariate statistics, the detection of outliers is usually tackled using a 3 sequivalent rule,
+which in the multidimensional space translates into a 99.7% tolerance ellipsoid rule. This can be easily
+implemented through the Mahalanobis distance, which corresponds to the standardized distance of a
+point from the centroid (¯X)of the ellipsoid deﬁned by the covariance matrix S=1
+N(X ¯X) (X ¯X)T
+the Mahalanobis distance MD is deﬁned as (Equation (10)):
+MD=q
+(X ¯X)S 1(X ¯X), (10)
+so that, if the estimates ¯XandScan be confused with the true values and Xis assumed normal,
+the simple conﬁdence interval based on the chi-squared ( c2) critical value holds (Equation 11):
+MD<q
+c2
+d;0.997. (11)
+Similarly to what happens in the univariate case, if the number of samples is not high enough
+to ensure reliable estimates, or if outliers are present distorting such estimates, the assumption of a c2
+distribution for the MD does not hold anymore. Nevertheless, this can be ﬁxed if a robust estimation
+of¯XandSis performed. A simple but effective method for getting robust estimates of ¯XandS
+is thorough the Minimum Covariance Determinant (MCD) [ 34]. Brieﬂy, MCD is an iterative procedure
+to select the hobservations out of N(where N/2<hN) whose classical covariance matrix has
+the lowest possible determinant. The ratio h/Nis called Outlier Fraction, and is the only parameter
+affecting the algorithm, which will be used in this work in its Fast implementation. Using such a routine,
+a Robust Mahalanobis distance RD can be obtained so that the conﬁdence interval in Equation (12):
+RD=q
+(X ¯XMCD)S 1
+MCD(X ¯XMCD)<q
+c2
+d;0.997(12)
+can be used to test for outliers. In this work, this method is used to remove the multivariate outliers
+independently from each of the 100 sample subsets corresponding to the different acquisitions, so as
+to clean out the data associated with machine adaptation to wind. Using an outlier fraction of 10%,
+1520 samples are left, starting from the original 1800 observations.
+3.4. Statistical Analysis
+3.4.1. Hypothesis Test
+A statistical hypothesis test is a method of statistical inference for comparing two statistical
+samples, or a sample against a model. A hypothesis is proposed for the statistical relationship
+among the two, and this is compared to an alternative suggesting no relationship. The comparison
+is considered statistically signiﬁcant if the relationship is estimated as an extremely unlikely realization
+of the null hypothesis according to a threshold probability. The p-value is the probability that, assuming
+the null hypothesis H0, the statistical summary is more extreme than the actual observed results.
+------------------------------End of the page -----------------------------------
+Energies 2020 ,13, 1474 11 of 18
+Hence, if the obtained p-value is less than or equal to a selected signiﬁcance level a, the null hypothesis
+is rejected. A typical value of ais 0.05 (5%).
+The ANOVA (univariate Analysis of Variance) is a statistical method to test, basing on the variance
+analysis, the null hypothesis H0that all the considered groups populations come from the same
+distribution: in other words, the null hypothesis corresponds to the fact that no signiﬁcant difference
+is detectable among the groups. The null hypothesis will be accepted or rejected according to a
+statistical summary ˆFwhich, under the assumptions of independence, normality and homoscedasticity
+of the original data, follows a Fisher distribution:
+ˆF=s2
+bg
+G 1
+s2wg
+N G'F(G 1,N G), (13)
+where
+s2
+bg=G
+å
+j=1nj
+N ¯y mj2, (14)
+s2
+wg=1
+NG
+å
+j=1nj
+å
+i=1 ¯yij mj2, (15)
+with Gbeing the number of groups of size nj,Nbeing the global number of samples with overall
+average ¯y,s2
+bgbeing the variance between the groups, s2
+wgbeing the variance within the groups
+(basically the average of the variance computed in each group) [ 35]. The null hypothesis H0will
+be accepted with a conﬁdence level 1 aif the summary ˆFis less extreme than a critical value
+Fa(G 1,N G). The corresponding p-value is computed: it represents the the probability that
+the summary is more extreme than the observed ˆF, assuming that H0is true. If the p-value is less than
+a(a typical threshold selection is 5%), H0is rejected. These concepts are sketched in Figure 7.
+Figure 7. F(G 1,N G)distribution, with highlighted the 5% critical value and the concept
+ofp-value.
+For this analysis, the data sets are divided into two groups: the former one contains
+the healthy samples (TS1–TS9), and the latter one includes the features extracted from the time
+series of the damaged wind turbine (TS10–18).
+The assumption of normality can be considered veriﬁed with enough conﬁdence. The same does
+not hold for the homoscedasticity (equal variance in the different groups), but the ANOVA method
+is robust to these kinds of possible violations, and therefore the reliability of the results of this study
+is not affected. In the test case of this study, where only two groups are used, the ANOVA reduces to a
+------------------------------End of the page -----------------------------------
+Energies 2020 ,13, 1474 12 of 18
+Student’s t-test. The ANOVA is a univariate method and therefore it will repeated for each channel
+and feature combination (10 times): this in particular can give meaningful indications about the most
+powerful statistical indicators for damage detection.
+3.4.2. Principal Component Analysis
+The Principal Component Analysis (PCA) is a technique widely used in multivariate statistics [ 36],
+in particular for visualizing multi-dimensional data sets characterized by remarkable collinearity.
+In fact, the PCA is a space rotation to convert a set of correlated quantities into orthogonal variables
+called principal components: the ﬁrst principal component explains the largest variance of the data set
+and each succeeding component explains the largest variance under the constraint of orthogonality
+with the preceding ones.
+LetXn,pbe the matrix of observations: pis the number of columns, given in this study
+by the product of the number of channels times the number of features; nis the number of rows,
+i.e., the number of independent chunks of which the data set of interest is constituted. The principal
+component transformation can easily be expressed in terms of the singular value decomposition.
+Therefore, let
+X=UDVT(16)
+be the singular value decomposition of X. This means that the columns of UandVare orthonormal
+sets of vectors denoting the left and right singular vectors of XandDis a diagonal matrix, whose
+elements are the singular values of X. This allows for eigen-decompose XXTas:
+XXT=VLVT, (17)
+where L=diag 
+l1, . . . , lp
+andl1 lp0.
+XViis the i-th principal component and Viis the i-th loading corresponding to the i-th principal
+value li. The usefulness of the principal component analysis is that the decomposition in Equation (17)
+indicates a sort of regularization scheme: namely, the matrix Wcan be truncated including a desired
+number of principal components.
+The Principal Component Analysis is employed in this study as for qualitative visualization
+of the data set by a more explanatory point of view, resulting from the space transform.
+3.4.3. Novelty Index
+In statistics, the anomaly identiﬁcation can be performed point by point, studying how discordant
+each sample is with respect to the data set. A data point is commonly deﬁned “outlier” when
+it can be considered statistically inconsistent with the others: a typical method for identifying
+outliers is detecting what measurements have a discrepancy with respect to the data set average
+that is higher than three data set standard deviations (the so-called 3srule). The judgment on data
+discordance with respect to a distribution can be performed also by analyzing an appropriately
+deﬁned metric (i.e., a distance) of the data point of interest with respect to the data distribution:
+this provides a Novelty Index ( NI) on which a threshold can be deﬁned [ 37] for qualifying what
+points are statistically anomalous. The Mahalanobis distance is the optimal candidate for evaluating
+discordance in a multi-dimensional space because it is non-dimensional and scale-invariant, and takes
+into account the correlations of the data set. The Mahalanobis distance between one measurement z
+(possibly multi-dimensional) and the Xdistribution, whose covariance matrix is S, is given by
+MD=q
+(z ¯X)S 1(z ¯X). (18)
+The Mahalanobis distance can be interpreted as a Euclidean distance in the feature space subjected
+to principal component transformation and standardization. In this study, the threshold for novelty
+detection is generated through several repeated Monte Carlo (MC) simulations of a 10-dimensional
+------------------------------End of the page -----------------------------------
+Energies 2020 ,13, 1474 13 of 18
+Gaussian distribution. Drawing 240 observations (equal to the numerousness of the healthy reference
+set) and computing the NIs, the maximum value could be used to generate a robust threshold—
+for example, taking the 99th percentile of the maxima distribution [37].
+The computation of the Mahalanobis Novelty Indices trained on healthy, normal condition data
+was selected for its intrinsic ability of compensating for linear and quasilinear confounding inﬂuences
+(i.e., environmental or operational variability) and for its robustness to noise [ 32,38]. In fact, training
+the algorithm corresponds to ﬁtting a statistical model to the reference data (i.e., healthy, normal
+condition data): if the training data set covers the whole range of normal variability, any outlier can
+be then attributed to a non-normal condition.
+For the purposes of this work, the reference Xdistribution is selected as the statistical features
+matrix extracted from the calibration data set of Table 1 (TS1–3). The target zis selected as the statistical
+features matrix extracted from the target data set of interest in Table 1. For example, computing
+the Mahalanobis distance, according to Equation (10), for each feature’s observation in TS4–18, will
+be possible to appreciate the different statistical novelty of the target (healthy, damaged, and repaired)
+wind turbines with respect to the reference healthy ones.
+4. Results
+As explained in detail in Sections 3.1–3.3, the raw accelerometric signal has been pre-processed
+to remove the non-physical trends; subsequently, it has been divided in 100 chunks on which features
+(i.e., statistics of the signal) have been computed and, ﬁnally, the overall dataset of 1800 observations
+of 10 features each (ﬁve for the x-accelerations and ﬁve for the y-accelerations) has been cleaned
+of the anomalous observations referred to the machine adaptation to the changes in the work condition
+(i.e., mainly wind direction and speed). Finally, 1520 observations have been left, almost fairly divided
+into a healthy group of 756 points (from TS 1 to 9, considering also the repaired turbine as healthy)
+and a damaged group of 754 points (from TS 10 to 18).
+The extracted features are shown in Figure 8 for the clean data set. The features extracted from
+the time series of the damaged wind turbines are placed in the subﬁgures on the right of the black
+dash-dot lines. From Figure 8, therefore, a powerful bird’s eye view is obtained based on the fact that
+the damaged wind turbines are distinguishable with respect to the healthy wind turbines.
+0 500 1000 15000.0050.010.0150.020.025acc−xRMS
+0 500 1000 1500−0.06−0.04−0.0200.020.040.06Skewness
+0 500 1000 15002.533.5Kurtosis
+0 500 1000 150033.544.555.566.5Crest
+0 500 1000 15000.020.030.040.050.060.070.08MaxAbs
+0 500 1000 15000.0050.010.0150.02acc−y
+0 500 1000 1500−0.04−0.0200.02
+0 500 1000 15002.42.62.833.23.43.63.8
+0 500 1000 15003.544.555.566.57
+0 500 1000 15000.020.030.040.050.060.070.08
+Figure 8. The statistical features computed on the cleaned data set. The different acquisitions
+are separated by the black dotted lines and ordered according to their corresponding TS number
+(Table 1). The healthy calibration data are separated from the healthy validation data, from the repaired
+validation data and from the damaged validation data by the black dash-dot lines.
+------------------------------End of the page -----------------------------------
+Energies 2020 ,13, 1474 14 of 18
+Once the ﬁnal data set is set up, the ANOVA is performed to test if diagnostic information
+is present in the different features: that is, if signiﬁcant differences can be found between the healthy
+turbines observations (TS 1 to 9) and the damaged turbines observations (TS 10 to 18). As described in
+Section 3.4, the ANOVA outputs p-values corresponding to the probability that the null-hypothesis
+(i.e., no difference between the groups) is true. When the p-value is lower than 0.05, then the differences
+between the healthy and the damaged observations prove to be high enough to be detected, so that
+an effective diagnostic can be accomplished. Considering the cleaned data set, the resulting p-values
+are reported in Table 2.
+As it can be easily seen, all the features prove to be clearly good for detecting the damage,
+except the Crest Factor of the accelerations from y-direction channel.
+Table 2. The ANOVA p-values considering two groups: Healthy (TS1 to 9) vs Damaged (TS10 to 18).
+Channel RMS Skewness Kurtosis Crest Factor Peak
+1 (X-dir) 0 0.28 1.4 10 148.210 70
+2 (Y-dir) 0 9.4 10 71.910 350.59 0
+The multivariate data set has then been visualized via PCA. The cleaned data set, rotated to match
+the principal directions, is reported in Figure 9: for readability of the Figure, it has been selected
+to report two-dimensional plots including up to the fourth principal component. It can be noticed that
+the dispersion of the damaged cloud (in red) is much larger, so that the red observations (in particular
+on the P2–P3 and P3–P4 planes) result in being more scattered and distinguishable.
+−2 −1 0 1 2 3−2.5−2−1.5−1−0.500.511.5
+P1P2
+−3 −2 −1 0 1 2−0.6−0.4−0.200.20.40.60.811.2
+P2P3Principal Component Analysis
+−0.5 0 0.5 1 1.5−1−0.8−0.6−0.4−0.200.20.40.60.8
+P3P4
+  
+Damaged
+Repaired
+Healthy−validation
+Healthy−training
+Figure 9. The data set projected on principal planes computed via PCA.
+Computing the MD of all the observations from the centroid of the healthy reference distribution,
+the Novelty Indices shown in Figure 10 were obtained. The Monte Carlo threshold is drawn in red.
+According to such a threshold, the performance of the MD-NI damage detection is reported in Table 3
+in terms of false and missed alarms. From the table, it is possible to understand that the algorithm
+is very good in discerning damaged from healthy acquisitions. it should be noticed that the repaired
+turbine data seems to show some differences with respect to the original healthy data. Using the same
+healthy reference for the repaired WTG06, then, could be not optimal.
+The results in Figure 10 can be interpreted in light of the information reported in Table 1, in order
+to support the fact that the method is capable of correctly highlighting the faulty signatures. The
+acquisitions have been performed in couples: for each acquisition at a given time at the damaged wind
+turbine, there is a contemporary acquisition at a healthy wind turbine. TS4, 5, and 6 are contemporary
+------------------------------End of the page -----------------------------------
+Energies 2020 ,13, 1474 15 of 18
+to, respectively, TS14, 16, and 18. The NI for each of TS4, 5, and 6 is coherently below the statistical
+threshold and the NI for each of the contemporary TS14, 16, and 18 is coherently well above
+the statistical threshold. This supports that the method is robust to detect as novelty the fault and not
+the different response of the wind turbines due to the wind ﬁeld difference in space along the wind
+farm. Furthermore, consider two TS couples: (TS1, TS13) and (TS4, TS14). The ﬁrst of each couple is a
+TS from a healthy wind turbine (WTG02) and the second is from the damaged wind turbine (WTG03);
+the two time series of each couple are acquired simultaneously. The operation conditions measured at
+the two wind turbines of the ﬁrst TS pair are remarkably similar: the difference in generator speed
+average is less than 1.7%. For the second TS pair, the difference in generator speed average is more
+than 10%. From Figure 10, the statistical difference between TS1 and TS13 is indistinguishable with
+respect to the difference between TS4 and TS14. This supports that the novelty detection between
+the TS of WTG03 and the TS of the healthy wind turbines is indeed due to the damage and not due
+to slightly different operation conditions.
+0 500 1000 150020406080100120140160
+#1 #2 #3 #4 #5 #6 #7 #8 #9 #10 #11 #12 #13 #14 #15 #16 #17 #18
+sample #Mahalanobis DistanceNovelty Detection
+Figure 10. The Novelty Indices computed via Mahalanobis Distance. The MC threshold is visualized
+in red. The different acquisitions are separated by the black dotted lines and ordered according to their
+corresponding TS number. The healthy calibration data are separated from the healthy validation data,
+from the repaired validation data and from the damaged validation data by the black dash-dot lines.
+Table 3. The MD-NI damage detection performance: False Alarms (FA) and Missed Alarms (MA).
+FA-Reference (TS1–3) FA-Validation (TS4–6) FA-Repaired (TS7–9) MA-Damaged (TS10–18)
+Alarms 0.4% 7.8% 28.5% 0.1%
+5. Conclusions
+A novel approach for damage detection at the drive-train subcomponents of wind turbine
+gearboxes has been proposed in this paper. The general idea is to measure the vibrations at the tower
+instead that at the gearbox, usually located in the nacelle in a hardly accessible area. This translates
+into simpler and less expensive acquisitions, whose reliability and effectiveness for damage detection
+is investigated in this work through a test case discussion.
+The case study considered in this work deals with a high-speed shaft bearing damage at a wind
+turbine sited in Italy, owned and managed by the Renvico wind farm. The study consisted in on-site
+measurements and data post-processing.
+------------------------------End of the page -----------------------------------
+Energies 2020 ,13, 1474 16 of 18
+The rationale for the measurements acquisition is exploiting the fact that wind turbines
+are typically grouped in clusters of nearby wind turbines, which, at a given time, should be subjected
+to reasonably similar solicitations: the expectation is that, if a wind turbine is damaged, it should
+have such a different response that it should be possible to distinguish it statistically with respect
+to healthy reference wind turbines, and the novelty identiﬁcation should be possible also analyzing
+measurements collected at the tower.
+For this study, therefore, tower accelerations have been measured at the target damaged wind
+turbine, at three healthy reference wind turbines and at a recently repaired wind turbine. This latter
+wind turbine has been included as a further contribution to the discussion because it is interesting
+to ask if it is distinguishable with respect to the healthy wind turbines.
+In order to test the appropriateness of the measurements, a statistical analysis has been conducted
+on the post-processed and cleaned acceleration signals from which common time domain features such
+as RMS, Skewness, Kurtosis, Crest factor and Peak value have been extracted. The analysis started
+with the ANOVA, to test if a difference was detectable among the healthy and the damaged turbines
+acquisitions feature-wise (i.e., univariately). Then, the PCA was performed to visualize the data
+set projected on the ﬁrst principal planes. Both techniques proved the detectability of the damage
+using the selected features extracted from the pre-processed tower acceleration measurements. Finally,
+the Mahalanobis Distance Novelty Detection showed optimal results in damage detection, given
+the low number of missed and false alarms. Another interesting result is that the repaired turbine
+resulted in being non-comparable to the healthy wind turbines because of an augmented value
+of false alarms.
+In general, the algorithm proved to be an excellent damage detection routine, considering
+the quickness, the simplicity and the full independence from human interaction, which makes
+it suitable for real time implementations. This deﬁnitely motivates further research, also in light
+of the fact that the measurement procedure does not request altering the normal operation of the wind
+turbine and does not involve industrial plants security issues. This could foster the integration
+of vibration monitoring in the maintenance regimes of wind turbines, ensuring to the wind farms
+of the future higher reliability and minimal down times.
+Another important development of this research is empowering the experimental techniques,
+in order to have reliable and high-frequency rotor angular speed measurements: this direction
+is currently being explored through video-tachometer [ 39] because it preserves the zero-impact
+philosophy of the approach. The availability of this kind of information, as well as of the gearbox
+geometry, is decisive for obtaining a precise identiﬁcation of the damage location. Another line
+of further research regards the identiﬁcation of the transfer functions of the machines: this development
+and the improvement of the experimental techniques would allow a more sophisticated signal
+processing and fault analysis, evolving with respect to the black box method of the present work.
+Author Contributions: Conceptualization, D.A., F.C., A.P .D., F.N., and L.G. ; Data curation, F.C., A.P .D., and F.N.;
+Formal analysis, D.A., F.C., A.P .D., and L.G.; Investigation, D.A., F.C., A.P .D., F.N., and L.G; Methodology, F.C:,
+A.P .D., and L.G.; Project administration, F.C. and L.G.; Software, A.P .D. and F.N.; Supervision, F.C. and L.G.,
+Validation, D.A., F.C., A.P .D., F.N., and L.G.; Writing—original draft, D.A. and A.P .D.; Writing—review and
+editing, F.C. and L.G. All authors have read and approved the ﬁnal version of the manuscript.
+Funding: The authors acknowledge Fondazione “Cassa di Risparmio di Perugia” for the funded research project
+WIND4EV (WIND turbine technology EVolution for lifecycle optimization) and the Basic Research Plan 2018
+of the Department of Engineering of the University of Perugia, for a ﬁnanced project entitled “Investigation
+of the relations between surface micro-topography and vibration phenomena for couplings subjected to wear”.
+Acknowledgments: The authors would like to thank Ludovico Terzi, technology manager of the Renvico
+company.
+Conﬂicts of Interest: The authors declare no conﬂict of interest.
+------------------------------End of the page -----------------------------------
+Energies 2020 ,13, 1474 17 of 18
+Abbreviations
+List of the abbreviations employed in the analysis.
+Acronym Meaning
+ANOVA Univariate Analysis of Variance
+CREST Crest Factor
+E Expectation value
+FA False alarms
+KURT Kurtosis
+MA Missing alarms
+MAD Median absolute deviation
+MC Monte Carlo
+MD Mahalanobis Distance
+NI Novelty Index
+PCA Principal Component Analysis
+PEAK Peak
+RD Robust Mahalanobis Distance
+RMS Root Mean Square
+SKEW Skewness
+References
+1. Raﬁee, J.; Arvani, F.; Hariﬁ, A.; Sadeghi, M. Intelligent condition monitoring of a gearbox using artiﬁcial
+neural network. Mech. Syst. Signal Process. 2007 ,21, 1746–1754. [CrossRef]
+2. Smolders, K.; Long, H.; Feng, Y.; Tavner, P . Reliability analysis and prediction of wind turbine gearboxes.
+In Proceedings of the European Wind Energy Conference and Exhibition 2010, EWEC 2010, Warsaw, Poland,
+20–23 April 2010; Volume 4, pp. 2660–2682.
+3. Bhardwaj, U.; Teixeira, A.; Soares, C.G. Reliability prediction of an offshore wind turbine gearbox. Renew. Energy
+2019 ,141, 693–706. [CrossRef]
+4. Carroll, J.; McDonald, A.; McMillan, D. Failure rate, repair time and unscheduled O&M cost analysis of
+offshore wind turbines. Wind Energy 2016 ,19, 1107–1119.
+5. Tchakoua, P .; Wamkeue, R.; Ouhrouche, M.; Slaoui-Hasnaoui, F.; Tameghe, T.A.; Ekemb, G. Wind turbine
+condition monitoring: State-of-the-art review, new trends, and future challenges. Energies 2014 ,7, 2595–2630.
+[CrossRef]
+6. López de Calle, K.; Ferreiro, S.; Roldán-Paraponiaris, C.; Ulazia, A. A Context-Aware Oil Debris-Based
+Health Indicator for Wind Turbine Gearbox Condition Monitoring. Energies 2019 ,12, 3373. [CrossRef]
+7. Wang, Y.; Inﬁeld, D. Supervisory control and data acquisition data-based nonlinear state estimation technique
+for wind turbine gearbox condition monitoring. IET Renew. Power Gener. 2013 ,7, 350–358. [CrossRef]
+8. Astolﬁ, D.; Castellani, F.; Terzi, L. Fault prevention and diagnosis through scada temperature data analysis
+of an onshore wind farm. Diagnostyka 2014 ,15, 71–78.
+9. Sequeira, C.; Pacheco, A.; Galego, P .; Gorbeña, E. Analysis of the efﬁciency of wind turbine gearboxes using
+the temperature variable. Renew. Energy 2019 ,135, 465–472. [CrossRef]
+10. Guo, P .; Fu, J.; Yang, X. Condition Monitoring and Fault Diagnosis of Wind Turbines Gearbox Bearing
+Temperature Based on Kolmogorov–Smirnov Test and Convolutional Neural Network Model. Energies 2018 ,
+11, 2248. [CrossRef]
+11. Qian, P .; Tian, X.; Kanfoud, J.; Lee, J.L.Y.; Gan, T.H. A novel condition monitoring method of wind turbines
+based on long short-term memory neural network. Energies 2019 ,12, 3411. [CrossRef]
+12. Carroll, J.; Koukoura, S.; McDonald, A.; Charalambous, A.; Weiss, S.; McArthur, S. Wind turbine gearbox failure
+and remaining useful life prediction using machine learning techniques. Wind Energy 2019 ,22, 360–375. [CrossRef]
+13. Zhang, Z.; Verma, A.; Kusiak, A. Fault analysis and condition monitoring of the wind turbine gearbox.
+IEEE Trans. Energy Convers. 2012 ,27, 526–535. [CrossRef]
+14. Igba, J.; Alemzadeh, K.; Durugbo, C.; Eiriksson, E.T. Analysing RMS and peak values of vibration signals for
+condition monitoring of wind turbine gearboxes. Renew. Energy 2016 ,91, 90–106. [CrossRef]
+15. Peeters, C.; Guillaume, P .; Helsen, J. Vibration-based bearing fault detection for operations and maintenance
+cost reduction in wind energy. Renew. Energy 2018 ,116, 74–87. [CrossRef]
+16. Antoni, J. Cyclic spectral analysis in practice. Mech. Syst. Signal Process. 2007 ,21, 597–630. [CrossRef]
+------------------------------End of the page -----------------------------------
+Energies 2020 ,13, 1474 18 of 18
+17. Antoniadou, I.; Manson, G.; Staszewski, W.; Barszcz, T.; Worden, K. A time-frequency analysis approach for
+condition monitoring of a wind turbine gearbox under varying load conditions. Mech. Syst. Signal Process.
+2015 ,64, 188–216. [CrossRef]
+18. Shi, P .; Yang, W.; Sheng, M.; Wang, M. An enhanced empirical wavelet transform for features extraction
+from wind turbine condition monitoring signals. Energies 2017 ,10, 972. [CrossRef]
+19. Feng, Z.; Chen, X.; Liang, M. Iterative generalized synchrosqueezing transform for fault diagnosis of wind turbine
+planetary gearbox under nonstationary conditions. Mech. Syst. Signal Process. 2015 ,52, 360–375. [CrossRef]
+20. Hossain, M.; Abu-Siada, A.; Muyeen, S. Methods for advanced wind turbine condition monitoring and early
+diagnosis: A literature review. Energies 2018 ,11, 1309. [CrossRef]
+21. Wang, T.; Han, Q.; Chu, F.; Feng, Z. Vibration based condition monitoring and fault diagnosis of wind
+turbine planetary gearbox: A review. Mech. Syst. Signal Process. 2019 ,126, 662–685. [CrossRef]
+22. Castellani, F.; Sdringola, P .; Astolﬁ, D. Analysis of wind turbine wakes through time-resolved and SCADA
+data of an onshore wind farm. J. Sol. Energy Eng. 2018 ,140, 044501. [CrossRef]
+23. Gonzalez, E.; Stephen, B.; Inﬁeld, D.; Melero, J.J. Using high-frequency SCADA data for wind turbine
+performance monitoring: A sensitivity study. Renew. Energy 2019 ,131, 841–853. [CrossRef]
+24. Wang, X.; Yan, X.; He, Y. Weak Fault Feature Extraction and Enhancement of Wind Turbine Bearing Based
+on OCYCBD and SVDD. Appl. Sci. 2019 ,9, 3706. [CrossRef]
+25. Mollasalehi, E.; Wood, D.; Sun, Q. Indicative fault diagnosis of wind turbine generator bearings using tower
+sound and vibration. Energies 2017 ,10, 1853. [CrossRef]
+26. Elforjani, M.; Bechhoefer, E. Analysis of extremely modulated faulty wind turbine data using spectral
+kurtosis and signal intensity estimator. Renew. Energy 2018 ,127, 258–268. [CrossRef]
+27. Elforjani, M.; Shanbr, S.; Bechhoefer, E. Detection of faulty high speed wind turbine bearing using signal
+intensity estimator technique. Wind Energy 2018 ,21, 53–69. [CrossRef]
+28. Elforjani, M. Diagnosis and prognosis of real world wind turbine gears. Renew. Energy 2020 ,147, 1676–1693.
+[CrossRef]
+29. Smith, S.W. The Scientist and Engineer’s Guide to Digital Signal Processing ; California Technical Pub: Pasadena,
+CA, USA, 1997.
+30. Liu, H.; Shah, S.; Jiang, W. On-line outlier detection and data cleaning. Comput. Chem. Eng. 2004,28, 1635–1647.
+[CrossRef]
+31. Pearson, R.K.; Neuvo, Y.; Astola, J.; Gabbouj, M. The class of generalized hampel ﬁlters. In Proceedings of the
+IEEE 23rd European Signal Processing Conference (EUSIPCO), Nice, France, 31 August–4 September 2015;
+pp. 2501–2505.
+32. Daga, A.P .; Garibaldi, L. Machine Vibration Monitoring for Diagnostics through Hypothesis Testing.
+Information 2019 ,10, 204. [CrossRef]
+33. Daga, A.P .; Fasana, A.; Marchesiello, S.; Garibaldi, L. The Politecnico di Torino rolling bearing test rig:
+Description and analysis of open access data. Mech. Syst. Signal Process. 2019 ,120, 252–273. [CrossRef]
+34. Hubert, M.; Debruyne, M. Minimum covariance determinant. In Wiley Interdisciplinary Reviews: Computational
+Statistics ; Wiley: Hoboken, NJ, USA, 2010; V olume 2, pp. 36–43.
+35. Sahai, H.; Ageel, M.I. The Analysis of Variance: Fixed, Random and Mixed Models ; Springer Science & Business
+Media: Berlin, Germany, 2012.
+36. Abdi, H.; Williams, L.J. Principal component analysis. In Wiley Interdisciplinary Reviews: Computational
+Statistics ; Wiley: Hoboken, NJ, USA 2010; Volume 2, pp. 433–459.
+37. Worden, K.; Manson, G.; Fieller, N.R. Damage detection using outlier analysis. J. Sound Vib. 2000 ,
+229, 647–667. [CrossRef]
+38. Deraemaeker, A.; Worden, K. A comparison of linear approaches to ﬁlter out environmental effects in
+structural health monitoring. Mech. Syst. Signal Process. 2018 ,105, 1–15. [CrossRef]
+39. Daga, A.P .; Garibaldi, L. GA-Adaptive Template Matching for Ofﬂine Shape Motion Tracking Based on Edge
+Detection: IAS Estimation from the SURVISHNO 2019 Challenge Video for Machine Diagnostics Purposes.
+Algorithms 2020 ,13, 33. [CrossRef]
+c2020 by the authors. Licensee MDPI, Basel, Switzerland. This article is an open access
+article distributed under the terms and conditions of the Creative Commons Attribution
+(CC BY) license (http://creativecommons.org/licenses/by/4.0/).
+------------------------------End of the page -----------------------------------
