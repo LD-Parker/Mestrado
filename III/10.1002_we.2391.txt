@@ -1,0 +1,539 @@
+ORIGINALARTICLE
+Journal Section
+Predictionofwindturbinegeneratorfailureusing
+2stagecluster-classi ﬁcationmethodology
+AlanTurnbull1y| DrJamesCarroll1| DrAlasdair
+McDonald1| So ﬁaKoukoura1
+1ElectronicandElectricalEngineering,
+UniversityofStrathclyde,Glasgow,G1
+1XW,UK
+Correspondence
+AlanTurnbull,ElectronicandElectrical
+Engineering,UniversityofStrathclyde,
+Glasgow,G11RD,UK
+Email:a.turnbull@strath.ac.uk
+Presentaddress
+yElectronicandElectricalEngineering,
+TechnologyandInnovationCentre,99
+GeorgeStreet,Glasgow,G11RD,UK
+Fundinginformation
+EPSRC,projectreferencenumber
+EP/L016680/1Reducingwindturbinedowntimethroughinnovationssur-
+roundingassetmanagementhasthepotentialtogreatlyin-
+ﬂuencetheLCoEforlargewindfarmdevelopments. Fo-
+cusingongeneratorbearingfailureandvibrationdata,this
+paperpresentsatwo-stagemethodologytopredictfailure
+within1to2monthsofoccurrence.Resultsareobtained
+bybuildingupadatabaseoffailuresandtrainingmachine
+learningalgorithmstoclassifythebearingashealthyorun-
+healthy.Thisisachievedby ﬁrstusingclusteringtechniques
+toproducesub-populationsofdatabasedonoperatingcon-
+ditions,whichthispaperdemonstratescangreatlyin ﬂuence
+theabilitytodiagnoseafault.Secondly,thisworkclassi ﬁes
+individualclustersashealthyorunhealthyfromvibration
+basedconditionmonitoringsystemsbyapplyingorderanal-
+ysistechniquestoextractfeatures.Usingthemethodology
+explainedinthereport,anaccuracyofupto81.6%correct
+failurepredictionwasachieved.
+KEYWORDS
+Windturbine,failure,bearing,conditionmonitoring,vibration,
+machinelearning
+Abbreviations: LCoE;Levelisedcostofenergy,O&M;operationandmaintenance,CM;conditionmonitoring,SCADA;supervisory
+controlanddataacquisition,SVM;supportvectormachine,WT;windturbine.
+1
+------------------------------End of the page -----------------------------------
+2 ALANTURNBULLETAL .
+1|INTRODUCTION
+Inorderforwindenergytocompetewithtraditionalmethodsofgeneratingelectricitysuchasfossilfuels,thelevelised
+costofenergy(LCoE)mustbefurtherreducedinthecomingyears.Costsassociatedwiththeoperationandmaintenance
+(O&M)ofawindfarmmakesupasigni ﬁcantproportionoftotallifetimecosts.Infact,upto30%ofthetotalenergycost
+canbespentonO&Mforsomelargeoffshoredevelopments[1].Withwindfarmsmovingintoharsherenvironments
+furtheroffshore,thisvalueisonlyexpectedtoincreaseinthefuture.AsmoremoneyisspentonO&M,innovations
+surroundingassetmanagementhavethepotentialtogreatlyin ﬂuencetheoverallLCoE.Accordingtoastudyfoundin[2],
+innovationsassociatedwithoperations,maintenanceandserviceareanticipatedtoreducetheLCoEbyapproximately
+2%between2014and2025.Generatorfaultscancontributesigni ﬁcantlytotheoveralldowntimeexperiencedby
+awindfarmduetocomponentfailure,witharound1failureperyearinstateoftheartoffshorewindturbines(WT)
+[3][4][5][6][7][8].
+Oneoftheareasinwhichsigni ﬁcantimprovementcanbemadeisthroughtheintroductionofturbinecondition-
+basedmaintenance[2]. AlllargeutilityscaleWTshavesupervisorycontrolanddataacquisition(SCADA)systems
+asstandard,whichareprimarilyusedforperformancemonitoring[9],howeverdevelopersarenowoptingformore
+sophisticatedconditionmonitoring(CM)systemstogainbetterinsightintoWTcondition.Themostwidelydeveloped
+andadoptedCMsystemsarebasedonvibrationanalysis,withsensorsplacedthroughoutthenacelletogaininsight
+intothedynamicperformanceofWTsub-systems,andinturnidentifyanypotentialissuesorfaults.Thispaperwill
+focusonWTgeneratorbearingfailureofamulti-megawattmachine,andthereareanumberofwellestablishedand
+proventechniquesusingvibrationanalysistodetectfaultsinsuchsystems.ThesearetraditionallybasedaroundFourier
+analysis,Hilberttransformandorderanalysistechniques,whichcanallbeusedtoidentifyandextractfeaturesfrom
+thesignalbasedonrotationalfrequencies[10].
+Withincreasedwindfarmcapacityandassetportfoliosgrowinginsizethereisagrowingneedforautomatedfault
+detection,whichcanutiliseproventechniquesand ﬂagissuesinrealtimeacrossanentire ﬂeet.Theresearchpresented
+inthispaperdrawsuponsynchroniseddatabasesofgeneratorbearingvibrationtimeseriesandfailureeventsfrom
+awindturbineoriginalequipmentmanufacturer(OEM).Thisallowsmultiplevibrationsignalexamplesofthesame
+failuremodeindifferentturbinesatanumberoftimeintervalsleadinguptofailuretobeanalysedandcompared.This
+paperwill ﬁrstofallintroducethebearingfailureselectedinthisstudyandbrie ﬂydescribethetechniquesusedto
+detectfaultsbasedonspectralanalysis,providinginsightintothekeyfeatureswhichcanbeidenti ﬁedandextracted.
+Secondly,thispaperwillbrie ﬂyintroducetheprinciplesbehindusingclassi ﬁcationalgorithmstopredictfailurebased
+onextractingfeaturesfromvibrationmeasurementsbeforepresentingpredictionresults.
+Previousstudieshaveshownthatoperatingparametersatthetimeofvibrationmeasurementcanhaveasubstantial
+effectonvibrationspectra,andhencethefeatureswhichareextractedtodetectthefault[11][12].Tohelpmitigate
+theseissuesvibrationsamplescanbebinnedbasedonpoweroutputatthetimeofmeasurement,atechniquewidely
+adoptedbydevelopersofconditionmonitoringsoftwaretoday.Expandingonthisideaofgroupingvibrationdata,this
+paperpresentsatwo-stagemethodologytopredictgeneratorbearingfailure1-2monthsbeforeoccurrence.The ﬁrst
+stagewilluse k-meansclusteringtogroupdatabyoperatingconditions,whichwillactasanadvancementtoexisting
+powerbinningtechniquesbyconsideringmoreparameterstode ﬁnemeasurementsamplebins.Thesecondstageuses
+decisiontreesandsupportvectormachinesforfeatureclassi ﬁcation. K-meansclusteringseparatesdatabasedon
+Euclideandistancefromasetnumberofclustercentroids,thereforedoesnotdiscriminateclustersbasedonsample
+size.BothDecisionTree’sandSVM’sarewellestablishedtechniques,withtheformerscalingwelltolargergroupsand
+thelatterknowntoperformbetterwithsmallergroups[13][14].
+Thispaperprovidesinsightintohowclusteringtechniquescanbeusedtoimproveclassi ﬁcationaccuracyby
+------------------------------End of the page -----------------------------------
+ALANTURNBULLETAL . 3
+FIGURE 1 Damagedshaftfrominnerringofbearingspinningonit(left)anddamagetoinnerringfromspinningon
+shaft(right).
+separatingvibrationsamplesbasedonkeyoperatingconditions.Thestudyusesasigni ﬁcantlylargerpoolofrealworld
+dataandexamplesofthesamegeneratorbearingfailureinidenticalmachinesthananyotherpreviousstudytodate,
+allowingforacomprehensiveanalysisofhowfailuresobservedacrossa ﬂeetcanbeusedtodetectthesamefailure
+inothersimilarWTs.Italsopresentsadditionalevidencetosupportthehypothesisthatoperatingconditionshavea
+substantialeffectontheabilitytodetectfaultsandpredictfailure,andpresentsarobustandscale-ablemethodto
+separatevibrationmeasurementspriortoclassi ﬁcation,withthehighestaccuracyachievedatmid-rangeoperating
+conditionsforanexamplewindturbineandfailuremode.
+2|GENERATORBEARINGFAILURE
+Thispaperwillfocusongeneratorbearingfailure,whichinthiscasestemsfromraisedbearingtemperaturesleadingto
+bearinginnerringgrowthresultinginthebearinginnerringspinningonthegeneratorrotorshaftatthedriveend.For
+thisreason,thefaultleadinguptofailurewillbetreatedasamechanicalloosenessissuewithintheinternalassembly,
+withFigure1showingdamagethatcanoccurovertimefromafaultofthisnature.Rootcausessometimesstemfrom
+designandmanufacturingissuessuchasimperfectionsinmaterialgrade,outoftolerancesandimproperinstallation
+methods.Othercausesincludeoperationalandmaintenanceissuessuchashighloading,unbalancedelectromagnetic
+forces,damagewhileintransitorexacerbatedbyinadequatecoolingandinspectionstrategies[15].
+3|METHODOLOGY
+Figure3showstheoverallmethodologyusedinthisstudy,withtheinitialstagecompromisingofthedatagatheringand
+labellingprocess.Nextthevibrationsignalswereanalysedandthekeyfeatureswereextractedwhichcouldindicatethe
+faultordescribetheoperatingconditionsatthetimeofmeasurement.Twomodelsarepresentedinthispaper,bothof
+whichusedclassi ﬁcationalgorithmstoclassifythebearingashealthyorunhealthy.The ﬁrstactingasabaselinemodel
+inwhichtocomparethesecondtwostagecluster-classi ﬁcationmodel.
+3.1|Datapopulation
+Inordertotrackandcomparecomponentcondition,vibrationdatawasretrievedatdifferentpointsintimeleadingup
+toageneratorbearingfailure.Toachievethis,eventsassociatedwithgeneratorbearingfailurefromawindturbine
+OEMwereanalyseduntilseveralexamplesofthesamefailuremodewereidenti ﬁed.Thiswasthencrosscheckedwith
+------------------------------End of the page -----------------------------------
+4 ALANTURNBULLETAL .
+FIGURE 2 Twostagemethodologyfortrainingandvalidatingalgorithmstopredictgeneratorbearingfailureusing
+nnumberofclusters.
+SCADAdatatoensuredateswerecorrelatedbycheckingfailuredateswithdowntimeexperiencedbythewindturbine.
+Toguaranteeafaircomparisonallexampleswerefromanidenticalgeneratoranddrivetraincon ﬁguration.Inorderto
+ensurecon ﬁdentialitytheexactpoweroutputandwindturbineandbearingtypeusedisnotprovided,howeveritcan
+bestatedthatitwasadoubly-fedinductiongenerator(DFIG)witharatedpowerofbetween2and4MW.Eachturbine
+utilisedavariablespeed,pitchregulatedcontrolstrategy.Generatorrotorspeedatratedpowerwaspartlydetermined
+bygridfrequency,whereexampleswerefoundforboth50and60Hz.
+Atotalof15differentwindturbinesfromeightwindfarmswereusedinthestudy,ineachofwhichbetween4and
+10vibrationsamplesweregatheredaweekapart1year,5-6monthsand1-2monthsbeforefailure.Inmostcasesdata
+wasgatheredfromeachofthethreegroupsdescribedabove.Insomecaseshowevernoteverygroupcouldbeprovided,
+inwhichcasedatawasusedwhereavailable.Thisisclari ﬁedinTable1.Eachsampleconsistedofapproximately10
+secondsofdatatakenwithasamplingfrequencyofapproximately25kHzatboththedriveendandnon-driveend
+generatorbearing(seeFigure3forclari ﬁcation).
+Oncethepopulationoffailureexampleshadbeenidenti ﬁedthedatagatheredpriortooccurrence,datawaslabeled
+basedonthetimetofailure.Abinaryclassi ﬁcationsystemwasused,withsampleslabeled’healthy’takenatmorethan
+2monthspriortofailureandlabeled’unhealthy’ifthesamplewastakenbetweenfailureand2monthspriortofailure.
+Thisgaveatotalof306vibrationsamples,consistingof204inclassA(healthy)and102inclassB(unhealthy)forboth
+thedriveendandnon-driveendsensor.
+------------------------------End of the page -----------------------------------
+ALANTURNBULLETAL . 5
+TABLE 1Poolofdataavailableforanalysis
+WindturbineNo. Healthy-atleast1year Healthy-5-6months Unhealthy-1-2months
+110samples1weekapart 9samples1weekapart 7samples1weekapart
+2 None None 4samples1weekapart
+39samples1weekapart 7samples1weekapart 8samples1weekapart
+48samples1weekapart 7samples1weekapart 8samples1weekapart
+510samples1weekapart 10samples1weekapart 7samples1weekapart
+69samples1weekapart 8samples1weekapart 8samples1weekapart
+78samples1weekapart 7samples1weekapart 7samples1weekapart
+88samples1weekapart 8samples1weekapart 8samples1weekapart
+99samples1weekapart 9samples1weekapart 6samples1weekapart
+10 None 9samples1weekapart 7samples1weekapart
+11 None 9samples1weekapart 7samples1weekapart
+12 9samples1weekapart 9samples1weekapart 5samples1weekapart
+13 8samples1weekapart 8samples1weekapart 6samples1weekapart
+14 None None 7samples1weekapart
+15 7samples1weekapart 9samples1weekapart 7samples1weekapart
+Total 95samples 109samples 102samples
+3.2|Featureextraction
+Mostoftheexperiencetodrawupontoanalysevibrationingeneratorsandotherrotatingmachinerycomesfrom
+industrieswhichutiliselarge, ﬁxedspeedsynchronousmachines.Modernwindturbinesemployvariablespeedcontrol
+strategiesand,alongwiththestochasticnatureofthewind,produceloadpatternsthatarefarmorevariedthan
+traditionalgenerators. Theanalysisofsuchvibrationsignalsarethereforemorechallengingandassuch,makes
+diagnosingfaultsinwindturbinegeneratorsmoredif ﬁcult.
+3.2.1|Timedomainanalysis
+Thevibrationsignalcanbeanalysedinanumberofways,thesimplestofwhichisinthetimedomain.Basicstatistical
+analysistechniquescanprovideimportantinformationaboutthesignalandalthoughitisnotsuf ﬁcienttoactually
+diagnosefaultsonitsown,itcertainlyprovidesausefulmethodinwhichtodetectanyobviousirregularities.Table2
+showsthefeaturesthatwereextractedandusedtoanalysethesignal,where x¹tºistheaccelerationattime t,xmax
+andxminarethemaximumandminimummeasuredacceleration, ux,xrms,xandarethemeanacceleration,RMS,
+standarddeviationandkurtosisoversignallength T.
+------------------------------End of the page -----------------------------------
+6 ALANTURNBULLETAL .
+FIGURE 3 Diagramshowingestimatedpositionsofaccelerometersusedtomeasuregeneratorbearingvibration.
+TABLE 2Time-domainfeatures
+FeatureNo. Feature Formula
+1.1 Maximum xmax=maxfx¹tºg
+1.2 Minimum xmin=minfx¹tºg
+1.3 Mean ux=
+T¯T
+x¹tºdt
+1.4 RMS xrms=h
+
+T¯T
+x¹tºdti
+1.5Standarddeviation x=q
+
+T¯T
+»x¹tº ux¼dt
+1.6 Kurtosis =
+T¯T
+»x¹tº ux¼dt
+3.2.2|Fourier&orderanalysis
+ThefastestandmostwidelyusedtechniqueforanalysingvibrationsignalsisthroughtheFourierTransform,which
+representsthesignalinthefrequencydomain,inwhichspectralpeaksandsignalenergycanbeanalysed[16].However,
+duringeachvibrationsample,thegeneratorshaftspeedcanvary,oftensigni ﬁcantly,meaningthatthesignalisnot
+stationary.ThiscanproduceasmearingeffectontheFFTspectrumwhichissomewhatproportionaltotherangeof
+shaftspeedsexperiencedoverthesample.TheFouriertransformcanthereforebeadaptedforaslidingtimewindowby
+usingtheshort-timeFouriertransform,whereaspectro-temporalrepresentationofthesignalisobtained.Thisisused
+fororderanalysisandallowsthespectralvaluestobetrackedintime[17][18].Orderanalysisisare-samplingtechnique
+whichcanbeeffectivewhenanalysingnon-stationarysignals. Whenasignalisre-sampledusingthistechniqueit
+movesfromavariableshaftspeedandconstantsamplingrate,toconstantshaftspeedandvariablesamplerate.When
+computingthefrequency-RPMmapitisimportantthatasensibleresolutionbandwidthischosentocaptureallthe
+desiredfeaturesofthesignalthereforelosingaslittleinformationaspossible.Table3showsthefeaturesthatwere
+extractedandusedtoanalysethesignalusingthistechnique.Thespectralpeakfrequencieswerechosentore ﬂect
+amplitudegainsexpectedforabearingfaultsuchasthiscausingrelativemovementwithintheinternalassemblyofthe
+generator[12][15][19][20].
+AlthoughallWTsinthedatasetwerethesamesizeandtopology,theydidnotallusethesamebearingmanufacturer
+andmodel. Thismeantthattheballpassingfrequencyfortheinnerandouterraces(BPFIandBPFO),aswellas
+therollingelementdeteriorationfrequency(BSF)couldnotbecalculatedconsistentlyforeachWT.Forthisreason
+onlyfrequencieswhichwerecommontoallWTswereusedintheanalysis,whichincludedsynchronousvibrationat
+rotorspeedfundamentalfrequency(OrderNo.1)alongwiththe2nd(OrderNo.2)and3rd(OrderNo.3)harmonics.
+Non-synchronousvibrationindicatorswerealsoextractedatordernumbers0.5,1.5,2.5and3.5.
+------------------------------End of the page -----------------------------------
+ALANTURNBULLETAL . 7
+TABLE 3Order-domainfeatures
+FeatureNo. Feature Description
+2.1 A:Amplitudeofpeakatordernumber0.5
+2.2 AAmplitudeofpeakatordernumber1
+2.3 A:Amplitudeofpeakatordernumber1.5
+2.4 AAmplitudeofpeakatordernumber2
+2.5 A:Amplitudeofpeakatordernumber2.5
+2.6 AAmplitudeofpeakatordernumber3
+2.7 A:Amplitudeofpeakatordernumber3.5
+TABLE 4Operationalcharacteristics
+FeatureNo. Feature Description
+3.1 Pout Averageelectricalpoweroutduring10ssignal
+3.2 
+gen Averageshaftspeedduring10ssignal
+3.3 genAverageelectromagnetictorqueduring10ssignal gen=Pout
+gen
+3.4 UwindAveragewindspeedduring10ssignalfromwindturbineanemometer
+3.2.3|Operationalcharacteristics
+Operationalcharacteristicsareusedasamethodofunderstandingtheloadingconditionsatthetimeofvibration
+measurement.ThefeaturesthatwereextractedtorepresentthisareshowninTable4andwereusedintwoinstances;
+ﬁrstofallinthebaselinemodeltoassistwithtrainingtheclassi ﬁcationalgorithms,andsecondlyintwo-stagemodel
+usedindependentlyfromclassi ﬁcationduringtheclusteringstage.Awindturbinecontrolstrategyisde ﬁnedona
+torque-speedcurvewhiletheoperatingperformanceisindicatedbythepoweroutputinrelationtowindspeed.By
+consideringthese4featuresarepresentationofbothrelationshipscanbeachieved.
+3.3|Classi ﬁcationmodelsandpredictionalgorithms
+3.3.1|Baselineclassi ﬁcationmodel
+Thebaselineclassi ﬁcationmodeltrainedtheclassi ﬁcationalgorithmswithallavailabledataregardlessofturbineand
+operatingconditionsatthetimeofvibrationmeasurement.Bothsupportvectormachine(SVM)anddecisiontree
+classi ﬁersweretested,withdecisiontreesprovingtobebestsuitedtothebaselinemodelduetotheirabilitytoscale
+easilytolargedatapopulations.Oncealgorithmsweretrainedtheycouldbevalidatedusing5-foldcrossvalidation(see
+Section3.4).Thisprovidedabaselinetowhichthetwo-stagemethodologycouldbefairlycomparedtoevaluatethe
+effectivenessofclusteringdatabyoperatingconditionstoproducesub-populationsofdata.
+------------------------------End of the page -----------------------------------
+8 ALANTURNBULLETAL .
+3.3.2|Two-stageclassi ﬁcationmodel
+Forthetwo-stagemodel,asshowninFigure2,featureswereclusteredusing k-meansclusteringtocreategroups
+containingvibrationsamplestakenatsimilaroperatingconditions.Thesamealgorithmsasdescribedabovewerethen
+trainedonfeatureswithineachcluster,withthebestalgorithmchosenbasedonperformance,whichchangedwiththe
+numberandspreadofsamplesinthatparticulargroup.Oncealgorithmsweretrainedtheycouldbevalidatedusing
+5-foldcrossvalidation,beforethechosenalgorithmwasexportedforeachcluster.Onceexportedthechosenalgorithm
+couldbeusedforanyunseendatabelongingtoanyparticularcluster.TestingSVM’sanddecisiontreesprovidedthe
+opportunityforhighlevelsofaccuracyacrossclusterscontainingbothsmallandlargequantitiesofdata,whichwillbe
+discussedinmoredetailinSection4.
+3.3.3|Predictionalgorithms
+Theclassi ﬁcationalgorithmsdescribedinthisSectionareusedacrossboththebaselineandtwo-stagemodel,while
+clusteringisonlyrequiredinthelatter.Allalgorithmsarewidelyknowntechniquesandcanbereadilyapplied.
+Therearemanytypesofcommonclusteringalgorithmswhichcan ﬁndhiddenpatternsinlargedatasets,eachof
+whichusedifferentmetricstoanalysethedata.SuchalgorithmsincludeHierarchicalclustering, k-Meansclustering,
+HiddenMarkovmodelsandGaussianmixturemodels,howeverforthispaper k-meansclusteringwaschosendueto
+itseaseofapplication,fastcomputationalspeedandabilitytochoosethenumberofclusters[21].K-meansclustering
+worksbypartitioningdataintodistinctclustersbasedontheeuclideandistancetothecentroidofeachcluster.Any
+numberofclusterscanbeused,whichisprede ﬁned(notchosenbythealgorithmlikemanyothertechniques)priorto
+partitioning.
+Oncefeaturesweresuccessfullygrouped,classi ﬁcationalgorithmswerethentrainedandtestedbasedonthe
+validationprocessoutlinedinSection3.4,withthebestchosenandappliedtothesetoffeaturesspeci ﬁctothatcluster.
+Thereareavarietyofclassi ﬁersavailablethatusesupervisedlearningprocessestoclassifydata.Forthisresearch
+decisiontreesandsupportvectormachineswithpolynomialkernelwerechosen.Decisiontreesscalewellmakingthem
+suitablefordatasetswithalargenumberofsamples,whileSVM’stypicallyaremoresuitablefordatasetswithasmaller
+numberofsamples.Insuchcaseshowever,theyprovideanopportunityformorecomplexdecisionboundariestobe
+established[21].
+Decisiontreesaresimplealgorithmswhichclassifydatabasedonavarietyoffeatures.Attherootofthetree
+allfeaturesareconsideredbeforethedataissplitintobranchesbasedonpredeterminedconditions.Thisprocessof
+usinglogictosplitdatacontinuesusingaseriesofinternalnodesuntilbranchescannolongerbesplitagain,producing
+aleaf,or ﬁnaldecisionattheterminalnode.Theprocessofsplittingdataiskeytoproducingausefuldecisiontree,
+aseachsplitwillhaveacostassociatedintermsofperformanceandaccuracy.Toomanysplitscancausetreestobe
+overlycomplexandresultsindataover ﬁtting,meaningitdoesnotgeneralisethedatawell.Decisiontreescanbe
+reﬁnedbypruningmethods,whichremovebranchesutilisingfeaturesoflowimportance,andboostingmethods,which
+increasetreestability,orthelikelihoodofsmallchangesmakingasigni ﬁcantimpactontheoveralltreedesign.SVM’s
+areadaptablealgorithmswidelyusedforbothclassi ﬁcationandregressionproblems.Theyworkbyplottingeachdata
+pointin n-dimensionalspace,with nbeingthenumberoffeaturesusedtotrainthemodel.Classi ﬁcationisachievedby
+ﬁndingthehyper-planethatdifferentiatestheclassesofcoordinates(alsoknownassupportvectors).Themarginisa
+measureofthedistancebetweenthehyper-planeandnearestsupportvectorofeachclassi ﬁcation.Alargemargin
+indicatesthatthesupportvectormachineisstableandwillbelesssusceptibletomisclassifyingdata[22].Bothclassi ﬁers
+arewellestablishedandmoreinformationcanbefoundabouttheirapplicationin[13][23].
+------------------------------End of the page -----------------------------------
+ALANTURNBULLETAL . 9
+FIGURE 4 Confusionmatrixoftrainedalgorithmsforalldata(100healthyand100unhealthysamples).
+3.4|Validationofresults
+Therearetwokeystageswhenapplyingmachinelearningtovibrationdataforclassi ﬁcation;atrainingphasefollowed
+byavalidationphase.Thisprocesswasrepeatedwithdifferentpermutationsoffeaturestodiscoverwhichcouldbest
+beusedtoproducethegreatestoverallaccuracy.Foreachlabeledvibrationsampleleadinguptofailurethefeatures
+describedinTables2to4wereextractedandused.Thesewerethenclusteredwithdataineachclusteraccordingto
+Table5.Toensurethealgorithmistrainedinabalancedmanner,thesamenumberofdatapointswerechosenfromeach
+class,withrandomsampleschosenfortheclasswithmoresamplesinanyparticulargroup.Forexample,ifonecluster
+contained40healthysamplesand32unhealthysamples,32samplesforeachhealthclasswereusedtotrainthemodel.
+Cross-validationwasusedtodeterminetheoverallaccuracyofthealgorithm.Thismethodinvolvespartitioningthedata
+intosubsetsofapredeterminedratio,oneofwhichisthenomittedfromtrainingandusedtotestthealgorithm.Forthis
+example20%ofthedatawasusedforvalidationpurposes.Theprocessisthenrepeatedusingdifferentsup-populations
+andanaverageaccuracycalculatedtouseasaperformanceindicator.Thepredictionprocesscanthenbeevaluated
+usingaconfusionmatrixgivingcorrect/incorrectclassi ﬁcationandthelikelihoodoffalsepositives/negatives.
+4|RESULTS&DISCUSSION
+4.1|Baselineclassi ﬁcationmodel
+Thebaselinemodelhadamaximumclassi ﬁcationaccuracyof67%usingadecisiontreeclassi ﬁer.Theconfusionmatrix
+ispresentedinFigure4,whichshowsthelikelihoodoffalsepositivesornegativeswhenclassifyingthebearingsas
+healthyorunhealthy.Thedatapopulationusedforbothtrainingandvalidationwaslimitedonlybythenumberof
+availableunhealthyexamples.Theresultsshownhereused100randomvibrationsamplesfromeachhealthclassand
+regardlessoftherandompopulationofdataused,theaccuracyneverincreasedbeyond67%,withthemeanaccuracy
+justover64%forthisparticularclassi ﬁcationalgorithm.Thefactthataccuracychangessubstantiallybasedonthedata
+chosenfortraininghighlightsthelimitationsofthisapproachandsuggeststhatamorerobustmethodologyisrequired
+tochoosedatamorecarefullyforsupervisedtraining.
+TheresultsaboveusedallorderdomainfeaturesdescribedinTable3,alongwiththetimeseriesRMS,standard
+deviationandkurtosis(features1.4-1.6)inTable2.Forthebaselinemodel,operationalcharacteristicsoutlinedinTable
+4werealsoutilisedforclassi ﬁcation.
+------------------------------End of the page -----------------------------------
+10 ALANTURNBULLETAL .
+TABLE 5Clusterdescriptions
+ClusterNo. Dataincluster(%) Centroidposition( gen ;Uwind ;Ugen)Clusterdescription
+1 15.0 (0.093,0.19,0.61) lowtorque,lowwindspeed,low
+genspeed
+2 4.2 (0.23,0.25,0.72) low-medtorque,low-medwind
+speed,low-medgenspeed
+3 20.5 (0.27,0.31,0.87) medium torque, medium wind
+speed,mediumgenspeed
+4 41.0 (0.38,0.38,0.99) mediumtorque,ratedwindspeed,
+highgenspeed
+5 19.3 (0.83,0.63,0.99) ratedtorque,ratedwindspeed,
+highgenspeed
+4.2|Two-stageclassi ﬁcationmodel
+4.2.1|Clusteringresults
+K-meansclusteringpartitionsdatausinganiterativeprocessinitiatedwitharandomguessofcentroidpositions.This
+meansthatalthoughthenumberofclusterscanremainconstant,differentdataclustersareobtainedeverytimethe
+algorithmisranwithadifferentseed.Asensitivitystudyperformedusing10randomseedswith5clustersshowedthat
+96%ofthedatapointswereconsistentlygroupedintoaparticularcluster.Resultswillfocuson5clusters,chosento
+provideabalancebetweenseparatingthevibrationsamplesbasedonoperatingconditionswhilestillhavingenough
+dataineachclustertoperformclassi ﬁcationandvalidation.Using5clustersalsomanagestocoverallpartsofthe
+torque-speedoperatingcurveincludingimportanttransitionpoints.Theeffectofnumberofclustersonclassi ﬁcation
+accuracyispresentedinmoredetailinSection4.2.3.
+Sampleswereclusteredbasedonthreepropertieswhichdescribetheoperatingconditionsatthetimethesignal
+wastaken;averageelectromagnetictorque(feature3.3),windspeed(feature3.4)andgeneratorspeed(feature3.2).
+Theaverageshaftspeedandtorquegivesagoodindicationofloadingconditionsonthegeneratorshaftatthetimeof
+measurement,whileusingwindspeedallowsforanunderstandingofanyde-ratingoradjustmentsfromthenormal
+torquespeedcurveoperatingpoints.Only3outofthe4parametersdescribedinTable4wererequiredduetothedirect
+relationshipbetweenpowerandtorque.Forthisanalysisusingelectromagnetictorqueprovidedmoreconsistency
+intheclusteringprocess.TheclustersaredescribedqualitativelyinTable5,whileFigure5showsthedataclustered
+intothe5groupstoassistwithvisualisation.EachpointinFigure5representsthecoordinatesofthechosenoperation
+characteristicsusedforclusteringforasinglevibrationsample.Notethatthesecharacteristicsarecommontoboth
+thedrive-endandnondrive-endsample.ThecentroidpositionisalsogiveninTable5,whichdescribeseachcluster
+quantitativelywithrespecttothenormalisedwindspeed,electromagnetictorqueandgeneratorspeed.
+4.2.2|Classi ﬁcationresults
+Theresultspresentedforthetwo-stageclassi ﬁcationmodelusethe5clustersofdatashowninSection4.2.1.Each
+clustergoesthroughatrainingandvalidationprocessforeachoftheclassi ﬁcationalgorithmsasdescribedinSection
+3.3.3.Table6presentsthebestalgorithmandaccuracyforeachoftheclusters,alongwiththepercentageaccuracy
+------------------------------End of the page -----------------------------------
+ALANTURNBULLETAL . 11
+FIGURE 5 Plotofclustersbasedonthreechosenvariables,normalisedtoensurecon ﬁdentiality.’X’represents
+eachclustercentroidposition.
+TABLE 6Resultsfor5clusters
+ClusterNo. Algorithm Overallaccuracy(%) Differencefrombasemodel(%)
+1DecisionTree 61 -6
+2 SVM 70 +3
+3DecisionTree 81.6 +14.6
+4DecisionTree 78.6 +11.6
+5DecisionTree 65.2 -1.8
+differencefromthebaselinemodeldescribedinSection4.1,forwhichalldatawastakenandclassi ﬁedwithoutany
+clustering.
+Twoofthegroupsshowedasigni ﬁcantincreaseinaccuracywithamaximumofupto81.6%forgroup3.These
+twogroups(3and4)accountedfor61.5%ofalldata,whilegroup2,whichsawacomparativelymodestriseof3%in
+accuracyaccountedforafurther4.2%.Interestingly,thetwogroups(1and5)whichunderperformedincomparisonto
+thebaselinemodelhadthe2extremedatasetsofeitherveryhighoperatingconditionsorverylow.Thissuggeststhatif
+theoperatingconditionsaretoolowatthetimeofvibrationsampleitbecomesmoredif ﬁculttodistinguishbetween
+ahealthyorunhealthybearing.Alternatively,iftheWTisoperatingatratedpowerwithratedtorque,shaftspeed
+andwindspeed,thisalsoholdstrue.Thealgorithmsperformmuchbetterusingfeaturesfrommid-rangeoperating
+conditions,withthehighestaccuracywheninandaroundratedwindspeed.Figure6showstheoverallaccuracyofthe
+algorithmsforeachgroupincomparisontothebaseline,withthegroupsorderedbasedontheextremityofoperating
+conditionsatthetimethevibrationssamplewastaken.
+Intermsoffeaturesanalysis,thedominantfrequency(thepointatwhichthemostincreaseinamplitudewas
+observedtoindicatethefault)changedbetweenturbines,thereforeallorderdomainfeatureswereusedineverycase.
+TheRMS,standarddeviationandkurtosisprovedtobethemostsigni ﬁcantofthetimedomainfeatures,withaccuracy
+generallyincreasingifatleastoneofthesethreefeatureswasused.
+------------------------------End of the page -----------------------------------
+12 ALANTURNBULLETAL .
+FIGURE 6 Plotofaccuracyforeachclusterorderedbyextremityofoperatingconditionsattimeofvibration
+sample.
+Tocompareabsoluteaccuracyofbothapproaches,anoverallweightedaccuracyforthetwo-stagemodelcanbe
+calculatedby;
+overall=nÕ
+iii (1)
+whereoverallistheoverallweightedaccuracy, iistheclusteraccuracyand iisthepercentageofdataincluster
+ifornnumberofclusters.Forthe5clustersinthisanalysisthisgivesanoverallweightedaccuracyof73%forthe
+two-stagemethodologyconsideringalldata.Ifgroups1and5areexcluded,theweightedaccuracyoftheremaining
+groupsincreasesto79%,andrepresentsalldatainmid-rangeoperatingconditions.
+LookingatthebestperformingalgorithmsinTable6,decisiontreesconsistentlyoutperformedSVM’sinthe4groups
+withthehighestnumberofdatasamples.Asexpected,SVM’sperformedbetteringroup2,whichhadsigni ﬁcantlyless
+data.Havingtheoptionofbothalgorithmsprovedtobeausefulmethodtoensurethehighestaccuracywasachieved
+foreachgroupofvaryingsize.
+Consideringnowthetoptwoperforminggroupsinmoredetail,Figure7showstheconfusionmatrixforeach
+trainingandvalidationphase.Resultsindicateabalancebetweenpredictingfalse-positivesandfalse-negatives,with
+eachgrouphavingslightlylessmisclassi ﬁcation’sforunhealthysamplestothatofhealthy.Faultpropagationtimeswill
+differforeverywindturbineusedinthestudy,thereforethefeaturesextractedasfaultindicatorswillalsochangein
+timeleadinguptofailure.Classifyingalldata1-2monthsbeforefailureasunhealthyisoneofthelimitationssurrounding
+thistypeofclassi ﬁcationprocess,whichconsidersmultipleexampleswithoutmakinganallowanceforthefacteach
+bearinghasitsownuniquepropagationtimeandfailurethreshold.
+4.2.3|Effectofnumberofclustersonclassi ﬁcationaccuracy
+TheresultshighlightedinSection4.2.2showedthetwo-stageclassi ﬁcationmodelwith5clusters.Asstatedpreviously,
+thisprovidedabalancebetweenthenumberofclustersandnumberofdatawithineachcluster.If3or4werechosenan
+increaseinaccuracyatmidrangeoperatingconditionsstilloccurred,howeverthesamelevelofimprovementswere
+notobserved.Tables7and8showthebreakdownofclustersandaccuracyalongwiththeassociatedclustercentroid
+positionsandalgorithmsused.ConsideringaweightedaccuracyasdescribedinSection4.2.2,thiscanbecalculated
+------------------------------End of the page -----------------------------------
+ALANTURNBULLETAL . 13
+FIGURE 7 Confusionmatrixoftrainedalgorithmsforgroup3(left)andgroup4(right).
+TABLE 7Resultsfor3clusters
+ClusterNo. Data(%) Centroid Algorithm Overallaccuracy(%)
+131.1(0.13,0.21,0.64) DecisionTree 62
+250.1(0.34,0.36,0.96) DecisionTree 78.2
+318.8(0.81,0.62,0.99) SVM 60.4
+TABLE 8Resultsfor4clusters
+ClusterNo. Data(%) Centroid Algorithm Overallaccuracy(%)
+130.3(0.13,0.20,0.63) DecisionTree 62.5
+243.6(0.31,0.35,0.95) DecisionTree 79.7
+314.5(0.60,0.48,0.99) SVM 63.0
+411.6(0.90,0.68,0.99) SVM 53.6
+for3clustersas69.8%and69.1%for4clusters.If6ormoreclusterswerechosen,groupsstartedtogettoosparseto
+performclassi ﬁcationoneverycluster,(asevenwith5clustersgroup2consistedofonly4.2%ofthedata)andaccuracy
+generallydecreased.Ifmoredatawasavailable,itwouldbeworthrevisitingthenumberofclusterstodeterminethe
+optimalrange.
+4.2.4|Comparisonofclusteringandpowerbinning
+Uptothispointclusteringhasbeencomparedonlytothebaselinemodel,whichconsidersallavailabledata.Clustering
+offerstheopportunitytogroupvibrationdatausingavarietyofoperatingparameters,andresultshaveshownimproved
+accuracyindoingso,however,itisalsoimportanttocomparethisapproachtostandardpowerbinningpractices.A
+similarmethodologywasusedaspreviouslydescribeinFigure2,butinsteadofclusteringinstage1datawasdividedinto
+5evenbinsbasedonpoweroutputonly.Eachbinwasthenclassi ﬁedindividually,withresultsshowinganimprovement
+tothebaselinemodel,butnotreachingthelevelofaccuracyachievedthroughclustering.ResultsarepresentedinTable
+9,wheremid-rangeoperatingconditionsagainprovidethehighestpredictionaccuracy.
+------------------------------End of the page -----------------------------------
+14 ALANTURNBULLETAL .
+TABLE 9Resultsbypowerbinning
+BinNo.Powerrange(%) Datainbin(%) Algorithm Overallaccuracy(%)
+10-20 18.3DecisionTree 63.6
+220-40 45.8DecisionTree 68.2
+340-60 15.8DecisionTree 71.1
+460-80 5.9 SVM 67.1
+580-100 14.2 SVM 55.2
+5|CONCLUSION
+Predictivemaintenancestrategiesthatusepreviousfailurestolearnandpredictfailureandremainingusefullifeof
+componentsindifferentwindturbineshavethepotentialtomakesubstantialsavingstocostsassociatedwithO&M.
+Thisresearchindicatesthatmachinelearningclassi ﬁcationalgorithmscanbeappliedtospeci ﬁcfeaturestosuccessfully
+predictgeneratorbearingfailure1-2monthsbeforeoccurrencewithanaccuracyofup81.6%.Toachievethislevel
+ofaccuracyoperatingconditionsatthetimeeachvibrationsamplewastakenmustbeconsideredindependentlyof
+classi ﬁcation,asaccuracyfallssigni ﬁcantlyto67%withoutit,asshowninthebaselinemodel.Asimpleapproachto
+improvebaselineaccuracyismanualorrule-basedremovalofdataatextremesofthepowercurve,howeveritisdif ﬁcult
+todothisrobustlyandfairly.Binningvibrationsamplesbypoweroutputtocreategroupswhichcanbefairlycompared
+isstandardpractice,howeverthispaperhasdemonstratedthat k-meansclusteringisamoresuccessfulmethodby
+consideringmoreoperatingparameterspriortoclassi ﬁcation.
+Thisworkshowsthattheoperatingconditionsatthetimeofvibrationmeasurementcangreatlyin ﬂuencethe
+abilitytodetectafault,withmid-rangeoperatingconditionsleadingtohighestaccuracywhenpredictingremaining
+usefullifebasedonvibrationanalysisforthisparticularwindturbineandfailuremode.TheexamplesshowninSection
+4ﬁndabalancebetweenfalse-positivesandfalse-negatives,meaningthatequalweightisgiventoeithercasehowever
+fromacommercialperspectiveitmaybeworthre ﬁningthemodeltoeitherminimiseormaximisefalse-positives,which
+couldbefurtherexploredthroughcost-bene ﬁtanalysis.
+Thetwo-stagemethodologydescribedinthispaperprovidesascalablepredictionmodelwhichcouldbeapplied
+toarangeoffaultsacrossthedrivetrain.Byconsideringdifferentfeaturesofvibrationthatcaneffectivelydescribea
+particularfault,whichmayalsorelyondifferentvibrationmeasurementsandanalysistechniquestothoseusedinthis
+paper,themodelcouldbeadaptedaccordingly.
+REFERENCES
+[1] CrabtreeCJ,ZappalaD,HoggSI.Windenergy:UKexperiencesandoffshoreoperationalchallenges.Proceedingsofthe
+InstitutionofMechanicalEngineersParta-JournalofPowerandEnergy2015;229(7):727–746.
+[2] ValpyB,EnglishP. Futurerenewableenergycosts:offshorewind,Howtechnologyinnovationisanticipatedtoreduce
+thecostofenergyfromEuropeanoffshorewindfarms;2014.
+[3] CarrollJ,McDonaldA,McMillanD. ReliabilityComparisonofWindTurbinesWithDFIGandPMGDriveTrains. Ieee
+TransactionsonEnergyConversion2015;30(2):663–670.
+[4] HahnB,DurstewitzM,RohrigK. Reliabilityofwindturbines-Experiencesof15yearswith1,500WTs. WindEnergy
+2007;p.329–+.
+------------------------------End of the page -----------------------------------
+ALANTURNBULLETAL . 15
+[5] PfaffelS,FaulstichS,RohrigK,PerformanceandReliabilityofWindTurbines:AReview.MPDIenergies;2017.
+[6] SpinatoF,TavnerPJ,vanBusselGJW,KoutoulakosE. Reliabilityofwindturbinesubassemblies. IetRenewablePower
+Generation2009;3(4):387–401.
+[7] CarrollJ,McDonaldA,McMillanD. Failurerate,repairtimeandunscheduledOandMcostanalysisofoffshorewind
+turbines.WindEnergy2016;19(6):1107–1119.
+[8] WilkinsonM,HarmanK,SpinatoF,HendriksB,DelftTV,MeasuringWindTurbineReliability-ResultsoftheReliawind
+Project;2011.
+[9] Tautz-WeinertJ,WatsonS.UsingSCADAdataforwindturbineconditionmonitoring–areview.IETRenewablePower
+Generation2017;11(4):382–394.
+[10] MollasalehiE.Data-drivenandModel-basedBearingFaultAnalysis-WindTurbineApplication.Thesis;2017.
+[11] deAzevedoHDM,AraujoAM,BouchonneauN.Areviewofwindturbinebearingconditionmonitoring:Stateoftheart
+andchallenges.RenewableSustainableEnergyReviews2016;56:368–379.
+[12] HossainML,Abu-SiadaA,MuyeenSM.MethodsforAdvancedWindTurbineConditionMonitoringandEarlyDiagnosis:
+ALiteratureReview.Energies2018;11(5):14. <GotoISI>://WOS:  .
+[13] StetcoA,DinmohammadiF,ZhaoXY,RobuV,FlynnD,BarnesM,etal. Machinelearningmethodsforwindturbine
+conditionmonitoring:Areview.RenewableEnergy2019;133:620–635.
+[14] SaidiL,AliJB,FnaiechF. Applicationofhigherorderspectralfeaturesandsupportvectormachinesforbearing
+faultsclassi ﬁcation. ISATransactions2015;54:193–206. http://www.sciencedirect.com/science/article/pii/
+S .
+[15] GirdharP,SchefferC,PracticalMachineryVibrationAnalysisandPredictiveMaintenance;2004.
+[16] ChenJL,PanJ,LiZP,ZiYY,ChenXF.Generatorbearingfaultdiagnosisforwindturbineviaempiricalwavelettransform
+usingmeasuredvibrationsignals.RenewableEnergy2016;89:80–92.
+[17] KabirMJ,OoAMT,RabbaniM,Ieee. ABriefReviewonOffshoreWindTurbineFaultDetectionandRecentDevelop-
+mentinConditionMonitoringBasedMaintenanceSystem. In: AustralasianUniversitiesPowerEngineeringConfer-
+ence(AUPEC)AustralasianUniversitiesPowerEngineeringConference,NEWYORK:Ieee;2015. <GotoISI>://WOS:
+ .
+[18] RomeroA,SouaS,GanTH,WangB. Conditionmonitoringofawindturbinedrivetrainbasedonitspowerdependant
+vibrations.RenewableEnergy2018;123:817–827.
+[19] BorghesaniP,PennacchiP,ChattertonS,RicciR.ThevelocitysynchronousdiscreteFouriertransformforordertracking
+inthe ﬁeldofrotatingmachinery. MechanicalSystemsandSignalProcessing2014;44(1):118–133. SpecialIssueon
+InstantaneousAngularSpeed(IAS)ProcessingandAngularApplications.
+[20] WangY,TsePW,TangBP,QinY,DengL,HuangT,etal.Orderspectrogramvisualizationforrollingbearingfaultdetection
+underspeedvariationconditions. MechanicalSystemsandSignalProcessing2019;122:580–596. <GotoISI>://WOS:
+ .
+[21] MullerAC,GuidoS,IntroductiontoMachineLearningwithPython.O’ReillyMedia;2017.
+[22] LaoutiN,Sheibat-OthmanN,OthmanS.Supportvectormachinesforfaultdetectioninwindturbines.IFACProceedings
+Volumes(IFAC-PapersOnline)2011;18(PART1):7067–7072.
+[23] KaterisD,MoshouD,PantaziXE,GravalosI,SawalhiN,LoutridisS. Amachinelearningapproachforthecondition
+monitoringofrotatingmachinery.JournalofMechanicalScienceandTechnology2014;28(1):61–71. https://doi.org/
+. /s -- -y.
+------------------------------End of the page -----------------------------------
+16 ALANTURNBULLETAL .
+ALANTURNBULLreceivedtheM.EngdegreeinAero-mechanicalEngineeringfromtheUniversity
+ofStrathclydein2013.HeisaPh.D.studentattheUniversityofStrathclyde,focusingondeveloping
+diagnosticandprognosticmethodsforwindturbinegeneratorsbyapplyingsignalprocessingand
+machinelearningtechniques.
+DRJAMESCARROLLreceivedtheB.Eng.degreeinmechanicalandmanufacturingengineeringfrom
+DublinInstituteofTechnologyin2008,andtheM.Eng. inTechnicalManagementfromEmden
+UniversityofAppliedScience,Germanyin2010.HereceivedaPh.D.fromtheUniversityofStrath-
+clydein2016.HeisalecturerintheEPSRCWindEnergyDoctoralTrainingCentre,Universityof
+Strathclyde.
+DRALASDAIRMCDONALDreceivedtheM.EngdegreeinElectricalandMechanicalEngineering
+fromtheUniversityofDurham,U.K.,in2004andaPh.D.degreefromtheUniversityofEdinburgh,
+U.K.in2008.HeisalecturerintheEPSRCWindEnergyDoctoralTrainingCentre,Universityof
+Strathclyde.
+SOFIAKOUKOURAreceivedherdegreeinMechanicalEngineeringfromtheNationalTechnical
+UniversityofAthensin2015.ShethenjoinedtheUniversityofStrathclydeWindandMarineEnergy
+SystemsCentreforDoctoralTraining.HerPhDfocusesondiagnosticsandprognosticsofwind
+turbinegearboxesusingsignalprocessingandmachinelearningtechniques.
+------------------------------End of the page -----------------------------------
