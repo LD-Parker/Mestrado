@@ -1,0 +1,971 @@
+sensors
+Article
+Structural Health Monitoring for Jacket-Type
+Offshore Wind T urbines: Experimental Proof
+of Concept
+Yolanda Vidal1,*
+, Gabriela Aquino2, Francesc Pozo1
+and
+José Eligio Moisés Gutiérrez-Arias2
+1Control, Modeling, Identiﬁcation and Applications (CoDAlab), Department of Mathematics,
+Escola d’Enginyeria de Barcelona Est (EEBE), Universitat Politècnica de Catalunya (UPC),
+Campus Diagonal-Besòs (CDB), Eduard Maristany, 16, 08019 Barcelona, Spain; francesc.pozo@upc.edu
+2Facultad de Ciencias de la Electrónica (FCE), Benemérita Universidad Autónoma de Puebla (BUAP),
+Av. San Claudio y 18 Sur, Ciudad Universitaria, Ediﬁcio 1FCE6/202, 72570 Puebla, Mexico;
+aquino.201006419@gmail.com (G.A.); arigutmses5@gmail.com (J.E.M.G.-A.)
+*Correspondence: yolanda.vidal@upc.edu; Tel.: +34-934-137-309
+Received: 20 February 2020; Accepted: 24 March 2020; Published: 26 March 2020
+Abstract: Structural health monitoring for offshore wind turbines is imperative. Offshore wind
+energy is progressively attained at greater water depths, beyond 30 m, where jacket foundations
+are presently the best solution to cope with the harsh environment (extreme sites with poor soil
+conditions). Structural integrity is of key importance in these underwater structures. In this work, a
+methodology for the diagnosis of structural damage in jacket-type foundations is stated. The method
+is based on the criterion that any damage or structural change produces variations in the vibrational
+response of the structure. Most studies in this area are, primarily, focused on the case of measurable
+input excitation and vibration response signals. Nevertheless, in this paper it is assumed that the
+only available excitation, the wind, is not measurable. Therefore, using vibration-response-only
+accelerometer information, a data-driven approach is developed following the next steps: (i) the
+wind is simulated as a Gaussian white noise and the accelerometer data are collected; (ii) the
+data are pre-processed using group-reshape and column-scaling; (iii) principal component analysis
+is used for both linear dimensionality reduction and feature extraction; ﬁnally, (iv) two different
+machine-learning algorithms, knearest neighbor ( k-NN) and quadratic-kernel support vector machine
+(SVM), are tested as classiﬁers. The overall accuracy is estimated by 5-fold cross-validation. The
+proposed approach is experimentally validated in a laboratory small-scale structure. The results
+manifest the reliability of the stated fault diagnosis method being the best performance given by the
+SVM classiﬁer.
+Keywords: structural health monitoring; jacket-type; accelerometers; support vector machines;
+principal component analysis
+1. Introduction
+The potential of offshore wind power is enormous. In offshore wind farms, wind turbines
+(WTs) are erected with different types of foundations. Monopile foundations are by far the most
+common foundation (81%). These are quite simple structures anchored directly to the seabed. Gravity
+foundation systems are very rare (at 5.7% market share) as they involve using a large concrete or steel
+platform with a diameter of approximately 15m and a weight of approximately 3000 tons. Finally,
+jackets are preferred for extreme sites with poor soil conditions as these are foundations with a lattice
+framework that feature three or four seabed anchoring points, which increases the levels of safety
+Sensors 2020 ,20, 1835; doi:10.3390/s20071835 www.mdpi.com/journal/sensors
+------------------------------End of the page -----------------------------------
+Sensors 2020 ,20, 1835 2 of 23
+when anchoring the towers; see Figure 1. As said previously, the potential of offshore wind power
+is enormous. However, it can only be exploited by diminishing operation and maintenance costs.
+Structural health monitoring (SHM) solutions to provide an early warning of damage are essential to
+accomplish this objective. Thus, this paper focuses in the problem of damage detection for jacked-type
+foundations.
+Figure 1. Fixed type WT foundations [1]. Monopile ( a), jacket ( b), and gravity-based ( c).
+In the literature, a lot of methodologies for damage detection can be found, among them the
+vibration-based methods are one of the most proliﬁc ones, as shown in [ 2]. Vibration-based SHM
+methods are data-based approaches employing random excitation and/or vibration response signals
+(time series), statistical model building, and statistical decision making schemes for inferring the health
+state of a structure [ 3]. The interest in these methods has been growing in recent years, due to their
+simplicity, ease of use, and high effectiveness [ 4]. However, most studies are, primarily, focused on
+the case of measurable input excitation and vibration response signals, with only a few recent studies
+focused on the vibration-response-only case [ 5], the importance of which stems from the fact that in
+some applications the excitation cannot be imposed and is often not measurable. This work, aims to
+contribute in this area of vibration-response-only as the vibration excitation is given by the wind (it
+cannot be imposed and it is assumed to be unknown).
+An overview of SHM systems for various WT components is presented, for example, in [ 6]. Some
+important studies that focus speciﬁcally on the offshore WT structure are the following. In [ 7] a review
+of SHM systems for offshore WTs has been carried out considering the topic as a statistical pattern
+recognition problem. In [ 8] health monitoring systems and operational safety evaluation techniques of
+the offshore wind turbine structure are systematically investigated and summarized. It is noteworthy
+the work of Mieloszyk et al. [ 9] where a SHM system is stated based on ﬁber Bragg grating sensors
+dedicated to an offshore wind turbine support structure model is presented to detect and localize crack
+occurrence. It is also remarkable the work of Fritzen et al. [ 10] where a method for online damage
+detection/localization is presented accompanied with on ﬁeld tests of a prototype 5MW plant. In [ 11]
+a method for damage localization using ﬁnite element model updating is introduced as a subsequent
+step to a three tier SHM scheme for damage detection. It is also noteworthy the work of Weijtjens
+et al. [ 12] related to the foundation SHM of a real offshore monopile WT based on its resonance
+frequencies where the key problems are the operational and environmental variability of the resonance
+frequencies of the turbine that potentially conceal any structural change. Another method based on
+random decrement and neural networks is stated in [ 13]. A method based on ﬁnite element model
+updating and fuzzy logic is applied on a lab-scale jacket-type platform in [ 14]. At the lowest level of
+------------------------------End of the page -----------------------------------
+Sensors 2020 ,20, 1835 3 of 23
+SHM, the main objective is simply the detection of the presence of damage. In most cases, a model
+of normality is built [ 15], and data originating from the structure of interest are tested, usually after
+some processing, in terms of novelty (when compared to the normal model). Novel data are thus
+detected and can be considered indicative of damage. Although this process is generally considered
+less challenging than the full identiﬁcation of damage, it has a great advantage: it does not need data
+from damaged states. Finally, in [ 16], where an experimental testbed similar to the one stated in this
+work is used, damage detection is accomplished (but not localization or classiﬁcation) by means of the
+covariance matrix estimate damage indicator.
+This paper contributes a damage detection and localization method (the latter being treated as a
+classiﬁcation problem) for a jacket-type WT model by using only acceleration response data. As in [ 17],
+it is assumed that the available excitation is the wind, thus the input excitation is not measurable.
+Hence, the contributed methodology comprises the following steps. First, a Gaussian white noise
+is used to simulate the wind excitation. Secondly, the data coming from the WT accelerometers are
+acquired. Thirdly, the raw data are pre-processed using group-reshape (to increase the amount of
+information contained by each observation) and column-scaling (to simplify the computation of the
+principal components (PCs)). Fourthly, the PCA is used as a feature selection technique as well as to
+reduce the dimensionality of the data and the computing time. Finally, the k-nearest neighbor ( k-NN)
+and the quadratic Support Vector Machine (SVM) classiﬁers are tested. To estimate their performance,
+the5-fold cross-validation technique is used to advise that the SVM has the best performance. The
+reliability of the proposed method is veriﬁed using different bar crack locations in a small-scale
+structure—an experimental testbed modeling a jacket-type WT.
+The structure of the paper is as follows. Section 2 details the experimental laboratory testbed
+used to validate the proposed approach. Section 3 states the damage detection and classiﬁcation
+methodology. The results are presented in Section 4. Finally, the conclusions are drawn in Section 5.
+2. Experimental Testbed
+The general overview of the experimental testbed is given in Figure 2 and explained as follows.
+The experiment starts with a white noise signal given by the function generator. This signal is
+ampliﬁed and passed to the inertial shaker. This is responsible for generating vibrations (similar to
+those produced by steady state wind on the blades) to the laboratory tower structure. The shaker is
+placed in the upper part of the structure, thus simulating the nacelle mass. Finally, the structure is
+monitored by 8triaxial accelerometers which are connected to the data acquisition system. The next
+subsections describe the testbed different steps and instrumentation.
+Figure 2. General overview of the experimental testbed.
+2.1. Function Generator
+Function generators are signal sources which provide a speciﬁable voltage applied over a
+speciﬁable time. In this work the GW INSTEKAF-2005 model is used. To perform the experimental
+------------------------------End of the page -----------------------------------
+Sensors 2020 ,20, 1835 4 of 23
+tests, the white noise signal is selected. Different wind speeds were simulated by multiplying the
+amplitude of the white noise signal (at the function generator) by the factors 0.5, 1, 2 and 3.
+2.2. Ampliﬁer and Shaker
+When large structures need to be tested, inertial shakers provide the ideal solution. The central
+spigot is attached to the structure under test and the body then provides the inertial mass. In this
+work, the inertial shaker model GW-IV47 from Data Physics is used as well as its PA300E gain control
+ampliﬁer; see Figure 3. To produce vibrations that simulate the ones obtained when the wind hits the
+WT blades, the white noise signal given by the function generator is ampliﬁed and this electrical signal
+is applied to the shaker. Thus, the vibration needed to excite the structure is created.
+Figure 3. Ampliﬁer model PA300E (left) and inertial shaker IV47 series (right) from Data Physics used
+in the experimental set-up.
+2.3. Laboratory Tower Structure and Studied Types of Damage
+The real structure used in this work is 2.7m high and, as shown in Figure 4 (left), it has three
+different structural components: nacelle, tower and jacket. The top piece is a 1m long and 0.6m wide
+beam where an inertial shaker is located that simulates the nacelle mass and the environmental effects
+of the wind over the whole structure. The tower is formed by three tubular sections linked with bolts
+with a torque of 125Nm. The jacket is a pyramidal structure formed by several steel bars of different
+lengths, all of them linked with bolts, with a torque of 12Nm. The studied damage is introduced
+in these bars; see Figure 4 (right). In particular, the jacket has four different bar lengths, each one at
+different levels (depth). Level 1 is where the shortest bars are located, near the water surface. Then,
+greater depth leads to next levels up to level 4 where the longest bars are situated (near the see bottom).
+The damage will be introduced, one at a time, at the four different levels, i.e., at four different bars
+located at level 1, 2, 3 and 4 as illustrated in Figure 4 (right). Fatigue cracks are one of the types of
+damage found on offshore WT foundations. The probability of detection of a fatigue crack is low for
+small crack sizes. However, for larger and therefore better detectable fatigue cracks, the crack growth
+rate accelerates rapidly [ 18]. Consequently, there is only a small time window for detection and repair
+of this type of cracks before failure. Thus, in this work a 5 mm crack is considered located at different
+bars of the jacket structure, one at a time. Please note that in [ 16] a modal analysis and power spectral
+density signal processing methods were not able to detect this 5mm crack located in the substructure
+using a similar laboratory tower model.
+------------------------------End of the page -----------------------------------
+Sensors 2020 ,20, 1835 5 of 23
+Figure 4. WT scaled offshore ﬁxed jacket-type platform tower model used in the experimental tests
+(left). Bars (pointed with arrows) where the crack damage is introduced (right); note that in this picture
+the damage is introduced at level 4 (red circle), but it will be introduced on each level one by one.
+2.4. Sensors
+Eight triaxial accelerometers (model 356A17, PCB Piezotronics) (PCBRmanufacturer, Depew, NY,
+USA) have been used strategically (placed at the tower and jacket by direct adhesive mount) to detect
+some anomaly in the dynamic behavior of the structure. These are high sensitivity and ceramic shear
+accelerometers that have a ﬁxed voltage sensitivity, regardless of the type of cable used or its length;
+and its output signal is low impedance, so it can transmit over long cables in hostile environments
+without losing signal quality. The device is accompanied by a cable that trifurcates giving an output
+for each spatial component x,y, and z; see Figure 5. Hence, data from 24 sensors are acquired.
+Figure 5. Triaxial accelerometers used in the testbed (PCB Piezotronics, model 356A17).
+The optimal location of the sensors (see Figure 6) is determined according to the sensor elimination
+by modal assurance criterion (SEAMAC) ([ 16], Chapter 3.7, page 53). This is a sensor removal algorithm
+based on eliminating iteratively, one by one, the degrees of freedom that show a lower impact on MAC
+------------------------------End of the page -----------------------------------
+Sensors 2020 ,20, 1835 6 of 23
+matrix values. This iterative process stops when you get a default MAC matrix, high values in the
+diagonal terms and low values in off-diagonal terms.
+Figure 6. Location of the sensors on the overall structure.
+2.5. Data Acquisition System
+The data acquisition system is composed by the cDAQ-9188 chassis and six NI-9234 modules from
+National InstrumentsTMmanufacturer (Austin, TX, USA), as shown in Figure 7. The cDAQ-9188 is a
+CompactDAQ Ethernet chassis, consisting of 8 input slots, and each slot can receive up to 4 different
+signals. The chassis is capable of controlling timing, synchronization and data transfer between the
+C Series I / O modules and an external server. The NI-9234 modules can measure signals from
+integrated electronic piezoelectric sensors (IEPE) and non-IEPE such as accelerometers (used in this
+work), tachometers and proximity sensors.
+Figure 7. Data Acquisition System (DAQ) used in this work: cDAQ-9188 chassis and six NI-9234
+modules from National Instruments.
+------------------------------End of the page -----------------------------------
+Sensors 2020 ,20, 1835 7 of 23
+3. Damage Detection Methodology
+3.1. Data Collection and Reshape
+In this work, data collection and reshape is considered with the goal of combining different
+response signals (measured by different sensors during multiple observations) into a single and uniﬁed
+view. We will present a method for data fusion, dimensionality reduction and feature extraction using
+a particular unfolding. We then apply a machine-learning classiﬁer ( k-NN and SVM are tested) to
+detect damage or structural changes in incoming collected data. It is clear that the classiﬁers will
+play a key role in the damage detection methodology. However, given the three-dimensional nature
+of the collected information in this paper (time, sensors, experiments), how the data are collected,
+arranged, scaled, transformed, and reduced may affect the overall performance of the strategy [ 19].
+A similar problem is considered in [ 20], where the three-dimensional nature of the SHM data comes
+from location, frequency and time. In that case, tensor analysis is considered to extract the features.
+One of the most widely adopted ways to deal with this kind of three-dimensional source of
+information is the unfolding proposed by Westerhuis et al. [ 21], where six alternative ways of arranging
+a3-dimensional data matrix are proposed. In our case, the combination of the different response signals
+into a uniﬁed view will be represented by a two-dimensional matrix X=
+xk,l
+i,j
+2M(n1++nE)(KL)
+as follows:
+X=
+xk,l
+i,j
+=2
+66666666666666666666666666664x1,1
+1,1 x1,L
+1,1x2,1
+1,1 x2,L
+1,1 xK,1
+1,1 xK,L
+1,1
+..............................
+x1,1
+n1,1 x1,L
+n1,1x2,1
+n1,1 x2,L
+n1,1 xK,1
+n1,1 xK,L
+n1,1
+x1,1
+1,2 x1,L
+1,2x2,1
+1,2 x2,L
+1,2 xK,1
+1,2 xK,L
+1,2
+..............................
+x1,1
+n2,2 x1,L
+n2,2x2,1
+n2,2 x2,L
+n2,2 xK,1
+n1,2 xK,L
+n2,2
+..............................
+x1,1
+1,J x1,L
+1,Jx2,1
+1,J x2,L
+1,J xK,1
+1,J xK,L
+1,J
+..............................
+x1,1
+nJ,J x1,L
+nJ,Jx2,1
+nJ,J x2,L
+nJ,J xK,1
+nJ,J xK,L
+nJ,J3
+77777777777777777777777777775(1)
+=2
+666666664X1
+X2
+...
+XJ3
+777777775=
+X1X2 XK
+.
+Matrix Xin Equation (1)is presented for a general case, so that the proposed strategy can be
+easily reproduced. The two subindices iand jand the two superindices kand lare related to the
+experimental trial, structural state, sensor and time instant, respectively. More precisely,
+ i=1,. . .,njrepresents the i th experimental trial, while njis the number of observations or
+experimental trials per structural state;
+ j=1,. . .,Jis the structural state that is been measured, while Jis the quantity of different
+structural states;
+ k=1, . . . , Kindicates the sensor that is measuring, while Kis the total number of sensors;
+------------------------------End of the page -----------------------------------
+Sensors 2020 ,20, 1835 8 of 23
+ l=1, . . . , Lidentiﬁes the time stamp, while Lis the number of time stamps per experiment.
+Please note that matrix Xin Equation (1)can also be viewed as the vertical concatenation of J
+matrices Xj,j=1,. . .,J, where each matrix is associated with a different structural state. Similarly,
+matrix Xcan also be considered to be the horizontal concatenation of Kmatrices Xk,k=1,. . .,K,
+where each matrix is associated with a different sensor. This horizontal concatenation of matrices can
+also be viewed as a kind of group-reshaping , where we measure a sensor during njLtime instants (in
+thej th structural state), and we ﬁnally arrange these njLtime instants in a njLmatrix Xj. It is
+noteworthy that by this reshape—that is the key of the selected unfolding proposed by Westerhuis et
+al. [21]—it is increased the amount of information contained by each observation (row). Moreover,
+this choice facilitates the study of the variability among samples, because we compile the information
+related to the sensor measurements and their variations over time.
+3.2. Column-Scaling and Principal Component Analysis (PCA)
+The raw data in matrix Xin Equation (1)is scaled for two main reasons: ﬁrst, to process data that
+come from different sensors and second, to simplify the computations of the data transformation using
+PCA [ 22–25]. In this work, column-wise scaling (CS) is used. More precisely, each column vector in
+matrix Xis normalized by subtracting the mean of all the elements in the column and by dividing by
+the standard deviation of the same set of data. Thus, each column of the new scaled matrix, ˘X, has a
+mean of zero and a standard deviation of one.
+Recall that before using a classiﬁer, the data must be processed (transformed and reduced) to
+obtain the most suitable features. In this work, multiway PCA is selected to accomplish this objective.
+On one hand, the transformation is calculated as a matrix-to-matrix multiplication
+T=˘XP,
+where Pis the matrix that contains, written as columns, the principal components of matrix ˘X.Tis a
+(n1++nJ)(KL)matrix. On the other hand, the dimensionality reduction is performed through
+the reduced PCA model P`that contains, written as columns, the ﬁrst `principal components. More
+precisely, T`is the projection of the scaled matrix ˘Xinto the vectorial space spanned by the reduced
+PCA model through the matrix-to-matrix multiplication
+T`=˘XP`.
+Since we have applied column-scaling, the trace of the variance-covariance matrix is equal to KL.
+This means that the ﬁrst `principal components retain a proportion of variance given by
+l1+l2++l`
+KL,
+where liare the eigenvalues associated with the eigenvectors (principal components) of the
+variance-covariance matrix, in decreasing order.
+3.3. Machine-Learning Classiﬁers
+Multi-class classiﬁcation algorithms are used to categorize the different structural states. In
+particular, the supervised learning algorithms k-NN and SVM are used and its performance compared
+through different indicators. The k-NN classiﬁer is an instance-based learner, i.e., it stores the training
+data in the memory instead of constructing a model and compares the new test data to closest saved
+instances to perform the prediction. On the other hand, the SVM classiﬁer constructs a model that is
+supposed to generalize well. The classiﬁers are succinctly introduced in the following subsections.
+------------------------------End of the page -----------------------------------
+Sensors 2020 ,20, 1835 9 of 23
+3.3.1. k-Nearest Neighbor ( k-NN)
+The k-NN algorithm [ 26,27] stores the training dataset and to make a prediction computes the
+knearest neighbors to the observation to be categorized and assigns the category of the majority. It
+only requires tuning one parameter: the number of neighbors, k. The main drawback is that as it does
+not train a model, the algorithm spends more time during the prediction. Please note that we use the
+same symbol kas one of the superindices in the generic element of matrix Xin Equation (1), but with
+a different meaning. We will keep the notation k-NN because we think that there is no possibility
+of ambiguity.
+3.3.2. Support Vector Machine (SVM)
+It is not the purpose of this paper to give a detailed explanation of the SVM classiﬁer. For the
+interested reader, an excellent detailed review is given in reference [ 28]. However, to hand over the
+background and motivation for the proposed methodology, a summary of the method is given. This
+recap is based on reference [29].
+SVM classiﬁcation is primarily a binary classiﬁcation technique. Suppose a training set
+f(xi,yi)gN
+i=1with d-dimensional data xi2Rdand their complementary binary label yi2f  1,+1g.
+Figure 8 shows a two-dimensional example of these type of data where one class is labeled as ( +) and
+the other one as (  ). The objective of the SVM is to ﬁnd the hyperplane with the widest margin to
+separate both classes; see Figure 8. Conventionally, the hyperplane is given by
+Figure 8. Linear support vector machine (SVM) in a two-dimensional example.
+h(x) =wTx+b, (2)
+where wis the weight vector and bis the bias term. Among all the possible descriptions of the
+hyperplane, usually the so-called canonical hyperplane is used that satisﬁes
+wTxsv
+++b=1, (3)
+wTxsv
+ +b= 1, (4)
+------------------------------End of the page -----------------------------------
+Sensors 2020 ,20, 1835 10 of 23
+where xsv+and xsv illustrate the ( +) and ( ) training samples closest to the hyperplane (the
+so-called support vectors); see Figure 8. Maximizing the margin is equivalent to the following
+minimization problem
+min
+w,b1
+2jjwjj2subject to h(xi)yi1,i=1, . . . , N. (5)
+When the data are not separable by a hyperplane, SVM can use a soft margin, meaning to ﬁnd
+a hyperplane that separates many but not all the data. Therefore, the problem is generalized by
+introducing slack variables, #i, and a penalty parameter, C. Then, the general formulation, for the
+linear kernel, is,
+min
+w,b,#i1
+2jjwjj2+CN
+å
+i=1#isubject to8
+><
+>:h(xi)yi1 #i,i=1, . . . , N;
+#i0,i=1, . . . , N.(6)
+In this case, using Lagrange multipliers, the problem reads
+minai"
+N
+å
+i=1ai 1
+2N
+å
+i=1N
+å
+j=1aiajyiyjxT
+ixj#
+subject to8
+><
+>:åN
+i=1aiyi=0;
+0aiC,i=1, . . . , N.(7)
+The ﬁnal set of constraints demonstrate why the penalty parameter Cis called a box constraint, as it
+retains the values of the Lagrange multipliers in a bounded region.
+From Equation (7), it is obvious that optimization depends only on dot products of pairs of
+samples. Plus, the decision rule depends only on the dot product. Thus, when the classiﬁcation
+problem does not have a simple separating hyperplane, even using a soft margin, a transformation
+to another space can be used, f(). Indeed, the transformation itself is not needed, but just the dot
+product (so-called kernel function),
+K(xi,xj) =f(xi)f(xj). (8)
+The kernel function permits the computation of the inner product between the mapped vectors
+without expressly calculating the mapping. This is known as the kernel trick [30]. Different kernels can
+be used, namely polynomial, hyperbolic tangent, or Gaussian radial basis function. Here, to give an
+insight and understand why the quadratic kernel is selected in this work, some scatter plots are shown
+in Figure 9. It can be seen that these plots reveal a quadratic relationship and, particularly, the ﬁrst
+versus the second feature scatter plot exposes a concentric circles shape of the data set. Therefore, the
+quadratic SVM classiﬁer is adopted, i.e., the following polynomial kernel is used
+K(xi,xj) =
+1+1
+r2xT
+ixj2
+(9)
+where ris the so-called kernel-scale parameter; and xiand xjdenote here different observations of our
+data set.
+As said previously, SVM classiﬁcation is a binary classiﬁcation technique, which must be adapted
+to cope with multi-classiﬁcation problems. Two of the most common methods to enable this adaptation
+include the one-vs-one and one-vs-all approaches. The one-vs-all technique [ 31] represents the earliest
+and most common SVM multi-class approach and comprises the division of an Nclass dataset into N
+two-class cases and it designates the class which classiﬁes the test with greatest margin. The one-vs-one
+strategy [ 32] comprises constructing a machine for each pair of classes, thus resulting in N(N 1)/2
+machines. When this approach is applied to a test point, each classiﬁcation gives one vote to the
+winning class and the point is labeled with the class with most votes. The one-vs-one strategy is more
+------------------------------End of the page -----------------------------------
+Sensors 2020 ,20, 1835 11 of 23
+computationally demanding since the results of more SVM pairs ought to be computed. In this work,
+the one-vs-all approach is used.
+(a)Scatter plots of the ﬁrst versus the second
+principal component.
+(b)Scatter plots of the ﬁrst versus the third
+principal component.
+(c)Scatter plots of the ﬁrst versus the fourteenth
+principal component.
+(d) Scatter plots of the ﬁrst versus the
+twenty-ﬁfth principal component.
+Figure 9. Blue dots represent healthy samples, orange dots represent samples of damage at level 1,
+yellow dots represent samples of damage at level 2, purple dots represent samples of damage at level 3
+and green dots represent samples of damage at level 4.
+3.4.k-Fold Cross-Validation
+Cross-validation is a technique used to evaluate the results and ensure that they are independent
+of the partition between training and test data. It comes from the improvement of the holdout method
+that consists of dividing the sample data into two complementary sets, performing the training in
+the ﬁrst subset and validating with the other subset. By the holdout method, the evaluation can
+depend to a large extent on how the partition between training and test data is performed. Due to
+this deﬁciency the concept of cross-validation appears. In the cross-validation of kiterations, or k-fold
+cross-validation, the data is divided into ksubsets. One of the subsets is used as test data and the rest
+(k 1) as training data. This process is repeated ktimes, and at each iteration a different subset is used
+as test data and the others as training data. Finally, the arithmetic mean of the results of each iteration
+is performed to obtain a single result. This method is a more accurate estimate of model prediction
+performance since it evaluates from kdifferent combinations of training and test data. In this paper,
+5-fold cross-validation is used to estimate the performance of the proposed strategy.
+------------------------------End of the page -----------------------------------
+Sensors 2020 ,20, 1835 12 of 23
+4. Results
+4.1. Experimental Set-Up
+As said in Section 2.3, we have considered J=5different structural states, the healthy WT and
+the structure with damage located at four different jacket levels. Moreover, a total of n1+n2+n3+
+n4+n5=11620 experimental tests are conducted, which includes the four amplitudes that represent
+the different wind speed regions (multiplying the amplitude of the white noise signal by the factors
+0.5, 1, 2 and 3). In particular:
+(i) 1245 tests with the original healthy bar for each amplitude, i.e., n1=12454=4980 tests.
+(ii) 415 tests with damage located at level 1 for each amplitude, i.e., n2=4154=1660 tests.
+(iii) 415 tests with damage located at level 2 for each amplitude, i.e., n3=4154=1660 tests.
+(iv) 415 tests with damage located at level 3 for each amplitude, i.e., n4=4154=1660 tests.
+(v) 415 tests with damage located at level 4 for each amplitude, i.e., n5=4154=1660 tests.
+For each experimental test, we measure K=24sensors (see Section 2.4), during L=199time
+instants. Since the accelerometers measure at a sampling frequency of about 275Hz, the time step is
+D=0.003633 seconds, which represents a time window for each experimental test of199
+275 Hz=0.7236
+seconds. Please note that this sampling frequency is feasible in an offshore environment using
+accelerometers; see [8].
+Therefore, with the raw matrix Xas in Equation (1) where
+n1=4980
+n2=1660
+n3=1660
+n4=1660
+n5=1660
+J=5
+L=199
+K=24
+we apply the column-scaling and we compute the PCA model for the data transformation as detailed
+in Section 3.2. The extent of the data reduction can be measured as the rate of the number of principal
+components that retains a predetermined variance with respect to the number of columns in matrix X
+in Equation (1). For instance:
+(i)if we retain 85% of the variance, the ﬁrst 443principal components are needed out of KL=4776
+columns. This represents a data reduction (leading to reduced memory requirements) of 90.72% .
+(ii)if we retain 90% of the variance, the ﬁrst 887principal components are needed. The reduction in
+this case is 81.43%.
+(iii) if we retain 95% of the variance, the ﬁrst 1770 principal components are needed. This represents
+a still signiﬁcant reduction of 62.94%.
+Data reduction is of paramount importance in both the training time and the prediction speed.
+The results in this section are computed and assessed using M ATLABc.
+4.2. Metrics for Evaluating Classiﬁcation Models
+In classiﬁcation problems, training data is used to build a model and thus predict the class label
+for a new sample. To know if the model that we have trained has the best performance according to
+the problem presented, it is important to evaluate the classiﬁcation model through metrics such as
+accuracy, precision, sensitivity and speciﬁcity that can be generated from a confusion matrix such as
+the one shown in Table 1. Regularly, these metrics evaluate binary classiﬁcation problems.
+------------------------------End of the page -----------------------------------
+Sensors 2020 ,20, 1835 13 of 23
+Table 1. Binary confusion matrix.
+Predicted Class
+Positive Negative
+Actual classPositiveTrue positive
+(TP)False negative
+(FN)
+NegativeFalse positive
+(FP)True negative
+(TN)
+From this binary confusion matrix:
+ True positive (TP) is the number of positive cases that were correctly identiﬁed.
+ False positive (FP) is the quantity of negative cases that were incorrectly classiﬁed as positive.
+ True negative (TN) is deﬁned as the sum of negative cases that were correctly classiﬁed.
+ False negative (FN) is the total of positive cases that were incorrectly classiﬁed as negative.
+The meaning of positive and negative may vary from one application to another. For instance,
+in [23,33], where a 5 MW high-ﬁdelity WT model is considered for fault detection, if a new sample is
+categorized as positive it means that the current structure is classiﬁed as healthy. Otherwise, some
+kind of fault is present in the WT. In the present work, we follow the same classiﬁcation with respect
+to positive and negative.
+Table 2 shows the most common metrics for choosing the best solution to a binary
+classiﬁcation problem.
+Table 2. Metrics for evaluating binary classiﬁcation models.
+Metric Formula Description
+Accuracy acc =TP+TN
+TP+FP+FN+TNIt is the number of correct predictions made by the model
+according to the total number of records. The best accuracy is
+100%, which indicates that all predictions are correct. Accuracy
+alone does not tell the full story when working with a
+class-imbalanced data set.
+Precision ppv =TP
+TP+FPThis parameter evaluates the data by its performance of positive
+predictions, in other words, it is the proportion of positive cases
+that have been correctly predicted.
+Sensibility/Recall tpr =TP
+TP+FNThis parameter calculates the fraction of the positive cases that
+our model has been able to identify as positive (true positive).
+F1-Score F1 =2ppvtpr
+ppv +tprIt is deﬁned as the harmonic mean of precision and sensitivity. A
+F1 score reaches its best value at 1 (accuracy and perfect sensitivity)
+and worse at 0.
+Speciﬁcity tnr =TN
+TN+FPThe speciﬁcity or true negative rate is calculated as the proportion
+of correct negative predictions divided by the total number
+of cases that are classiﬁed as negative.
+Speciﬁcity is the exact opposite of sensitivity, the proportion of
+negative cases predicted correctly.
+------------------------------End of the page -----------------------------------
+Sensors 2020 ,20, 1835 14 of 23
+As shown in [ 34], these metrics are easy to calculate and applicable to binary and multi-class
+classiﬁcation problems. When the classiﬁcation problem is multi-class, according to [ 35,36] the result
+is the average obtained by adding the result of each class and dividing over the total number of classes.
+The formulas for calculating these metrics in a multi-class classiﬁcation model are shown in Table 3.
+Table 3. Metrics for evaluating multi-class classiﬁcation models, where jrefers to the individual class
+and Jis the total number of classes.
+Metric Formula
+Average Accuracy ( acc)1
+JåJ
+j=1TPj+TN j
+TPj+FPj+FN j+TN j
+Average Precision ( ppv)1
+JåJ
+j=1TPj
+TPj+FPj
+Average Sensibility/Recall ( tpr)1
+JåJ
+j=1TPj
+TPj+FN j
+Average F1-Score ( F1) 2ppvtpr
+ppv +tpr
+Average Speciﬁcity ( tnr)1
+JåJ
+j=1TN j
+TN j+FPj
+In a multi-class confusion matrix, the classiﬁcation results TP , TN, FP and FN can also be
+considered for each class, as shown in ([ 35], page 71). Table 4 summarizes a confusion matrix with 5
+different classes. When we focus, for instance, on class B (that is, the second class), we can identify
+four regions:
+ the green region is related to the true positive (TP 2);
+ the magenta region is related to the false positive ( FP2). More precisely, FP2is the sum of the
+elements in the second column but BB, i.e., FP 2=AB+CB+DB+EB;
+ the orange region is related to the false negative ( FN2). More precisely, FN2is the sum of the
+elements in the second row but BB, i.e., FN 2=BA+BC+BD+BE; and ﬁnally,
+ the cyan region is related to the true negative ( TN 2). More precisely, TN 2is the sum of all the
+elements of the confusion matrix but the ones in the second row and the second column.
+Table 4. Multi-class confusion matrix. In this case, the confusion matrix has ﬁve classes.
+Predicted Class
+Class A Class B Class C Class D Class EActual class.........Class A AA AB AC AD AE
+Class B BA BB BC BD BE
+Class C CA CB CC CD CE
+Class D DA DB DC DD DE
+Class E EA EB EC ED EE
+The classiﬁcation results TPj,FPj,FNjand TN jforj=1,. . ., 5that correspond to classes A, B, C,
+D and E in Table 4, respectively, are computed similarly.
+Recall that this paper shows a multiple classiﬁcation problem that collects data grouped in ﬁve
+different classes: the original healthy bar, damage located at jacket level 1, damage located at jacket
+level 2, damage located at jacket level 3 and damage located at jacket level 4.
+------------------------------End of the page -----------------------------------
+Sensors 2020 ,20, 1835 15 of 23
+4.3. Results of k-NN Classiﬁcation Method
+First, the k-NN classiﬁer is tested. The indicators introduced in Section 4.2 are employed to tune
+the value of the parameter k, which is the number of neighbors to be used, and also decide the best
+variance to be adopted when applying PCA.
+Table 5 shows the results obtained when working with 85%,90% and 95% of the variance, and
+also varying the number of neighbors, k. The classiﬁers with the best performance are highlighted in
+boldface font. It can be observed that the best classiﬁers from 90% and 95% of the variance, respectively,
+have both similar indicators. In this case, working only with 90% of variance is preferred as it will
+reduce the computational memory requirement. In terms of time, Table 6 shows the training time
+and prediction speed for each of the classiﬁers with the best performance. It can be inferred that the
+classiﬁer using 90% of the variance and k=200neighbors has the best performance. In particular,
+for this classiﬁer, Figure 10 graphically shows its performance indicators (pink line) and Table 7
+represents its confusion matrix. Regarding Figure 10 it is observed that initially, increasing the number
+of neighbors leads to better indicators, however when kis greater than 200the performance degrades
+for all the indicators. With regard to the confusion matrix (Table 7), each row represents the instances
+in a true class while each column represents the instances in a predicted class (by the classiﬁer). In
+particular, the ﬁrst row (and ﬁrst column) is labeled as 0 and corresponds to the healthy bar. The next
+labels (for rows and columns) 1,2,3, and 4correspond to bars damage in the corresponding levels of
+the jacket structure. From this confusion matrix, it can be derived all the aforementioned indicators.
+In particular, it is noteworthy that an average accuracy of 95%, an average precision (proportion
+of healthy cases predicted correctly) of 95%, and an average speciﬁcity (proportion of faulty cases
+predicted correctly) of 99.5% are obtained.
+acc ppv trp F1 tnr0.80.850.90.951k=1
+k=5
+k=10
+k=25
+k=50
+k=100
+k=150
+k=200
+k=250
+k=300
+k=500
+Figure 10. Indicators corresponding to the k-NN method using 90% of variance. The case k=200,
+represented by the pink line, shows the best performance in each of the evaluation indicators.
+------------------------------End of the page -----------------------------------
+Sensors 2020 ,20, 1835 16 of 23
+Table 5. Evaluation indicators for the k-NN method using different percentages of variance and
+different number of nearest neighbors ( k). The best classiﬁers for each variance are highlighted using a
+boldface font.
+VarianceNumber
+of PCsNeighbors
+kAccuracy
+accPrecision
+ppvRecall
+tprF1 score
+F1Speciﬁcity
+tnr
+85% 4431 0.857 0.860 0.846 0.853 0.950
+5 0.856 0.869 0.82 0.844 0.953
+10 0.867 0.891 0.827 0.858 0.956
+25 0.868 0.898 0.828 0.862 0.955
+50 0.874 0.912 0.831 0.87 0.958
+100 0.911 0.928 0.879 0.903 0.981
+150 0.933 0.942 0.908 0.925 0.988
+200 0.946 0.947 0.924 0.936 0.993
+250 0.940 0.938 0.917 0.927 0.991
+300 0.930 0.929 0.903 0.915 0.988
+500 0.899 0.909 0.859 0.884 0.976
+90% 8871 0.857 0.856 0.845 0.85 0.961
+5 0.860 0.870 0.828 0.849 0.956
+10 0.872 0.887 0.838 0.862 0.961
+25 0.873 0.889 0.840 0.864 0.961
+50 0.884 0.913 0.846 0.878 0.964
+100 0.917 0.930 0.886 0.907 0.984
+150 0.938 0.945 0.914 0.929 0.990
+200 0.950 0.950 0.931 0.940 0.995
+250 0.944 0.941 0.922 0.932 0.993
+300 0.933 0.931 0.906 0.918 0.989
+500 0.903 0.912 0.864 0.888 0.977
+95% 17701 0.854 0.853 0.842 0.847 0.960
+5 0.858 0.865 0.829 0.847 0.956
+10 0.872 0.885 0.841 0.862 0.962
+25 0.873 0.888 0.841 0.864 0.962
+50 0.885 0.911 0.848 0.879 0.965
+100 0.918 0.930 0.888 0.908 0.985
+150 0.938 0.945 0.915 0.930 0.990
+200 0.950 0.950 0.930 0.940 0.995
+250 0.945 0.942 0.923 0.932 0.993
+300 0.934 0.931 0.908 0.919 0.989
+500 0.904 0.913 0.866 0.889 0.978
+------------------------------End of the page -----------------------------------
+Sensors 2020 ,20, 1835 17 of 23
+Table 6. Prediction speed and training time results for the best performance classiﬁers of each variance
+(85%,90% and 95%) using the k-NN classiﬁcation method on a 3GHz Intel Core i7, 16 GB RAM
+computer. The best classiﬁer in terms of accuracy is highlighted using a boldface font.
+Variance AccuracyPrediction
+Speed
+(obs/s)Training
+Time
+(s)
+85% 94.6% 210 329
+90% 95.0% 110 638
+95% 95.0% 55 1251
+Table 7. Confusion matrix for the k-NN algorithm with k=200 neighbors. The obtained accuracy is
+95%. Label 0corresponds to the healthy state, and labels 1,2,3and 4correspond to the damage state
+located at the corresponding level. In this matrix, each row represents the instances in a true class while
+each column represents the instances in a predicted class. An empty blank square means 0%.
+0 1 2 3 4
+0 >99% <1%
+1 <1% 98% 2%
+2 7% 93% <1%
+3 75% 25%
+4 1% <1% 99%
+4.4. Results of SVM Classiﬁcation Method
+In this Section the results of the SVM classiﬁcation method are presented. As stated in Section 3.3.2,
+since the scatter plots in Figure 9 reveal a quadratic relationship (particularly the ﬁrst versus the
+second principal components), the quadratic SVM classiﬁer is adopted. Therefore, in this case, the
+hyper-parameters are the box constraint C, see (6), and the kernel scale r, see (9), that are tuned using
+the indicators detailed in Section 4.2.
+Table 8 summarizes the results obtained when working with 85%,90% and 95% of the variance.
+Since the problem we are dealing with seems a separable problem, no changes were found in the
+performance of the indicators when considering different values of the box constraint C. Therefore,
+C=1is considered for the rest of the analysis. The cases that present the best results have been
+highlighted in boldface font. It can be observed that the best classiﬁers from 85%,90% and 95% of
+the variance reach a level of accuracy, precision, recall, F1 score and speciﬁcity around 99.8% and
+100% . However, the best cases are the ones that consider 85% of the variance and kernel scales r=90
+andr=100. In these cases, the results are almost ideal reaching a speciﬁcity value of 100% and
+the rest of the indicators 99.9% . With respect to the time, Table 9 presents the training time and the
+prediction speed for each one of the classiﬁers with the best performance. According to this table, it is
+observed that the classiﬁer with 85% of the variance and a kernel scale r=90 has a higher prediction
+speed (in terms of observations per second) and a shorter training time. Therefore, this classiﬁer has
+the best performance. It may seem incongruous that a case with fewer principal components ( 85%,
+443PCs) behaves better than cases with more principal components ( 90%,887PCs; or even 95%,
+1770 ). However, this can occur, since the last principal components usually collect the noise present in
+the measurements.
+Figure 11 graphically shows the magnitude of the indicators in Table 3 with respect to the kernel
+scale rfor the case with 85% of the variance. It can be seen that increasing the kernel scale from r=5
+------------------------------End of the page -----------------------------------
+Sensors 2020 ,20, 1835 18 of 23
+(solid light blue) onwards improves the overall performance of the classiﬁcation method up to a certain
+limit. The performance degradation appears for values greater than r=100.
+The confusion matrix for the best performing classiﬁer ( 85% variance and kernel scale r=90) is
+represented in Table 10. From this confusion matrix and according to the indicators of evaluation, we
+obtain an average accuracy of 99.9% , an average precision of 99.9% and an average speciﬁcity of 100% .
+Table 8. Evaluation indicators for the SVM model using different percentages of variance and different
+values for r(kernel scale). The best values for each indicator are highlighted using a boldface font.
+Variance/
+Number of
+ComponentsBox
+Constraint
+CKernel
+Scale
+rAccuracy
+accPrecision
+ppvRecall
+tprF1 Score
+F1Speciﬁcity
+tnr
+85%/443 15 0.987 0.993 0.983 0.988 0.995
+20 0.994 0.991 0.991 0.991 1.000
+30 0.995 0.994 0.994 0.994 1.000
+40 0.996 0.995 0.995 0.995 1.000
+50 0.997 0.996 0.996 0.996 1.000
+60 0.998 0.997 0.997 0.997 1.000
+70 0.998 0.998 0.998 0.998 1.000
+80 0.999 0.998 0.998 0.998 1.000
+90 0.999 0.999 0.999 0.999 1.000
+100 0.999 0.999 0.999 0.999 1.000
+150 0.998 0.998 0.998 0.998 1.000
+200 0.997 0.996 0.997 0.997 0.999
+300 0.882 0.926 0.835 0.878 0.954
+90%/887 15 0.987 0.993 0.982 0.988 0.995
+20 0.991 0.988 0.988 0.988 1.000
+30 0.995 0.993 0.993 0.993 1.000
+40 0.996 0.995 0.995 0.995 1.000
+50 0.997 0.997 0.997 0.997 1.000
+60 0.998 0.997 0.997 0.997 1.000
+70 0.998 0.997 0.997 0.997 1.000
+80 0.998 0.997 0.997 0.997 1.000
+90 0.998 0.998 0.998 0.998 1.000
+100 0.998 0.998 0.998 0.998 1.000
+150 0.998 0.998 0.998 0.998 0.999
+200 0.997 0.996 0.996 0.996 0.999
+300 0.883 0.927 0.837 0.880 0.955
+95%/1770 15 0.986 0.993 0.981 0.987 0.994
+20 0.990 0.987 0.986 0.986 1.000
+30 0.994 0.992 0.992 0.992 1.000
+40 0.996 0.994 0.994 0.994 1.000
+50 0.997 0.996 0.996 0.996 1.000
+60 0.997 0.997 0.997 0.997 1.000
+70 0.998 0.997 0.997 0.997 1.000
+80 0.998 0.997 0.998 0.998 1.000
+90 0.998 0.998 0.998 0.998 1.000
+100 0.998 0.997 0.998 0.998 1.000
+150 0.998 0.997 0.998 0.997 0.999
+200 0.996 0.996 0.996 0.996 0.999
+300 0.997 0.997 0.997 0.997 0.999
+------------------------------End of the page -----------------------------------
+Sensors 2020 ,20, 1835 19 of 23
+Table 9. Prediction speed and training time results for the best performance cases of each variance
+(85%,90% and 95%) using the SVM classiﬁcation method. The best classiﬁer in terms of accuracy and
+computational cost is highlighted using a boldface font.
+VarianceKernel
+scale
+rAccuracyPrediction
+speed
+(obs/sec)Training
+time
+(sec)
+85%90 0.999 1700 76
+100 0.999 1600 79
+90%90 0.998 320 256
+100 0.998 580 364
+95% 90 0.998 100 676
+acc ppv trp F1 tnr0.9820.9840.9860.9880.990.9920.9940.9960.9981=5
+=20
+=30
+=40
+=50
+=60
+=70
+=80
+=90
+=100
+=150
+=200
+Figure 11. Indicators to evaluate the SVM classiﬁcation model using 85% of variance. The cases with
+the best performance are r=90andr=100that are represented by the overlapped orange (solid) line
+and blue (dotted) line, respectively. The graph omits r=300since the results obtained are much worse
+and would be out of the y-axis scale used in this graph.
+------------------------------End of the page -----------------------------------
+Sensors 2020 ,20, 1835 20 of 23
+Table 10. Confusion matrix of the SVM model with r=90and C=1, we get an accuracy of 99.9% .
+Label 0corresponds to healthy, label 1corresponds to level 1, label 2corresponds to level 2, label 3level
+3and label 4corresponds to level 4. In this matrix, each row represents the instances in a true class
+while each column represents the instances in a predicted class. An empty blank square means 0%.
+0 1 2 3 4
+0 >99% <1% <1%
+1 <1% 99% <1%
+2 <1% 99%
+3 >99% <1%
+4 100%
+5. Conclusions
+In this work, a methodology has been stated for damage detection and localization on a
+laboratory-scale WT with jacket-type foundation. In particular, a crack damage is studied in four
+different locations of the jacket foundation. The main conclusions stressed from this work are
+the following:
+(i)A vibration-response-only methodology has been conceived and a satisfactory experimental
+proof of concept has been conducted. However, future work is needed to validate the technology
+in a more realistic environment that takes into account the varying environmental and operational
+conditions.
+(ii)The contribution of this work resides in how three-dimensional data (coming from different time,
+sensors, and experiments) is collected, arranged, scaled, transformed, and dimension reduced
+following a general framework stated in Sections 3.1 and 3.2, and afterwards particularized for
+the speciﬁc application that concerns us in Section 4.1.
+(iii) The damage detection and localization methodology with the quadratic SVM classiﬁer, kernel
+scale r=90, box constraint C=1, and 443principal components (85% of variance kept) has a
+very close to ideal performance, achieving in all indicators a result equal o higher to 99.99% with
+a very fast prediction speed (1700 obs/sec) and short training time (76 sec).
+Finally, it is important to note that environmental and operational conditions (EOC) play an
+important role when dealing with long term monitoring, because they can complicate damage detection.
+Large variations in EOCs make EOC monitoring almost as important as structural monitoring itself.
+Therefore, its inﬂuence should be compensated. Several methods for EOC compensation for WTs
+have been developed to make SHM possible. For example, in [ 37] afﬁnity propagation clustering is
+used to delineate data into WT groups of similar EOC. In [ 38] covariance-driven stochastic subspace
+identiﬁcation is used. Finally, in [ 39,40] fuzzy classiﬁcation techniques are used for EOC compensation.
+However, as noted previously, this work is an experimental proof of concept and EOC compensation
+is left as future work using pattern recognition techniques in a more realistic environment.
+Author Contributions: All authors contributed equally to this work. All authors have read and agreed to the
+published version of the manuscript.
+Funding: This work has been partially funded by the Spanish Agencia Estatal de Investigación (AEI) - Ministerio
+de Economía, Industria y Competitividad (MINECO), and the Fondo Europeo de Desarrollo Regional (FEDER)
+through the research project DPI2017-82930-C2-1-R; and by the Generalitat de Catalunya through the research
+project 2017 SGR 388. We gratefully acknowledge the support of NVIDIA Corporation with the donation of the
+Titan Xp GPU used for this research.
+Acknowledgments: We thank the two anonymous reviewers for their careful reading of our manuscript and
+their many insightful comments and suggestions.
+------------------------------End of the page -----------------------------------
+Sensors 2020 ,20, 1835 21 of 23
+Conﬂicts of Interest: The authors declare no conﬂict of interest. The founding sponsors had no role in the design
+of the study; in the collection, analyses, or interpretation of data; in the writing of the manuscript, and in the
+decision to publish the results.
+Abbreviations
+The following abbreviations are used in this manuscript:
+CS column-scaling
+FN false negative
+FP false positive
+k-NN knearest neighbors
+IEPE integrated electronic piezoelectric sensors
+MAC modal assurance criterion
+PC principal component
+PCA principal component analysis
+SHM structural health monitoring
+SVM support vector machine
+TN true negative
+TP true positive
+WT wind turbine
+References
+1. Klijnstra, J.; Zhang, X.; van der Putten, S.; Röckmann, C. Aquaculture Perspective of Multi-Use Sites in the Open
+Ocean ; Technical Risks of Offshore Structures; Springer: Cham, Switzerland, 2017; pp. 115–127.
+2. Fritzen, C.P . Structural Health Monitoring ; Vibration-Based Techniques for Structural Health Monitoring;
+Wiley: Hoboken, NJ, USA, 2006; pp. 45–224.
+3. Fassois, S.D.; Sakellariou, J.S. Time-series methods for fault detection and identiﬁcation in vibrating
+structures. Philos. Trans. R. Soc. A 2006 ,365, 411–448. [CrossRef] [PubMed]
+4. Goyal, D.; Pabla, B. The vibration monitoring methods and signal processing techniques for structural health
+monitoring: a review. Arch. Comput. Meth. Eng. 2016 ,23, 585–594. [CrossRef]
+5. Vamvoudakis-Stefanou, K.J.; Sakellariou, J.S.; Fassois, S.D. Output-only statistical time series methods
+for structural health monitoring: A comparative study. In Proceedings of the 7th European Workshop on
+Structural Health Monitoring, Nantes, France, 8–11 July 2014.
+6. Liu, W.; Tang, B.; Han, J.; Lu, X.; Hu, N.; He, Z. The structure healthy condition monitoring and fault
+diagnosis methods in wind turbines: A review. Renew. Sustain. Energy Rev. 2015 ,44, 466–472. [CrossRef]
+7. Martinez-Luengo, M.; Kolios, A.; Wang, L. Structural health monitoring of offshore wind turbines: A
+review through the Statistical Pattern Recognition Paradigm. Renew. Sustain. Energy Rev. 2016 ,64, 91–105.
+[CrossRef]
+8. Lian, J.; Cai, O.; Dong, X.; Jiang, Q.; Zhao, Y. Health monitoring and safety evaluation of the offshore wind
+turbine structure: a review and discussion of future development. Sustainability 2019 ,11, 494. [CrossRef]
+9. Mieloszyk, M.; Ostachowicz, W. An application of Structural Health Monitoring system based on FBG
+sensors to offshore wind turbine support structure model. Mar. Struct. 2017 ,51, 65–86. [CrossRef]
+10. Fritzen, C.P .; Kraemer, P .; Klinkov, M. Structural Dynamics ; An Integrated SHM Approach for Offshore Wind
+Energy Plants; Springer: New York, NY, USA, 2011; pp. 727–740.
+11. Schröder, K.; Gebhardt, C.; Rolfes, R. Damage Localization at Wind Turbine Support Structures Using
+Sequential Quadratic Programming for Model Updating. In Proceedings of the 8th European Workshop on
+Structural Health Monitoring, Bilbao, Spain, 5–8 July 2016.
+------------------------------End of the page -----------------------------------
+Sensors 2020 ,20, 1835 22 of 23
+12. Weijtjens, W.; Verbelen, T.; De Sitter, G.; Devriendt, C. Foundation structural health monitoring of an offshore
+wind turbine—A full-scale case study. Struct. Health Monit. 2016 ,15, 389–402. [CrossRef]
+13. Elshafey, A.A.; Haddara, M.R.; Marzouk, H. Damage detection in offshore structures using neural networks.
+Mar. Struct. 2010 ,23, 131–145. [CrossRef]
+14. Mojtahedi, A.; Yaghin, M.L.; Hassanzadeh, Y.; Ettefagh, M.; Aminfar, M.; Aghdam, A. Developing a robust
+SHM method for offshore jacket platform using model updating and fuzzy logic system. Appl. Ocean Res.
+2011 ,33, 398–411. [CrossRef]
+15. Papatheou, E.; Dervilis, N.; Maguire, A.E.; Campos, C.; Antoniadou, I.; Worden, K. Performance monitoring
+of a wind turbine using extreme function theory. Renew. Energy 2017 ,113, 1490–1502. [CrossRef]
+16. Zugasti Uriguen, E. Design and Validation of a Methodology for Wind Energy Structures Health Monitoring.
+Ph.D. Thesis, Universitat Politècnica de Catalunya, Barcelona, Spain, 2014.
+17. Pozo, F.; Vidal, Y. Wind turbine fault detection through principal component analysis and statistical
+hypothesis testing. Energies 2016 ,9, 3. [CrossRef]
+18. Ziegler, L.; Muskulus, M. Comparing a fracture mechanics model to the SN-curve approach for
+jacket-supported offshore wind turbines: Challenges and opportunities for lifetime prediction. In
+Proceedings of the ASME 2016 35th International Conference on Ocean, Offshore and Arctic Engineering,
+Busan, Korea, 18–24 June 2016.
+19. Pozo, F.; Vidal, Y.; Serrahima, J. On real-time fault detection in wind turbines: Sensor selection algorithm
+and detection time reduction analysis. Energies 2016 ,9, 520. [CrossRef]
+20. Anaissi, A.; Makki Alamdari, M.; Rakotoarivelo, T.; Khoa, N. A tensor-based structural damage identiﬁcation
+and severity assessment. Sensors 2018 ,18, 111. [CrossRef] [PubMed]
+21. Westerhuis, J.A.; Kourti, T.; MacGregor, J.F. Comparing alternative approaches for multivariate statistical
+analysis of batch process data. J. Chemom. 1999 ,13, 397–413. [CrossRef]
+22. Mujica, L.; Rodellar, J.; Fernandez, A.; Güemes, A. Q-statistic and T2-statistic PCA-based measures for
+damage assessment in structures. Struct. Health Monit. 2011 ,10, 539–553. [CrossRef]
+23. Pozo, F.; Vidal, Y.; Salgado, Ó. Wind turbine condition monitoring strategy through multiway PCA and
+multivariate inference. Energies 2018 ,11, 749. [CrossRef]
+24. Wang, Y.; Ma, X.; Qian, P . Wind turbine fault detection and identiﬁcation through PCA-based optimal
+variable selection. IEEE Trans. Sustain. Energy 2018 ,9, 1627–1635. [CrossRef]
+25. Jolliffe, I.T.; Cadima, J. Principal component analysis: A review and recent developments. Philos. Trans. R.
+Soc. A 2016 ,374, 20150202. [CrossRef]
+26. Tan, M.; Zhang, Z. Wind turbine modeling with data-driven methods and radially uniform designs. IEEE
+Trans. Ind. Informatics 2016 ,12, 1261–1269. [CrossRef]
+27. Vitola, J.; Pozo, F.; Tibaduiza, D.A.; Anaya, M. A sensor data fusion system based on k-nearest neighbor
+pattern classiﬁcation for structural health monitoring applications. Sensors 2017 ,17, 417. [CrossRef]
+28. Smola, A.J.; Schölkopf, B. A tutorial on support vector regression. Stat. Comput. 2004 ,14, 199–222. [CrossRef]
+29. Vidal, Y.; Pozo, F.; Tutivén, C. Wind turbine multi-fault detection and classiﬁcation based on SCADA data.
+Energies 2018 ,11, 3018. [CrossRef]
+30. Sergios Theodoridis and Konstantiinos Koutroumbas. Pattern Recognition ; Elsevier: Amsterdam,
+The Netherlands, 2009.
+31. Scholkopf, B.; Sung, K.K.; Burges, C.J.; Girosi, F.; Niyogi, P .; Poggio, T.; Vapnik, V . Comparing support
+vector machines with Gaussian kernels to radial basis function classiﬁers. IEEE Trans. Signal Process. 1997 ,
+45, 2758–2765. [CrossRef]
+32. Allwein, E.L.; Schapire, R.E.; Singer, Y. Reducing multiclass to binary: A unifying approach for margin
+classiﬁers. J. Mach. Learn. Res. 2000 ,1, 113–141.
+33. Ruiz, M.; Mujica, L.E.; Alferez, S.; Acho, L.; Tutiven, C.; Vidal, Y.; Rodellar, J.; Pozo, F. Wind turbine fault
+detection and classiﬁcation by means of image texture analysis. Mech. Syst. Sig. Process. 2018 ,107, 149–167.
+[CrossRef]
+34. Hossin, M.; Sulaiman, M. A review on evaluation metrics for data classiﬁcation evaluations. IJDKP 2015 ,
+5, 1–11.
+35. Krüger, F. Activity, Context, and Plan Recognition with Computational Causal Behaviour Models. Ph.D.
+Thesis, University of Rostock, Mecklenburg, Germany, 2016.
+------------------------------End of the page -----------------------------------
+Sensors 2020 ,20, 1835 23 of 23
+36. Hameed, N.; Hameed, F.; Shabut, A.; Khan, S.; Cirstea, S.; Hossain, A. An Intelligent Computer-Aided
+Scheme for Classifying Multiple Skin Lesions. Computers 2019 ,8, 62. [CrossRef]
+37. Häckell, M.W.; Rolfes, R.; Kane, M.B.; Lynch, J.P . Three-tier modular structural health monitoring
+framework using environmental and operational condition clustering for data normalization: Validation on
+an operational wind turbine system. Proc. IEEE 2016 ,104, 1632–1646. [CrossRef]
+38. Kraemer, P .; Friedmann, H.; Ebert, C.; Mahowald, J.; Wölfel, B. Experimental validation of stochastic
+subspace algorithms for structural health monitoring of offshore wind turbine towers and foundations. In
+Proceedings of the 8th European Workshop On Structural Health Monitoring, Bilbao, Spain, 5–8 July 2016.
+39. Fritzen, C.P .; Kraemer, P .; Buethe, I. Vibration-based damage detection under changing environmental and
+operational conditions. Adv. Sci. Technol. Water Resour. 2013 , 83, pp. 95–104. [CrossRef]
+40. Ostachowicz, W.; Güemes, A. New Trends in Structural Health Monitoring ; Springer Science & Business Media:
+New York, NY, USA, 2013; Volume 542.
+c2020 by the authors. Licensee MDPI, Basel, Switzerland. This article is an open access
+article distributed under the terms and conditions of the Creative Commons Attribution
+(CC BY) license (http://creativecommons.org/licenses/by/4.0/).
+------------------------------End of the page -----------------------------------

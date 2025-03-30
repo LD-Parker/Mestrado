@@ -1,0 +1,1114 @@
+applied  
+sciences 
+Article
+Damage Diagnosis for Offshore Wind T urbine
+Foundations Based on the Fractal Dimension
+Ervin Hoxha
+ , Yolanda Vidal
+ and Francesc Pozo *
+Campus Diagonal-Besòs (CDB) , Control, Modeling, Identiﬁcation and Applications (CoDAlab), Department of
+Mathematics, Escola d’Enginyeria de Barcelona Est (EEBE), Universitat Politècnica de Catalunya (UPC),
+Eduard Maristany, 16, 08019 Barcelona, Spain; ervin.hoxha@upc.edu (E.H.); yolanda.vidal@upc.edu (Y.V .)
+*Correspondence: francesc.pozo@upc.edu; Tel.: +34-934-137-316
+Received: 11 September 2020; Accepted: 29 September 2020; Published: 5 October 2020
+/gid00030/gid00035/gid00032/gid00030/gid00038/gid00001/gid00033/gid00042/gid00045 /gid00001
+/gid00048/gid00043/gid00031/gid00028/gid00047/gid00032/gid00046
+Abstract: Cost-competitiveness of offshore wind depends heavily in its capacity to switch preventive
+maintenance to condition-based maintenance. That is, to monitor the actual condition of the wind
+turbine (WT) to decide when and which maintenance needs to be done. In particular, structural
+health monitoring (SHM) to monitor the foundation (support structure) condition is of utmost
+importance in offshore-ﬁxed wind turbines. In this work a SHM strategy is presented to monitor
+online and during service a WT offshore jacket-type foundation. Standard SHM techniques, as guided
+waves with a known input excitation, cannot be used in a straightforward way in this particular
+application where unknown external perturbations as wind and waves are always present. To face
+this challenge, a vibration-response-only SHM strategy is proposed via machine learning methods.
+In this sense, the fractal dimension is proposed as a suitable feature to identify and classify different
+types of damage. The proposed proof-of-concept technique is validated in an experimental laboratory
+down-scaled jacket WT foundation undergoing different types of damage.
+Keywords: fractal dimension; structural health monitoring; offshore wind turbine; kNN; support
+vector machines
+1. Introduction
+Structural health monitoring’s (SHM) main purpose is to diagnose in time damage that affects the
+integrity of a structure and determine whether repair or reinforcement actions are required to avoid or
+delay its degradation. Generally, SHM strategies consist of the following steps:
+(i) the strategic placement of sensors in the overall structure;
+(ii) data collection and communication; and
+(iii) analysis of the measured data.
+It is important to note that, in a wide variety of applications, guided waves, which is a
+nondestructive approach, is the usual standard. This approach relies on exciting the structure with
+low frequency ultrasonic waves and then sensing the reﬂected response waves. Thus, the method
+relies heavily on the fact that the input excitation is known and also that other perturbations can be
+ﬁltered or neglected. On the one hand, in civil infrastructures, such as bridges, it is feasible to assume
+that external perturbations can be neglected or ﬁltered with respect to the induced excitation, see [ 1,2].
+On the other hand, in other applications, as in aerospace, the structure can only be diagnosed with
+this approach when it is not in service. This strategy is used, for example, in [ 3] where a multiarea
+scanning ultrasonic system is built in a hangar to rapidly scan the airplane overall structure. This type
+ofnot in service diagnose (the airplane can be diagnosed during no-ﬂight conditions, when it is in the
+hangar) or neglecting the external perturbations (as in SHM for standard civil structures as bridges
+Appl. Sci. 2020 ,10, 6972; doi:10.3390/app10196972 www.mdpi.com/journal/applsci
+------------------------------End of the page -----------------------------------
+Appl. Sci. 2020 ,10, 6972 2 of 23
+or buildings) cannot be straightforwardly extrapolated to the main research area of the present work:
+wind turbines. Online and in-service SHM for wind turbines (WTs) are extremely important. WTs are
+extremely large structures subject to remarkable external unknown excitations such as wind and waves
+in the offshore case. Thus, SHM strategies for WTs must be able to cope with unknown signiﬁcant
+external excitations hindering the use of the standard exciting-and-sensing approach [ 4]. To face
+this challenge, in this work, a vibration-response-only SHM strategy is stated to monitor online and
+during service a WT offshore ﬁxed foundation by using only the excitation caused by the external and
+unknown perturbations.
+Offshore wind power will expand dramatically in the next two decades, multiplying by 15by2040
+to a minimum of 345gigawatts (GW) of installed capacity, according to the Offshore Wind Outlook
+2019 report of the International Energy Agency [ 5]. However, this achievement will only be possible
+through cost-competitiveness of offshore wind, which depends entirely on SHM capacity to switch
+preventive maintenance to predictive one [ 6]. Thus, SHM for offshore assets is imperative to guarantee
+its exploitability. Hence, in this work, a SHM methodology for offshore ﬁxed foundations is proposed.
+Nowadays, the SHM systems for WTs are mostly deployed to blades [ 7] and tower [ 8] but research
+of SHM for offshore support structures is still scarce [ 9]. The state of the art in this very speciﬁc area
+has three main research lines:
+(i) model-based, using, for example, the ﬁnite element method as in [10–12];
+(ii) data-based using solely experimental and/or real data; and
+(iii) a hybrid approach that makes use of real and/or experimental data and numerical models.
+Regarding the ﬁrst option, the work of Stutzamnn et al. is noteworthy [ 13] where crack detection
+of monopile offshore foundations is accomplished based on numerical simulations of fatigue cracks.
+Regarding the second option, a comprehensive review is given in [ 14] about SHM of offshore WTs
+through the statistical pattern recognition paradigm. In this review, it is shown that the usual strategy,
+regarding offshore WT damage detection, is to identify changes in the modal properties. However,
+this strategy requires detailed attention to take into account the operational and environmental impact,
+and usually only damage detection (but not classiﬁcation) is accomplished. For example, in [ 15] a
+SHM approach veriﬁed on a full-scale foundation is presented. However, dynamic variability between
+different operational cases only allows the ﬁnal results to indicate an overall stiffening of the structure
+but not to conclude whether damage is present or not. Regarding the third approach, the work by
+Gomez et al. [ 16] is noteworthy based on acceleration response data and calibrated computer models.
+However, this work is based in the usual operational modal analysis and holds the difﬁculties of
+this type of approach including the fact that only detection (but not classiﬁcation of damage type) is
+acquired. In this work, facing the challenge posed by the previous references, different damage types
+are taken into account and its classiﬁcation is achieved in an experimental down-scaled jacket WT
+foundation. It should be noted that the experimental testbed is a reduced model but well-founded
+for this proof-of-concept work as it is comparable to that employed in the following works: (i) [ 17],
+where damage detection is achieved via damage indicators; (ii) [ 18], where damage detection is
+obtained via statistical time series analysis; (iii) [ 19], based on principal component analysis and
+support vector machines; and (iv) [ 20], where a deep learning approach based on convolutional neural
+networks is employed.
+It is well known that machine learning requires a feature extraction preprocess. It is a challenge to
+ﬁnd suitable features, sensitive to physical characteristics, that lead to the identiﬁcation of the damage
+or fault [ 21]. In this work, the fractal dimension (FD) of the data time series is employed as the main
+feature. The FD has been used traditionally as a feature for medicine applications. For example, in [ 22]
+experiments on intensive care unit data sets show that the FD characterizes the time series better than
+the correlation dimension; in [ 23] FD is proven to be discriminant for the detection of epileptic seizures
+in intracranial electroencephalogram signals; and in [ 24] glaucomatous eye detection is proposed
+based on FD estimation. However, it was not until recently that FD has been explored as feature for
+------------------------------End of the page -----------------------------------
+Appl. Sci. 2020 ,10, 6972 3 of 23
+structural damage detection. It is important to note the recent work by Rezaie et al. [ 25], where FD for
+crack pattern recognition is studied. It is also important to note the work by Wen et al. [ 26] where FD is
+shown to be effective to realize fault diagnosis of rolling element bearings and cope with the effects of
+variation in operating conditions. In this work, the FD feature is proposed for the vibration-response
+signals inspired by the physical insight that the different fractal structures of these signals should be
+capable to discriminate different types of damage in jacket-type offshore foundations.
+The paper is arranged as follows. First, the laboratory test bed and damage scenarios are brieﬂy
+introduced in Section 2. Section 3 addresses the detailed statement of the developed damage diagnosis
+strategy that encompasses the following steps:
+(i) data collection and manipulation;
+(ii) fractal dimension feature extraction by means of the Katz’s algorithm; and
+(iii) normalization and classiﬁcation tools.
+The experimental results are comprehensively stated in Section 4. Finally, conclusions are drawn
+in Section 5.
+2. Experimental Test Bed
+The reliability of the damage diagnosis approach presented in this paper is veriﬁed using different
+types of damage in an experimental test bed modeling a jacket-type WT as in [ 19]. For a very detailed
+description of the function generator, the ampliﬁer and inertial shaker, the sensor network, the data
+acquisition system, how the vibration signals are acquired and how the time domain waveforms are
+processed, readers are referred to [19,20].
+A brief characterization of the experimental setup of the small scale wind turbine is described
+below. First, a function generator (model GW INSTEK AF-2005) is used to produce a white noise
+signal with four different amplitudes ( 0.5, 1, 2, and 3) that account for different wind speed regions.
+This signal is then ampliﬁed and used as input to a modal shaker (GW-IV47 from Data Physics) that
+induces vibration in the structure. The overall description of the test bench is displayed in Figure 1a.
+(a)
+(b)
+Figure 1. (a) The test bench detailing the location of the damaged bar (red circle); and ( b) Location of
+the sensors.
+------------------------------End of the page -----------------------------------
+Appl. Sci. 2020 ,10, 6972 4 of 23
+The structure is 2.7 m high and consists of three parts:
+(i) the top beam;
+(ii) the tower; and
+(iii) the jacket.
+The top beam is 1meter wide and 0.6meters high and the inertial shaker is attached to one of
+the ends of the beam. Three tubular sections united with bolts form the tower. Finally, the jacket is a
+pyramidal structure composed of steel bars of different lengths as well as steel sheets.
+The vibration of the structure is measured by means of the data acquisition system cDAQ-9188
+(National Instruments) and through 8triaxial accelerometers (model 356A17, PCB Piezotronic)
+optimally placed following the work by Zugasti (2014) [17], as can be seen in Figure 1b.
+In this work we have considered the same 4different structural states as in the work by
+Puruncajas et al. [ 20]. All of the structural states refer to the jacket bar illustrated in Figure 1a.
+These states are:
+(i) the healthy structure with the original healthy steel bar;
+(ii) the healthy structure where the original bar is replaced by a replica;
+(iii) the structure with a 5 mm crack damaged bar; and
+(iv) the structure with an unlocked bolt in the jacket.
+3. Damage Diagnose Strategy
+In this section the damage diagnosis strategy is stated. First, a detailed description on data
+collection and manipulation is given. On the one hand, how data is collected and reshaped is of
+utmost importance in machine learning in general and for this speciﬁc application in particular,
+see [ 27,28]. On the other hand, it is well known that feature selection allows to improve the classiﬁcation
+performance making faster and more proﬁtable the classiﬁers [ 21]. In this regard, the fractal dimension
+feature is introduced for damage classiﬁcation purposes, as well as a physical insight of its nature
+for time series and a detailed explanation about the Katz’s algorithm used to compute it. Finally,
+three machine learning classiﬁers are reviewed and tested for damage classiﬁcation.
+3.1. Data Collection and Manipulation
+A total of 100experimental tests have been conducted that include the four amplitudes that
+represent the different speed regions. More precisely:
+(i) 10 tests with the original healthy bar for each amplitude, i.e., 40 tests;
+(ii) 5 tests with the replica bar for each amplitude, i.e., 20 tests;
+(iii) 5 tests with the 5 mm crack bar for each amplitude, i.e., 20 tests; and
+(iv) 5 tests with the unlocked bolt for each amplitude, i.e., 20 tests.
+For each experimental test, the acceleration has been measured through 24sensors during
+59.51636719 s and with a sampling frequency of 275.28 Hz, which leads to 16,384 time instants
+and a time step of about D=0.0036328125 s.
+The raw data of the k-th experimental test, k=1,. . ., 100 , can be arranged as the matrix X(k)in
+Equation (1). Each of the 24 columns of matrix X(k)contain the 16,384 measures of each sensor:
+------------------------------End of the page -----------------------------------
+Appl. Sci. 2020 ,10, 6972 5 of 23
+X(k)=sensor #1 sensor #2 sensor #3  sensor #24
+0
+BBBBBBBBB@1
+CCCCCCCCCAx(k)
+1,1x(k)
+1,2x(k)
+1,3 x(k)
+1,24
+x(k)
+2,1x(k)
+2,2x(k)
+2,3 x(k)
+2,24
+x(k)
+3,1x(k)
+3,2x(k)
+3,3 x(k)
+3,24
+...............
+x(k)
+16383,1x(k)
+16383,2x(k)
+16383,3 x(k)
+16383,24
+x(k)
+16384,1x(k)
+16384,2x(k)
+16384,3 x(k)
+16384,242M 1638424(R) (1)
+Each column of the matrix X(k)in Equation (1)is reshaped into a 64-by-256matrix to build a new
+matrix Y(k)2M64(25624)(R)in Equation (2):
+Y(k)=sensor #1  sensor #24
+0
+BBBB@1
+CCCCAx(k)
+1,1x(k)
+2,1 x(k)
+256,1 x(k)
+1,24x(k)
+2,24 x(k)
+256,24
+x(k)
+257,1x(k)
+258,1 x(k)
+512,1 x(k)
+257,24x(k)
+258,24 x(k)
+512,24
+...........................
+x(k)
+16129,1x(k)
+16130,1 x(k)
+16384,1 x(k)
+16129,24x(k)
+16130,24 x(k)
+16384,24(2)
+Two are the main reasons for reshaping the matrix Y(k)in Equation (2):
+(i) on the one hand, for a single experimental test, we create 64rows. Each one of these rows is what
+we call a sample ;
+(ii) on the other hand, each sample will contain time-history measures of the whole set of sensors.
+We will see in Section 4 that when we want to diagnose whether a wind turbine is healthy or not,
+we just need to measure these 24 sensors during 256 time instants, that is, during 256 D0.93 s.
+To deﬁne the matrix that contains all the data, the matrices Y(k),k=1,. . ., 100 , from each
+experiment, are stacked to deﬁne
+Y=0
+BBBB@Y(1)
+Y(2)
+...
+Y(100)1
+CCCCA2M(64100)(25624)(R) =M64006144(R). (3)
+3.2. Fractal Dimension
+Fractal geometry was proposed by Benoît Mandelbrot [ 29] and it is a relatively new mathematics
+discipline which has found a lot of applications in bio-science [ 30–32], engineering [ 33] and many
+other ﬁelds [34].
+Euclidean geometry describes common geometric forms like lines, planes, spheres or rectangular
+volumes. Each of the geometric objects considered so far has an integer dimension ( D), either 1, 2, or3.
+However, many natural shapes do not harmonize with the integer-based idea of dimension.
+In order to give meaning to noninteger dimensions, a more mathematical description of dimension
+proposed by P . Bourke [ 35] is based on “how the sizeof an object behaves as the linear dimension
+increase”. More precisely, consider, for instance, three objects with dimensions D=1(a line segment);
+D=2(a square); and D=3(a cube). If the line segment, the square and the cube are linearly scaled
+by a factor of 2, then the results are 2copies, 4copies, and 8copies of the initial objects, respectively.
+In other words, the length (characteristic size) of the line segment is doubled (Figure 2a), the area
+(characteristic size) of the square increases by a factor of 4(Figure 2b), and the volume (characteristic
+size) of the cube increases by a factor of 8 (Figure 2c).
+------------------------------End of the page -----------------------------------
+Appl. Sci. 2020 ,10, 6972 6 of 23
+Result: 2=21 copies o f the original1D line 2D squar e
+Result: 2=22 copies o f the original3D cube
+Result: 2=23 copies o f the original
+(a) (b) (c)
+Figure 2. When objects of different dimension (e.g., ( a) line, ( b) square, and ( c) cube) are linearly scaled
+by a factor of 2, their characteristic size will have different results associated to their dimension.
+The relation between the scaling factor S, the dimension Dand the number of generated copies N
+(increasing size) can be generalized and expressed as:
+N=SD, (4)
+which is equivalent to
+D=log(N)
+log(S). (5)
+Since Dis deﬁned in terms of Nand Sin Equation (5), it is possible to ﬁnd the dimension,
+for instance, of the famous Koch curve [36]. In the case of the Koch curve, at each step, we divide the
+line segment into S=3segments of equal length and we draw an equilateral triangle that has the
+middle as its base and points outward. Therefore, we have created N=4copies (the two external sides
+of the original line segment and the two sides of the triangle). Consequently, the fractal dimension
+DKoch of the Koch curve is:
+DKoch=log(4)
+log(3)1.2619.
+As it is very well known, fractals are self-similar subsets of the Euclidean space where the fractal
+dimension deﬁned in Equation (5)surpasses their topological dimension. Fractals have the same
+appearance at different scales. In this sense, many time series of different processes can be considered
+as fractals, since many parts taken from these time series, scaled by proper factors, are similar to the
+whole series. Considering that the fractal dimension is, somehow, a measure of the complexity that is
+repeating on each scale, it seems very interesting to compute the fractal dimension of a time series.
+In this regard, there are several algorithms that can be applied to estimate the fractal dimension of
+a time series. The approach used in this paper to estimate the fractal dimension is Katz’s algorithm,
+that is summarized in Section 3.2.1.
+------------------------------End of the page -----------------------------------
+Appl. Sci. 2020 ,10, 6972 7 of 23
+3.2.1. Katz’s Algorithm
+For a given sensor t=1,. . ., 24, the time series used in this work are the rows in matrix Y
+in Equation (3). More precisely, for a given row i=1,. . ., 6400 and a given sensor t=1,. . ., 24,
+the associated time series are composed of a sequence of n=256 points, s1
+i,t,s2
+i,t, . . . , sn
+i,t2R2where
+sj
+i,t=(j,Y[i,j+n(t 1)])2R2,j=1, . . . , n,
+where Y[a,b]represents the element in the a-th row and b-th column of matrix Y.
+To estimate the fractal dimension of the time series, Katz [ 37] deﬁnes two magnitudes, Land d,
+see Figure 3. On the one hand, the total length of the curve Lis deﬁned as the sum of the distance
+between two consecutive points. More precisely, for a given row i=1,. . ., 6400 and a given sensor
+t=1, . . . , 24:
+Li,t=n 1
+å
+j=1sj+1
+i,t sj
+i,t
+2=n 1
+å
+j=1q
+1+(Y[i,j+1+n(t 1)] Y[i,j+n(t 1)])2. (6)
+On the other hand, dis the diameter or planar extent of the time series and it is deﬁned as the
+maximum distance between the ﬁrst point in the time series and the rest of points. More precisely,
+for a given row i=1, . . . , 6400 and a given sensor t=1, . . . , 24:
+di,t=max
+j=2,...,nsj
+i,t s1
+i,t
+2. (7)
+The last step in the Katz’s algorithm is the normalization of both Li,tand di,tby the average
+distance ai,tbetween two consecutive points. More precisely, for a given row i=1,. . ., 6400 and a
+given sensor t=1, . . . , 24:
+ai,t=Li,t
+n 1. (8)
+Finally, for a given row i=1,. . ., 6400 and a given sensor t=1,. . ., 24, the formula for the fractal
+dimension zi,tcan be represented as:
+zi,t=logLi,t
+ai,t
+logdi,t
+ai,t=log(n 1)
+logdi,t(n 1)
+Li,t=log(n 1)
+log(n 1) +logdi,t
+Li,t. (9)
+Note that di,tLi,t, where both di,tand Li,tare positive real numbers. Therefore,
+0<di,t
+Li,t1,
+that implies
+logdi,t
+Li,t
+0.
+The expression logdi,t
+Li,t
+is zero if, and only if, the points sj
+i,t,j=1,. . .,nare all aligned. In this
+case, the fractal dimension is exactly 1. When the ratiodi,t
+Li,tdecreases from 1to1p
+n 1, then the fractal
+dimension of the time series increases up to 2. Even though the fractal dimension of a plane fractal
+never exceeds 2, the fractal dimension of a time series using the Katz’s algorithm may exceed this
+value when the fractiondi,t
+Li,tis less than1p
+n 1. However, the fractal dimension of a regular time series
+normally lies within the range [1, 2].
+------------------------------End of the page -----------------------------------
+Appl. Sci. 2020 ,10, 6972 8 of 23
+…
+…a1 a2 a3 aN a∈RN
+hidden layer h1 h2 h3 hN h∈ {0,1}N
+W1,1 WN,MW∈RN×M
+visible layer v1 v2 v3 vM v∈ {0,1}M
+b1 b2 b3 bM b∈RM
+Figure 3: Original EPS image
+s1s1si=(ti,yi)
+sN
+d
+ty
+Figure 4: Original EPS image
+Figure 3. The diameter of a time series dis given by the distance between the ﬁrst point and the point
+that provides the maximum distance.
+With the fractal dimensions zi,tof the time series in matrix Yin Equation (3), we build a new
+matrix Zas:
+Z=sensor #1 sensor #2  sensor #240
+BBB@1
+CCCAz1,1 z1,2 z1,24
+z2,1 z2,2 z2,24
+............
+z6400,1 z6400,2 z6400,242M 640024(R). (10)
+Speciﬁcally:
+ z1,1in matrix Zin Equation (10) is the fractal dimension of the time series
+x(1)
+1,1,x(1)
+2,1, . . . , x(1)
+n,1;
+ more generally, zi,tis the fractal dimension of the time series
+x(b)
+a,t,x(b)
+a+1,t, . . . , x(b)
+a+n,t,
+where
+a=[(imod 64 ) 1]n+1, if imod 646=0,
+a=63n+1, if imod 64 =0,
+b=[(i 1)div 64 ]+1,
+anddivand mod stand for the integer quotient and the remainder of an integer division, respectively .
+3.3. Normalization and Classiﬁcation Tools
+Although matrix Zin Equation (10) is a matrix of elements generally between 1 and 2, the data
+is normalized by using column-wise scaling. This way, each column, and consequently each sensor,
+will have the same inﬂuence on the posterior analysis. Otherwise, the sensors closest to the source
+of the excitation and furthest from the structural damage could have a superior inﬂuence and make
+it difﬁcult to detect the damage. Column-wise scaling is performed by subtracting the mean of each
+column to the elements on that column and dividing the same elements by the standard deviation of
+the column.
+------------------------------End of the page -----------------------------------
+Appl. Sci. 2020 ,10, 6972 9 of 23
+In this work, different classiﬁers have been used for the classiﬁcation: knearest neighbors ( kNN)
+and support vector machines (SVM) with different kernels. In Sections 3.3.1 and 3.3.2 these methods
+will be brieﬂy reviewed. Finally, it is important to note that 5-fold cross validation has been used to
+evaluate the classiﬁer models.
+3.3.1. kNearest Neighbor
+The knearest neighbor ( kNN) algorithm has been used since 1970. It is a classiﬁcation algorithm
+that is used to make a prediction of a new observation based on the category of the knearest neighbors.
+Two elements are key to this approach:
+(i) the one and only parameter k; and
+(ii) the distance measure [38].
+The most commonly used distance measures in machine general are, in general, the Hamming
+distance, Euclidean distance, the Manhattan distance and the Minkowski distance. In this paper,
+the Euclidean distance is used.
+3.3.2. Support Vector Machines (SVM)
+SVM is a supervised machine learning algorithm that is used for classiﬁcation purposes and it
+has been applied to a large variety of applications [ 39]. SVM are based on the simple idea of ﬁnding
+the hyperplane (or the decision boundary) that best divides the data into two classes.
+Figure 4a shows the illustration of three separating hyperplanes out of many possible. The goal
+is to choose a hyperplane with the widest margin to separate both classes, see Figure 4b. In this
+context, the margin is deﬁned as the smallest distance between any of the samples and the hyperplane.
+The data points closest to the separating hyperplane are called the support vectors. These points
+will determine how wide the margin is. Let us consider a two-classes example, a training data set
+x1,. . .,xN,N2Nwith corresponding binary target values ft1,. . .,tNgf  1, 1g, where one class is
+labeled as red(corresponding to a positive target value 1) and the other one as blue (corresponding to a
+negative target value  1). Commonly, the hyperplane is expressed in the following form:
+h(x) =w>x+b
+where wis the weight vector and bis the bias term. The canonical hyperplane is used in this paper,
+among all the possible descriptions. The canonical hyperplane satisﬁes:
+w>xsv
+red+b=1,
+w>xsv
+blue+b= 1,
+where xsv
+redand xsv
+bluerepresent the so-called support vectors (the closest samples with respect to the
+hyperplane) on the red and blue classes, respectively. The distance dfrom the support vectors to the
+hyperplane is given by:
+d
+xsv
+fred,blueg,h
+=w>xsv
+fred,blueg+b
+kwk=1
+kwk.
+Since the margin is twice the distance from the support vectors to the hyperplane, the margin will
+be2
+kwk. As it has been said, the goal is to maximize the margin2
+kwk, which is equivalent to minimizing
+the inverse functionkwk
+2. This is also equivalent to minimizing
+min
+w,b1
+2kwk2subject to h(xi)ti1,i=1, . . . , N.
+------------------------------End of the page -----------------------------------
+Appl. Sci. 2020 ,10, 6972 10 of 23
+xy
+(a)
+xysupport vectorssupportvectorseparating hyperplanemargin (b)
+Figure 4. (a) There are two classes (blue and red), which are separated by three hyperplanes (in this
+case lines) out of many possible; ( b) optimal hyperplane that maximizes the margin between classes.
+In order to ﬁnd the extreme values of a function with multiple constraints, one possible approach
+is to use the Lagrange multipliers. With this approach, the previous minimization problem is
+re-expressed as:
+min
+w,b,aiL(w,b;ai) = min
+w,b,ai1
+2kwk2 N
+å
+i=1aih
+(w>xi+b)ti 1i
+(11)
+where ai,i=1,. . .,Nare the Lagrange multipliers. To ﬁnd the extreme values, the partial derivatives
+with respect to wand bare computed and equated to zero:
+¶L(w,b;ai)
+¶w=w N
+å
+i=1aitixi=0)w=N
+å
+i=1aitixi (12)
+¶L(w,b;ai)
+¶b= N
+å
+i=1aiti=0 (13)
+Equation (12) shows that the weight vector wis a linear combination of the training data set.
+Replacing Equations (12) and (13) into Equation (11), the minimization problem is uniquely expressed
+in terms of ai,xiand ti:
+minai2
+41
+2 
+N
+å
+i=1aitixi!> 
+N
+å
+i=1aitixi!
+ N
+å
+i=1aiti 
+N
+å
+j=1ajtjxj!>
+xi bN
+å
+i=1aiti+N
+å
+i=1ai3
+5. (14)
+After some simple manipulations, Equation (14) is now expressed as:
+minai"
+N
+å
+i=1ai 1
+2N
+å
+i=1N
+å
+j=1aiajtitjx>
+ixj#
+(15)
+As it can be clearly seen, the optimization problem depends only on the dot product of pairs of
+training data. However, frequently the data are not linearly separable. Therefore, the margin constraint
+cannot be satisﬁed for any wand b. One possible solution is to allow some data points to violate the
+margin constraints (soft margin), but it is needed to assign them a cost. In this case, a penalty parameter
+C(box constraint) has to be considered to control the maximum penalty imposed on margin-violating
+------------------------------End of the page -----------------------------------
+Appl. Sci. 2020 ,10, 6972 11 of 23
+observations, as well as slack variables #ithat controls the width of the margin. For the case of a linear
+kernel, dealing with a nonlinearly separable case can be generalized as:
+min
+w,b,#i"
+1
+2kwk2+CN
+å
+i=1#i#
+subject to(
+h(xi)ti1 #i,i=1, . . . , N;
+#i0,i=1, . . . , N.(16)
+The constrained minimization problem in Equation (16) can be rewritten, using Lagrange
+multipliers, as:
+minai"
+N
+å
+i=1ai 1
+2N
+å
+i=1N
+å
+j=1aiajtitjx>
+ixj#
+subject to8
+<
+:N
+å
+i=1aiti=0;
+0aiC,i=1, . . . , N.(17)
+In many cases, even with a soft margin, the space is not linearly separable. In these cases,
+a transformation fis used to transform the original training data to another space. As it was mentioned
+before, the optimization depends only in dot products. Therefore, the transformation fis not needed.
+Instead, only the dot product
+K(xi,xj) =f(xi)f(xj)
+is needed, renamed as the kernel function. In this work, we will used two kernel functions, quadratic
+kernel Kqand Gaussian kernel KG, deﬁned as:
+Kq(xi,xj) =
+1+1
+g2x>
+ixj
+,
+KG(xi,xj) =exp 
+ kxi xjk2
+g2!
+,
+where gis the so-called kernel scale.
+4. Results
+In this section, the results are organized as follows. First, the evaluation metrics used to assess
+the classiﬁcation models are introduced and explained in Section 4.1. As it has been detailed in
+Sections 3.3.1–3.3.2, the classiﬁcation models used in this work are kNN, quadratic SVM and Gaussian
+SVM. The results of the present approach using the fractal dimension to build the feature vector and
+kNN, quadratic SVM and Gaussian SVM are presented in Sections 4.2–4.4, respectively.
+Figure 5 presents a ﬂowchart summarizing the proposed damage diagnosis strategy. In a nutshell,
+the fractal dimension is computed and normalized to each time series (per sensor) of the baseline data
+and machine learning models are trained. Finally, when new data from a structure to be diagnosed
+comes in, its fractal dimension is computed, normalized and ﬁnally the already trained kNN or SVM
+(quadratic or Gaussian) model is applied for the structural state classiﬁcation.
+4.1. Evaluation Metrics
+Before the results are presented, in terms of multiclass confusion matrices, it is important to clearly
+describe the evaluation metrics that are used to assess the performance of each model. One of the
+most used metrics is the overall accuracy, which is deﬁned as the number of correct predictions out of
+the total number of predictions. However, the overall accuracy alone does not always tell if a model
+performs satisfactorily or unsatisfactorily, especially if the test data are comprised of imbalanced classes.
+However, even in the case of balanced classes, with the information provided by the overall accuracy,
+it is not possible to completely know how to improve the model. The metrics used in this work are
+------------------------------End of the page -----------------------------------
+Appl. Sci. 2020 ,10, 6972 12 of 23
+accuracy, precision, recall, F 1-score and speciﬁcity. These metrics, for both the binary classiﬁcation and
+multiclass classiﬁcation problem will be deﬁned shortly in the next paragraphs.
+data coming fr om a s tructure 
+to be diagnosed
+baseline da ta
+kNN/SVM256 time s teps256 x 24
+CLASSIFICA TION
+N
+fractal dimension
+(Katz’s alg orithm)
+256 x 24sensor #1 sensor #24
+N
+24normalization
+Figure 5. Flowchart summarizing the proposed damage diagnose strategy.
+Consider categorical labels when n2Nobservations x1,. . .,xnhave to be assigned into
+predeﬁned classes C1,. . .,C`,`2N. In a binary classiﬁcation problem, each observation xiis to
+be classiﬁed into one, and only one, of two nonoverlapping classes ( C1and C2, orpositive and negative ).
+However, in a multiclass classiﬁcation problem, the input xiis to be classiﬁed into one, and only one,
+of`nonoverlapping classes.
+4.1.1. Metrics for a Binary Classiﬁcation Problem
+A confusion matrix is a table or matrix that summarizes the prediction results of a classiﬁcation
+problem. It is not a metric itself but it helps to visually understand the metrics and types of errors the
+model is making. Table 1 represents the confusion matrix for the case of a binary classiﬁcation problem,
+where two classes have been considered: positive and negative . The observations are distributed in
+two rows and two columns. The rows represent the actual classes, while the columns represent the
+predicted classes. The observations in the diagonal represent the correct decisions, while the elements
+in the antidiagonal represent the misclassiﬁcations.
+Table 1. Confusion matrix of a binary classiﬁcation problem.
+Predicted Class
+Positive NegativeActual classPositive True positive False negative
+(tp) (fn)
+Negative False positive True negative
+(fp) (tn)
+More precisely, the four elements in a confusion matrix of a binary classiﬁcation problem are:
+ True positive (tp): the number of positive observations predicted as positive;
+ True negative (tn): the number of negative observations predicted as negative;
+------------------------------End of the page -----------------------------------
+Appl. Sci. 2020 ,10, 6972 13 of 23
+ False positive (fp): the number of negative observations wrongly predicted as positive;
+ False negative (fn): the number of positive observations wrongly predicted as negative.
+The ﬁve metrics for the binary classiﬁcation problem are then deﬁned in Table 2 in terms of the
+elements of the confusion matrix. The F 1score is a particular case of the F bscore deﬁned in [ 40] when
+b=1.
+Table 2. Metrics for the evaluation of a binary classiﬁcation problem.
+Metric Formula
+accuracy acc =tp+tn
+tp+fn+fp+tn
+precision ppv =tp
+tp+fp
+recall tpr =tp
+tp+fn
+F1score F 1=2ppvtpr
+ppv+tpr
+speciﬁcity tnr =tn
+tn+fp
+4.1.2. Metrics for a Multiclass Classiﬁcation Problem
+Metrics for a multiclass classiﬁcation problem are based on a generalization of the metrics in
+Table 2 for many classes Ci,i=1,. . .,`[41,42]. More precisely, with respect to the class Ci, we deﬁne:
+ tpias the true positive for Ci, that is, the number of observations that belong to the class Cithat
+are correctly labeled as Ci;
+ tnias the true negative for Ci, that is, the number of observations that do not belong to the class
+Cithat are not labeled as Ci;
+ fpias the false positive for Ci, that is, the number of observations that do not belong to the class
+Cithat are wrongly labeled as Ci; and
+ fnias the false negative for Ci, that is, the number of observations that belong to the class Cithat
+are not labeled as Ci.
+Table 3 presents the metrics for the evaluation of a multiclass classiﬁcation problem. Although
+the quality of the overall multiclass classiﬁcation is usually assessed in two ways: (i) macroaveraging;
+and (ii) microaveraging, Table 3 only considers the macroaveraging case, where all classes are treated
+equally, instead of microaveraging, where bigger classes are favored.
+Table 3. Metrics for the evaluation of multiclass classification problems, where `is the number of classes.
+Metric Formula
+average accuracy acc=1
+``
+å
+i=1tpi+tni
+tpi+fni+fpi+tni
+average precision ppv=1
+``
+å
+i=1tpi
+tpi+fpi
+average recall tpr=1
+``
+å
+i=1tpi
+tpi+fni
+average F 1score F1=2ppvtpr
+ppv+tpr
+average speciﬁcity tnr=1
+``
+å
+i=1tni
+tni+fpi
+------------------------------End of the page -----------------------------------
+Appl. Sci. 2020 ,10, 6972 14 of 23
+Finally, it is important to note that in the next subsections all the presented confusion matrices
+follow the next nomenclature. The rows represent the actual class and the columns represent the
+predicted class. Label 0corresponds to the case when the structure is healthy; label 1corresponds to
+the structure with a replica bar; label 2corresponds to the structure with a 5mm cracked bar; and label
+3 corresponds to the structure with an unlocked bolt in the jacket.
+4.2. Results of Fractal Dimension and kNN as Classiﬁcation Method
+As it has been said in Section 3.3.1, the one and only parameter of the kNN classiﬁer is k,
+the number of neighbors. Table 4 shows the performance of the proposed approach using kNN
+as the classiﬁcation method, in terms of the number of neighbors k. As described in Section 4.1.2,
+the metrics for the evaluation of this multiclass classiﬁcation problem are the average accuracy, the
+average precision, the average recall, the average F 1score and the average speciﬁcity. The best results
+for each metric have been highlighted in bold. The same results, as a function of the number of
+neighbors, are depicted in Figure 6. The case with the best performance corresponds to the case where
+the number of neighbors is k=20. It can be observed that increasing further the number of neighbors
+does not increase the indicators’ performance and only leads to a higher computational cost. Table 5
+represents the confusion matrix for the best case ( k=20). In Table 4, the performance measures are
+presented using macroaveraging. However, in the confusion matrix in Table 5, precision and recall
+can be extracted for each class, separately. Similarly, Table 5 also presents the false negative rate
+(fnr)—deﬁned as 1 tpr— and the false discovery rate (fdr)—deﬁned as 1 ppv—. From this confusion
+matrix, it can be derived all the aforementioned metrics. In particular, it is noteworthy that an average
+accuracy of 96.9%, an average precision of 94.3% and an average speciﬁcity of 97.7% are obtained.
+Table 4. Performance measures (per-unit) for the kNN method using different number of nearest
+neighbors ( k). The cases with the best performance of each measure are highlighted in bold.
+k acc ppv tpr F1 tnr
+1 0.953 0.899 0.898 0.898 0.968
+5 0.964 0.929 0.917 0.922 0.974
+10 0.967 0.937 0.922 0.929 0.976
+15 0.968 0.940 0.925 0.931 0.977
+20 0.969 0.943 0.926 0.933 0.977
+25 0.969 0.942 0.925 0.933 0.977
+30 0.969 0.943 0.925 0.933 0.977
+35 0.969 0.943 0.924 0.932 0.977
+40 0.968 0.944 0.924 0.932 0.977
+45 0.967 0.941 0.920 0.929 0.976
+50 0.967 0.941 0.919 0.928 0.975
+Table 5. Confusion matrix for the kNN algorithm when k=20.
+0 1 2 3 tpr fnr
+0 2527 4 7 22 99% 1%
+1 33 1186 60 1 93% 7%
+2 6 68 1195 11 93% 7%
+3 165 6 13 1096 86% 14%
+ppv 93% 94% 94% 97%
+fdr 7% 6% 6% 3%
+4.3. Results of Fractal Dimension and Quadratic SVM as Classiﬁcation Method
+Table 6 summarizes the performance, using macroaveraging, of the proposed approach using
+quadratic SVM as the classiﬁcation method, in terms of the box constraint Cand the kernel scale g
+------------------------------End of the page -----------------------------------
+Appl. Sci. 2020 ,10, 6972 15 of 23
+hyperparameters. More precisely, we combine the box constraint for C=5, 10, 20, 30, 40 and 50and
+the kernel scale for g=0.1, 0.2, 0.5, 1, 2, 5, 10, 15, 20, 30 and 50. The best results for each metric have
+been highlighted in bold. The same results, for a box constraint C=30and as a function of the kernel
+scale g, are depicted in Figure 7. The case with the best performance corresponds to the case where the
+box constraint is C=30and the kernel scale is g=1. Table 7 represents the confusion matrix for this
+case, where it is worth remarking that an average accuracy of 98.4% , an average precision of 96.5% and
+an average speciﬁcity of 98.9% are obtained.
+0.890.910.930.950.970.99
+1 5 10 15 20 25 30 35 40 45 50
+accuracy precision recall F1 score speciﬁcity
+Figure 6. Performance measures (per-unit) corresponding to the kNN strategy for the multiclass
+classiﬁcation problem with respect to the number of neighbors k(horizontal axis).
+Table 6. Performance measures (per-unit) corresponding to the quadratic SVM strategy for the
+multiclass classiﬁcation problem using different box constraints ( C) and different kernel scales ( g).
+The cases with the best performance of each measure are highlighted in bold.
+C g acc ppv tpr F1 tnr
+50.1 0.971 0.935 0.937 0.936 0.981
+0.2 0.981 0.958 0.956 0.957 0.987
+0.5 0.982 0.961 0.959 0.960 0.988
+1 0.981 0.959 0.957 0.958 0.987
+2 0.980 0.958 0.953 0.956 0.986
+5 0.937 0.933 0.844 0.876 0.949
+10 0.924 0.928 0.809 0.850 0.937
+15 0.922 0.924 0.805 0.846 0.935
+20 0.919 0.918 0.798 0.838 0.933
+30 0.893 0.901 0.732 0.777 0.911
+50 0.868 0.887 0.669 0.720 0.890
+100.1 0.971 0.933 0.935 0.934 0.981
+0.2 0.980 0.956 0.955 0.955 0.987
+0.5 0.982 0.961 0.960 0.960 0.988
+1 0.982 0.961 0.959 0.960 0.988
+2 0.982 0.962 0.959 0.960 0.988
+5 0.963 0.940 0.910 0.922 0.972
+10 0.924 0.928 0.809 0.850 0.937
+15 0.923 0.926 0.808 0.849 0.936
+20 0.922 0.924 0.805 0.846 0.935
+30 0.918 0.916 0.796 0.837 0.933
+50 0.888 0.898 0.720 0.766 0.907
+------------------------------End of the page -----------------------------------
+Appl. Sci. 2020 ,10, 6972 16 of 23
+Table 6. Cont .
+C g acc ppv tpr F1 tnr
+200.1 0.961 0.915 0.912 0.912 0.974
+0.2 0.978 0.951 0.950 0.951 0.951
+0.5 0.982 0.961 0.959 0.960 0.988
+1 0.984 0.964 0.962 0.963 0.989
+2 0.982 0.962 0.959 0.961 0.988
+5 0.974 0.951 0.939 0.944 0.982
+10 0.926 0.929 0.814 0.854 0.938
+15 0.924 0.927 0.809 0.849 0.937
+20 0.923 0.925 0.808 0.848 0.936
+30 0.921 0.922 0.804 0.844 0.935
+50 0.906 0.908 0.766 0.810 0.923
+300.1 0.963 0.917 0.919 0.916 0.976
+0.2 0.976 0.947 0.946 0.947 0.984
+0.5 0.983 0.961 0.960 0.960 0.988
+1 0.984 0.966 0.964 0.965 0.989
+2 0.983 0.962 0.960 0.961 0.988
+5 0.978 0.955 0.948 0.951 0.984
+10 0.934 0.931 0.834 0.869 0.945
+15 0.924 0.928 0.810 0.850 0.937
+20 0.923 0.926 0.808 0.849 0.936
+30 0.923 0.924 0.807 0.847 0.936
+50 0.918 0.916 0.797 0.837 0.933
+400.1 0.963 0.917 0.919 0.916 0.976
+0.2 0.976 0.947 0.946 0.946 0.984
+0.5 0.982 0.961 0.959 0.960 0.988
+1 0.984 0.965 0.963 0.964 0.989
+2 0.983 0.962 0.961 0.962 0.989
+5 0.980 0.958 0.952 0.955 0.986
+10 0.944 0.932 0.860 0.886 0.954
+15 0.924 0.927 0.810 0.850 0.937
+20 0.924 0.927 0.809 0.849 0.937
+30 0.923 0.924 0.807 0.847 0.936
+50 0.919 0.918 0.799 0.839 0.934
+500.1 0.963 0.917 0.919 0.916 0.976
+0.2 0.974 0.941 0.941 0.941 0.982
+0.5 0.982 0.959 0.958 0.958 0.988
+1 0.984 0.965 0.963 0.964 0.989
+2 0.983 0.963 0.961 0.962 0.989
+5 0.980 0.958 0.953 0.955 0.986
+10 0.953 0.935 0.883 0.903 0.963
+15 0.925 0.927 0.812 0.852 0.938
+20 0.924 0.927 0.809 0.849 0.937
+30 0.923 0.925 0.807 0.848 0.936
+50 0.920 0.919 0.801 0.841 0.934
+------------------------------End of the page -----------------------------------
+Appl. Sci. 2020 ,10, 6972 17 of 23
+0.790.830.870.910.950.99
+0.1 0.2 0.5 1 2 5 10 15 20 30 50
+accuracy precision recall F1 score speciﬁcity
+Figure 7. Performance measures (per-unit) corresponding to the quadratic SVM strategy for the
+multiclass classiﬁcation problem for a box constraint C=30and with respect to the kernel scale g
+(horizontal axis).
+Table 7. Confusion matrix for the quadratic SVM algorithm for the case C=30(box constraint) and
+g=1 (kernel scale).
+0 1 2 3 tpr fnr
+0 2531 7 8 15 99% 1%
+1 5 1214 61 95% 5%
+2 11 40 1223 6 96% 4%
+3 41 10 9 1220 95% 5%
+ppv 98% 96% 94% 98%
+fdr 2% 4% 6% 2%
+4.4. Results of Fractal Dimension and Gaussian SVM as Classiﬁcation Method
+As in Section 4.3, Table 8 summarizes the performance of the proposed approach using Gaussian
+SVM as the classiﬁcation method, in terms of both the box constraint Cand the kernel scale g.
+More precisely, we combine the box constraint for C=5, 10, 20, 30, 40 and 50and the kernel scale for
+g=0.1, 0.2, 0.5, 1, 2, 5, 10, 15, 20, 30 and 50. The best results for each metric have been highlighted in
+bold. The same results, for a box constraint C=50and as a function of the kernel scale g, are depicted
+in Figure 8. The case with the best performance corresponds to the case where the box constraint is
+C=50and the kernel scale is g=1. Table 9 represents the confusion matrix for this case. From the
+confusion matrix, it is worth remarking that an average accuracy of 98.7% , an average precision of
+97.3% and an average speciﬁcity of 99.1% are obtained.
+------------------------------End of the page -----------------------------------
+Appl. Sci. 2020 ,10, 6972 18 of 23
+Table 8. Performance measures (per-unit) corresponding to the Gaussian SVM strategy for the
+multiclass classiﬁcation problem using different box constraints ( C) and different kernel scales ( g). The
+cases with the best performance of each measure are highlighted in bold.
+C g acc ppv tpr F1 tnr
+50.1 0.757 0.734 0.396 0.397 0.800
+0.2 0.833 0.833 0.586 0.634 0.863
+0.5 0.939 0.921 0.849 0.876 0.951
+1 0.983 0.965 0.960 0.963 0.988
+2 0.978 0.959 0.946 0.952 0.984
+5 0.925 0.930 0.813 0.853 0.938
+10 0.924 0.929 0.810 0.851 0.937
+15 0.922 0.926 0.806 0.847 0.936
+20 0.919 0.919 0.798 0.839 0.933
+30 0.893 0.901 0.733 0.778 0.912
+50 0.868 0.886 0.669 0.720 0.890
+100.1 0.756 0.730 0.395 0.396 0.800
+0.2 0.832 0.828 0.584 0.631 0.862
+0.5 0.940 0.923 0.851 0.879 0.952
+1 0.985 0.969 0.965 0.967 0.990
+2 0.977 0.956 0.953 0.954 0.985
+5 0.944 0.936 0.859 0.887 0.954
+10 0.924 0.928 0.810 0.850 0.937
+15 0.924 0.928 0.809 0.850 0.937
+20 0.922 0.925 0.806 0.846 0.935
+30 0.919 0.917 0.797 0.837 0.933
+50 0.888 0.898 0.721 0.767 0.908
+200.1 0.756 0.730 0.395 0.396 0.800
+0.2 0.831 0.822 0.581 0.627 0.627
+0.5 0.940 0.922 0.852 0.879 0.952
+1 0.986 0.970 0.967 0.968 0.990
+2 0.984 0.967 0.961 0.963 0.988
+5 0.969 0.948 0.922 0.932 0.976
+10 0.925 0.930 0.812 0.853 0.938
+15 0.924 0.928 0.809 0.850 0.937
+20 0.924 0.927 0.809 0.849 0.937
+30 0.921 0.922 0.804 0.844 0.935
+50 0.909 0.910 0.773 0.817 0.925
+300.1 0.756 0.730 0.395 0.396 0.800
+0.2 0.830 0.821 0.581 0.627 0.862
+0.5 0.940 0.923 0.852 0.879 0.952
+1 0.987 0.972 0.969 0.970 0.991
+2 0.985 0.968 0.963 0.966 0.989
+5 0.976 0.956 0.942 0.948 0.982
+10 0.930 0.930 0.824 0.861 0.942
+15 0.924 0.928 0.809 0.850 0.937
+20 0.924 0.928 0.809 0.850 0.937
+30 0.923 0.924 0.807 0.847 0.936
+50 0.918 0.916 0.796 0.837 0.933
+400.1 0.756 0.730 0.395 0.396 0.800
+0.2 0.830 0.819 0.580 0.626 0.861
+0.5 0.940 0.923 0.852 0.879 0.952
+1 0.987 0.972 0.970 0.971 0.991
+2 0.985 0.969 0.965 0.967 0.990
+5 0.978 0.957 0.946 0.951 0.984
+10 0.936 0.931 0.841 0.873 0.948
+15 0.924 0.928 0.811 0.851 0.937
+20 0.924 0.927 0.809 0.849 0.937
+30 0.923 0.925 0.808 0.848 0.936
+50 0.919 0.918 0.799 0.839 0.934
+------------------------------End of the page -----------------------------------
+Appl. Sci. 2020 ,10, 6972 19 of 23
+Table 8. Cont .
+C g acc ppv tpr F1 tnr
+500.1 0.756 0.730 0.395 0.396 0.800
+0.2 0.830 0.818 0.579 0.625 0.861
+0.5 0.940 0.922 0.852 0.878 0.952
+1 0.987 0.973 0.970 0.971 0.991
+2 0.985 0.969 0.965 0.967 0.990
+5 0.979 0.959 0.95 0.954 0.985
+10 0.946 0.933 0.865 0.890 0.956
+15 0.925 0.928 0.812 0.852 0.938
+20 0.924 0.927 0.809 0.849 0.937
+30 0.923 0.926 0.808 0.848 0.936
+50 0.920 0.920 0.802 0.842 0.934
+0.790.830.870.910.950.99
+0.1 0.2 0.5 1 2 5 10 15 20 30 50
+accuracy precision recall F1 score speciﬁcity
+Figure 8. Performance measures (per-unit) corresponding to the Gaussian SVM strategy for the
+multiclass classiﬁcation problem for a box constraint C=50and with respect to the kernel scale g
+(horizontal axis).
+Table 9. Confusion matrix for the Gaussian SVM algorithm for the case C=50(box constraint) and
+g=1 (kernel scale).
+0 1 2 3 tpr fnr
+0 2542 2 1 15 99% 1%
+1 7 1231 40 2 96% 4%
+2 1 45 1230 4 96% 4%
+3 36 6 3 1235 96% 4%
+ppv 98% 96% 97% 98%
+fdr 2% 4% 3% 2%
+4.5. Brief Discussion
+Sections 4.2–4.4 present an optimization of the model hyperparameters for the kNN, quadratic
+SVM and Gaussian SVM, respectively. In each subsection, the confusion matrix for the best (optimized)
+model is presented. In this subsection, the best models are compared among them. That is,
+a comparison among the kNN, quadratic SVM and Gaussian SVM methodologies is given. In particular,
+------------------------------End of the page -----------------------------------
+Appl. Sci. 2020 ,10, 6972 20 of 23
+Figure 9 shows the accuracy, precision, recall, F 1score and speciﬁcity measures for the best kNN,
+quadratic SVM and Gaussian SVM models. It is noteworthy that the Gaussian SVM accomplishes the
+highest performance for all the indicators. Thus, it is the recommended approach to be employed
+with the proposed SHM strategy. Finally, it is also important to note that the quadratic SVM has a
+close performance to the Gaussian SVM but the kNN falls far behind in all the indicators in general,
+and more markedly for the recall and F 1score measures. Therefore, its use is inadvisable. As a ﬁnal
+remark, the performance of the Gaussian SVM over the quadratic SVM may depend on the nature
+of the data or even on how this data is preprocessed and what features are extracted. In this sense,
+the exceeding performance of the Gaussian SVM has been reported in the literature as a machine
+learning model for the prediction of the viscosity of nanoﬂuids [ 43] or, in the ﬁeld of fault diagnosis,
+to get the operation status of a wind turbine [44].
+9293949596979899100
+accuracy precision recall F1 score speciﬁcity
+kNN quadratic SVM Gaussian SVM
+Figure 9. Performance measures (percentage) comparison among the different classiﬁers.
+5. Conclusions
+In this work a proof-of-concept damage diagnosis strategy that can be deployed online and
+during the WT service has been stated. This main contribution of the paper is accomplished by
+using only the vibration-response accelerometer signals instead of the standard approach based on
+guided waves. Furthermore, the methodology is based on machine learning techniques. In this
+regard, the second main contribution of this work is to introduce the FD as a suitable feature to
+detect and classify different damage scenarios inspired by the physical insight that the different fractal
+structures of the accelerometer signals should be capable to discriminate different types of damage.
+Three supervised machine learning classiﬁers have been studied and optimized for the speciﬁc problem.
+Finally, the proposed methodology has been validated in an experimental laboratory test bed where
+for the best selected model (Gaussian SVM with box constraint C=50and kernel scale g=1) all the
+studied measures (average accuracy, average precision, average recall, average F 1score and average
+speciﬁcity) have attained values higher than 97%. These results encourage future work in this area of
+research to develop further this proof-of-concept. More tests including changing the damage location
+and taking into account and dealing with variable environmental operating conditions, including
+waves, will be the focus of future work.
+Author Contributions: All authors contributed equally to this work. All authors have read and agreed to the
+published version of the manuscript.
+------------------------------End of the page -----------------------------------
+Appl. Sci. 2020 ,10, 6972 21 of 23
+Funding: This research has been partially funded by the Spanish Agencia Estatal de Investigación (AEI)-Ministerio
+de Economía, Industria y Competitividad (MINECO), and the Fondo Europeo de Desarrollo Regional (FEDER)
+through the research project DPI2017-82930-C2-1-R; and by the Generalitat de Catalunya through the research
+project 2017 SGR 388.
+Conﬂicts of Interest: The authors declare no conﬂict of interest. The founding sponsors had no role in the design
+of the study; in the collection, analyses, or interpretation of data; in the writing of the manuscript, and in the
+decision to publish the results.
+Abbreviations
+The following abbreviations are used in this manuscript:
+acc accuracy
+FD fractal dimension
+fdr false discovery rate
+fn false negative
+fnr false negative rate
+fp false positive
+GW gigawatts
+kNN knearest neighbor
+ppv precision
+SHM structural health monitoring
+SVM support vector machine
+tn true negative
+tnr speciﬁcity
+tp true positive
+tpr recall
+WT wind turbine
+References
+1. Na, W.S.; Baek, J. A review of the piezoelectric electromechanical impedance based structural health
+monitoring technique for engineering structures. Sensors 2018 ,18, 1307. [CrossRef] [PubMed]
+2. Chen, H.P . Structural Health Monitoring of Large Civil Engineering Structures ; John Wiley & Sons: Hoboken, NJ,
+USA, 2018.
+3. Shin, H.J.; Lee, J.R. Development of a long-range multi-area scanning ultrasonic propagation imaging system
+built into a hangar and its application on an actual aircraft. Struct. Health Monit. 2017 ,16, 97–111. [CrossRef]
+4. Ozbek, M.; Meng, F.; Rixen, D.J. Challenges in testing and monitoring the in-operation vibration
+characteristics of wind turbines. Mech. Syst. Signal Process. 2013 ,41, 649–666. [CrossRef]
+5. Outlook, I.O.W. World Energy Outlook Series ; International Energy Agency: Paris, France, 2019.
+6. Martinez-Luengo, M.; Shaﬁee, M. Guidelines and Cost-Beneﬁt Analysis of the Structural Health Monitoring
+Implementation in Offshore Wind Turbine Support Structures. Energies 2019 ,12, 1176. [CrossRef]
+7. Arnold, P .; Moll, J.; Mälzer, M.; Krozer, V .; Pozdniakov, D.; Salman, R.; Rediske, S.; Scholz, M.; Friedmann, H.;
+Nuber, A. Radar-based structural health monitoring of wind turbine blades: The case of damage localization.
+Wind Energy 2018 ,21, 676–680. [CrossRef]
+8. Nguyen, T.C.; Huynh, T.C.; Yi, J.H.; Kim, J.T. Hybrid bolt-loosening detection in wind turbine tower
+structures by vibration and impedance responses. Wind Struct 2017 ,24, 385–403. [CrossRef]
+9. Mieloszyk, M.; Ostachowicz, W. An application of Structural Health Monitoring system based on FBG
+sensors to offshore wind turbine support structure model. Mar. Struct. 2017 ,51, 65–86. [CrossRef]
+10. Li, M.; Kefal, A.; Oterkus, E.; Oterkus, S. Structural health monitoring of an offshore wind turbine tower
+using iFEM methodology. Ocean. Eng. 2020 ,204, 107291. [CrossRef]
+11. Zhao, X.; Lang, Z. Baseline model based structural health monitoring method under varying environment.
+Renew. Energy 2019 ,138, 1166–1175. [CrossRef]
+12. Kim, H.C.; Kim, M.H.; Choe, D.E. Structural health monitoring of towers and blades for ﬂoating offshore
+wind turbines using operational modal analysis and modal properties with numerical-sensor signals.
+Ocean. Eng. 2019 ,188, 106226. [CrossRef]
+------------------------------End of the page -----------------------------------
+Appl. Sci. 2020 ,10, 6972 22 of 23
+13. Stutzmann, J.; Ziegler, L.; Muskulus, M. Fatigue crack detection for lifetime extension of monopile-based
+offshore wind turbines. Energy Procedia 2017 ,137, 143–151. [CrossRef]
+14. Martinez-Luengo, M.; Kolios, A.; Wang, L. Structural health monitoring of offshore wind turbines: A review
+through the Statistical Pattern Recognition Paradigm. Renew. Sustain. Energy Rev. 2016 ,64, 91–105. [CrossRef]
+15. Weijtjens, W.; Verbelen, T.; De Sitter, G.; Devriendt, C. Foundation structural health monitoring of an offshore
+wind turbine—A full-scale case study. Struct. Health Monit. 2016 ,15, 389–402. [CrossRef]
+16. Gomez, H.C.; Gur, T.; Dolan, D. Structural condition assessment of offshore wind turbine monopile
+foundations using vibration monitoring data. Nondestructive Characterization for Composite Materials,
+Aerospace Engineering, Civil Infrastructure, and Homeland Security 2013. Int. Soc. Opt. Photonics 2013 ,
+8694 , 86940B.
+17. Zugasti Uriguen, E. Design and Validation of a Methodology for Wind Energy Structures Health Monitoring.
+Ph.D. Thesis, Universitat Politècnica de Catalunya, Barcelona, Spain, 16 January 2014.
+18. Spanos, N.A.; Sakellariou, J.S.; Fassois, S.D. Vibration-response-only statistical time series structural health
+monitoring methods: A comprehensive assessment via a scale jacket structure. Struct. Health Monit. 2019 ,19,
+736–750. [CrossRef]
+19. Vidal, Y.; Aquino, G.; Pozo, F.; Gutiérrez-Arias, J.E.M. Structural Health Monitoring for Jacket-Type Offshore
+Wind Turbines: Experimental Proof of Concept. Sensors 2020 ,20, 1835. [CrossRef]
+20. Puruncajas, B.; Vidal, Y.; Tutivén, C. Vibration-Response-Only Structural Health Monitoring for Offshore
+Wind Turbine Jacket Foundations via Convolutional Neural Networks. Sensors 2020 ,20, 3429. [CrossRef]
+21. Ruiz, M.; Mujica, L.E.; Alferez, S.; Acho, L.; Tutiven, C.; Vidal, Y.; Rodellar, J.; Pozo, F. Wind turbine fault
+detection and classiﬁcation by means of image texture analysis. Mech. Syst. Signal Process. 2018 ,107, 149–167.
+[CrossRef]
+22. Sarkar, M.; Leong, T.Y. Characterization of medical time series using fuzzy similarity-based fractal
+dimensions. Artif. Intell. Med. 2003 ,27, 201–222. [CrossRef]
+23. El-Kishky, A. Assessing entropy and fractal dimensions as discriminants of seizures in EEG time series.
+In Proceedings of the 2012 11th International Conference on Information Science, Signal Processing and their
+Applications (ISSPA), Montreal, QC, Canada, 2–5 July 2012; pp. 92–96.
+24. Koláˇ r, R.; Jan, J. Detection of glaucomatous eye via color fundus images using fractal dimensions.
+Radioengineering 2008 ,17, 109–114.
+25. Rezaie, A.; Mauron, A.J.; Beyer, K. Sensitivity analysis of fractal dimensions of crack maps on concrete and
+masonry walls. Autom. Constr. 2020 ,117, 103258. [CrossRef]
+26. Wen, W.; Fan, Z.; Karg, D.; Cheng, W. Rolling element bearing fault diagnosis based on multiscale general
+fractal features. Shock Vib. 2015 ,2015 , 167902. [CrossRef]
+27. Vidal, Y.; Pozo, F.; Tutivén, C. Wind turbine multi-fault detection and classiﬁcation based on SCADA data.
+Energies 2018 ,11, 3018. [CrossRef]
+28. Pozo, F.; Vidal, Y.; Serrahima, J.M. On real-time fault detection in wind turbines: Sensor selection algorithm
+and detection time reduction analysis. Energies 2016 ,9, 520. [CrossRef]
+29. Mandelbrot, B.B. The Fractal Geometry of Nature ; WH freeman: New York, NY, USA, 1983; Volume 173,
+30. Sevcik, C. A procedure to estimate the fractal dimension of waveforms. arXiv 2010 , arXiv:1003.5266.
+31. Raghavendra, B.; Dutt, D.N. A note on fractal dimensions of biomedical waveforms. Comput. Biol. Med.
+2009 ,39, 1006–1012. [CrossRef]
+32. Higuchi, T. Approach to an irregular time series on the basis of the fractal theory. Phys. D Nonlinear Phenom.
+1988 ,31, 277–283. [CrossRef]
+33. Russ, J.C. Fractal dimension measurement of engineering surfaces. Int. J. Mach. Tools Manuf. 1998 ,
+38, 567–571. [CrossRef]
+34. Breslin, M.; Belward, J. Fractal dimensions for rainfall time series. Math. Comput. Simul. 1999 ,48, 437–446.
+[CrossRef]
+35. Bourke, P . An Introduction to Fractals ; The University of Western of Australia: Perth, Australia, 1991;
+Volume 5.
+36. Addison, P .S. Fractals and Chaos: An Illustrated Course ; CRC Press: Boca Raton, FL, USA, 1997.
+37. Katz, M.J. Fractals and the analysis of waveforms. Comput. Biol. Med. 1988 ,18, 145–156. [CrossRef]
+38. Mulak, P .; Talhar, N. Analysis of distance measures using k-nearest neighbor algorithm on kdd dataset.
+Int. J. Sci. Res. 2015 ,4, 2101–2104.
+------------------------------End of the page -----------------------------------
+Appl. Sci. 2020 ,10, 6972 23 of 23
+39. James, G.; Witten, D.; Hastie, T.; Tibshirani, R. An Introduction to Statistical Learning ; Springer:
+Berlin/Heidelberg, Germany, 2013; Volume 112.
+40. Sokolova, M.; Lapalme, G. A systematic analysis of performance measures for classiﬁcation tasks.
+Inf. Process. Manag. 2009 ,45, 427–437. [CrossRef]
+41. Krüger, F. Activity, Context, and Plan Recognition with Computational Causal Behaviour Models.
+Ph.D. Thesis, University of Rostock, Rostock, Germany, December 2016.
+42. Hameed, N.; Hameed, F.; Shabut, A.; Khan, S.; Cirstea, S.; Hossain, A. An Intelligent Computer-Aided
+Scheme for Classifying Multiple Skin Lesions. Computers 2019 ,8, 62. [CrossRef]
+43. Shateri, M.; Sobhanigavgani, Z.; Alinasab, A.; Varamesh, A.; Hemmati-Sarapardeh, A.; Mosavi, A.;
+Shamshirband, S.S. Comparative Analysis of Machine Learning Models for Nanoﬂuids Viscosity Assessment.
+Nanomaterials 2020 ,10, 1767. [CrossRef] [PubMed]
+44. Wu, Z.; Wang, X.; Jiang, B. Fault Diagnosis for Wind Turbines Based on ReliefF and eXtreme Gradient
+Boosting. Appl. Sci. 2020 ,10, 3258. [CrossRef]
+c2020 by the authors. Licensee MDPI, Basel, Switzerland. This article is an open access
+article distributed under the terms and conditions of the Creative Commons Attribution
+(CC BY) license (http://creativecommons.org/licenses/by/4.0/).
+------------------------------End of the page -----------------------------------
